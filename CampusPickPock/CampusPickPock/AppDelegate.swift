@@ -1,8 +1,8 @@
 //
 //  AppDelegate.swift
-//  CampusPickPock
+//  campusPickPock
 //
-//  Created by Kim Kyengdong on 9/28/25.
+//  Created by Kim Kyengdong on 10/21/25.
 //
 
 import UIKit

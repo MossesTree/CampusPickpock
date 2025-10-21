@@ -6,76 +6,33 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXContainerItemProxy section */
-		3126D8FD2E895172004F63B4 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 3126D8DE2E89516F004F63B4 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 3126D8E52E89516F004F63B4;
-			remoteInfo = CampusPickPock;
-		};
-		3126D9072E895172004F63B4 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 3126D8DE2E89516F004F63B4 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 3126D8E52E89516F004F63B4;
-			remoteInfo = CampusPickPock;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXFileReference section */
-		3126D8E62E89516F004F63B4 /* CampusPickPock.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CampusPickPock.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		3126D8FC2E895172004F63B4 /* CampusPickPockTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CampusPickPockTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		3126D9062E895172004F63B4 /* CampusPickPockUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CampusPickPockUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		31B724F72EA693AC003E4B3F /* campusPickPock.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = campusPickPock.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		3126D90E2E895172004F63B4 /* Exceptions for "CampusPickPock" folder in "CampusPickPock" target */ = {
+		31B725092EA693AE003E4B3F /* Exceptions for "campusPickPock" folder in "campusPickPock" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 3126D8E52E89516F004F63B4 /* CampusPickPock */;
+			target = 31B724F62EA693AC003E4B3F /* campusPickPock */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		3126D8E82E89516F004F63B4 /* CampusPickPock */ = {
+		31B724F92EA693AC003E4B3F /* campusPickPock */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				3126D90E2E895172004F63B4 /* Exceptions for "CampusPickPock" folder in "CampusPickPock" target */,
+				31B725092EA693AE003E4B3F /* Exceptions for "campusPickPock" folder in "campusPickPock" target */,
 			);
-			path = CampusPickPock;
-			sourceTree = "<group>";
-		};
-		3126D8FF2E895172004F63B4 /* CampusPickPockTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = CampusPickPockTests;
-			sourceTree = "<group>";
-		};
-		3126D9092E895172004F63B4 /* CampusPickPockUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = CampusPickPockUITests;
+			path = campusPickPock;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		3126D8E32E89516F004F63B4 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		3126D8F92E895172004F63B4 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		3126D9032E895172004F63B4 /* Frameworks */ = {
+		31B724F42EA693AC003E4B3F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -85,22 +42,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		3126D8DD2E89516F004F63B4 = {
+		31B724EE2EA693AC003E4B3F = {
 			isa = PBXGroup;
 			children = (
-				3126D8E82E89516F004F63B4 /* CampusPickPock */,
-				3126D8FF2E895172004F63B4 /* CampusPickPockTests */,
-				3126D9092E895172004F63B4 /* CampusPickPockUITests */,
-				3126D8E72E89516F004F63B4 /* Products */,
+				31B724F92EA693AC003E4B3F /* campusPickPock */,
+				31B724F82EA693AC003E4B3F /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		3126D8E72E89516F004F63B4 /* Products */ = {
+		31B724F82EA693AC003E4B3F /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				3126D8E62E89516F004F63B4 /* CampusPickPock.app */,
-				3126D8FC2E895172004F63B4 /* CampusPickPockTests.xctest */,
-				3126D9062E895172004F63B4 /* CampusPickPockUITests.xctest */,
+				31B724F72EA693AC003E4B3F /* campusPickPock.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -108,134 +61,64 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		3126D8E52E89516F004F63B4 /* CampusPickPock */ = {
+		31B724F62EA693AC003E4B3F /* campusPickPock */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 3126D90F2E895172004F63B4 /* Build configuration list for PBXNativeTarget "CampusPickPock" */;
+			buildConfigurationList = 31B7250A2EA693AE003E4B3F /* Build configuration list for PBXNativeTarget "campusPickPock" */;
 			buildPhases = (
-				3126D8E22E89516F004F63B4 /* Sources */,
-				3126D8E32E89516F004F63B4 /* Frameworks */,
-				3126D8E42E89516F004F63B4 /* Resources */,
+				31B724F32EA693AC003E4B3F /* Sources */,
+				31B724F42EA693AC003E4B3F /* Frameworks */,
+				31B724F52EA693AC003E4B3F /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				3126D8E82E89516F004F63B4 /* CampusPickPock */,
+				31B724F92EA693AC003E4B3F /* campusPickPock */,
 			);
-			name = CampusPickPock;
+			name = campusPickPock;
 			packageProductDependencies = (
 			);
-			productName = CampusPickPock;
-			productReference = 3126D8E62E89516F004F63B4 /* CampusPickPock.app */;
+			productName = campusPickPock;
+			productReference = 31B724F72EA693AC003E4B3F /* campusPickPock.app */;
 			productType = "com.apple.product-type.application";
-		};
-		3126D8FB2E895172004F63B4 /* CampusPickPockTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 3126D9142E895172004F63B4 /* Build configuration list for PBXNativeTarget "CampusPickPockTests" */;
-			buildPhases = (
-				3126D8F82E895172004F63B4 /* Sources */,
-				3126D8F92E895172004F63B4 /* Frameworks */,
-				3126D8FA2E895172004F63B4 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				3126D8FE2E895172004F63B4 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				3126D8FF2E895172004F63B4 /* CampusPickPockTests */,
-			);
-			name = CampusPickPockTests;
-			packageProductDependencies = (
-			);
-			productName = CampusPickPockTests;
-			productReference = 3126D8FC2E895172004F63B4 /* CampusPickPockTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		3126D9052E895172004F63B4 /* CampusPickPockUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 3126D9172E895172004F63B4 /* Build configuration list for PBXNativeTarget "CampusPickPockUITests" */;
-			buildPhases = (
-				3126D9022E895172004F63B4 /* Sources */,
-				3126D9032E895172004F63B4 /* Frameworks */,
-				3126D9042E895172004F63B4 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				3126D9082E895172004F63B4 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				3126D9092E895172004F63B4 /* CampusPickPockUITests */,
-			);
-			name = CampusPickPockUITests;
-			packageProductDependencies = (
-			);
-			productName = CampusPickPockUITests;
-			productReference = 3126D9062E895172004F63B4 /* CampusPickPockUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		3126D8DE2E89516F004F63B4 /* Project object */ = {
+		31B724EF2EA693AC003E4B3F /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2600;
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
-					3126D8E52E89516F004F63B4 = {
+					31B724F62EA693AC003E4B3F = {
 						CreatedOnToolsVersion = 26.0.1;
-					};
-					3126D8FB2E895172004F63B4 = {
-						CreatedOnToolsVersion = 26.0.1;
-						TestTargetID = 3126D8E52E89516F004F63B4;
-					};
-					3126D9052E895172004F63B4 = {
-						CreatedOnToolsVersion = 26.0.1;
-						TestTargetID = 3126D8E52E89516F004F63B4;
 					};
 				};
 			};
-			buildConfigurationList = 3126D8E12E89516F004F63B4 /* Build configuration list for PBXProject "CampusPickPock" */;
+			buildConfigurationList = 31B724F22EA693AC003E4B3F /* Build configuration list for PBXProject "campusPickPock" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = 3126D8DD2E89516F004F63B4;
+			mainGroup = 31B724EE2EA693AC003E4B3F;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 3126D8E72E89516F004F63B4 /* Products */;
+			productRefGroup = 31B724F82EA693AC003E4B3F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				3126D8E52E89516F004F63B4 /* CampusPickPock */,
-				3126D8FB2E895172004F63B4 /* CampusPickPockTests */,
-				3126D9052E895172004F63B4 /* CampusPickPockUITests */,
+				31B724F62EA693AC003E4B3F /* campusPickPock */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		3126D8E42E89516F004F63B4 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		3126D8FA2E895172004F63B4 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		3126D9042E895172004F63B4 /* Resources */ = {
+		31B724F52EA693AC003E4B3F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -245,21 +128,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		3126D8E22E89516F004F63B4 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		3126D8F82E895172004F63B4 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		3126D9022E895172004F63B4 /* Sources */ = {
+		31B724F32EA693AC003E4B3F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -268,21 +137,8 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
-/* Begin PBXTargetDependency section */
-		3126D8FE2E895172004F63B4 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 3126D8E52E89516F004F63B4 /* CampusPickPock */;
-			targetProxy = 3126D8FD2E895172004F63B4 /* PBXContainerItemProxy */;
-		};
-		3126D9082E895172004F63B4 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 3126D8E52E89516F004F63B4 /* CampusPickPock */;
-			targetProxy = 3126D9072E895172004F63B4 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
 /* Begin XCBuildConfiguration section */
-		3126D9102E895172004F63B4 /* Debug */ = {
+		31B7250B2EA693AE003E4B3F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -291,10 +147,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = SM8M7LZBR2;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = CampusPickPock/Info.plist;
+				INFOPLIST_FILE = campusPickPock/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -302,7 +156,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.kyengdongstudy.CampusPickPock;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kyengdongstudy.campusPickPock;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -314,7 +168,7 @@
 			};
 			name = Debug;
 		};
-		3126D9112E895172004F63B4 /* Release */ = {
+		31B7250C2EA693AE003E4B3F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -323,10 +177,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = SM8M7LZBR2;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = CampusPickPock/Info.plist;
+				INFOPLIST_FILE = campusPickPock/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -334,7 +186,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.kyengdongstudy.CampusPickPock;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kyengdongstudy.campusPickPock;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -346,7 +198,7 @@
 			};
 			name = Release;
 		};
-		3126D9122E895172004F63B4 /* Debug */ = {
+		31B7250D2EA693AE003E4B3F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -410,7 +262,7 @@
 			};
 			name = Debug;
 		};
-		3126D9132E895172004F63B4 /* Release */ = {
+		31B7250E2EA693AE003E4B3F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -467,130 +319,28 @@
 			};
 			name = Release;
 		};
-		3126D9152E895172004F63B4 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = SM8M7LZBR2;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.kyengdongstudy.CampusPickPockTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CampusPickPock.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CampusPickPock";
-			};
-			name = Debug;
-		};
-		3126D9162E895172004F63B4 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = SM8M7LZBR2;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.kyengdongstudy.CampusPickPockTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CampusPickPock.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CampusPickPock";
-			};
-			name = Release;
-		};
-		3126D9182E895172004F63B4 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = SM8M7LZBR2;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.kyengdongstudy.CampusPickPockUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = CampusPickPock;
-			};
-			name = Debug;
-		};
-		3126D9192E895172004F63B4 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = SM8M7LZBR2;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.kyengdongstudy.CampusPickPockUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = CampusPickPock;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		3126D8E12E89516F004F63B4 /* Build configuration list for PBXProject "CampusPickPock" */ = {
+		31B724F22EA693AC003E4B3F /* Build configuration list for PBXProject "campusPickPock" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				3126D9122E895172004F63B4 /* Debug */,
-				3126D9132E895172004F63B4 /* Release */,
+				31B7250D2EA693AE003E4B3F /* Debug */,
+				31B7250E2EA693AE003E4B3F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		3126D90F2E895172004F63B4 /* Build configuration list for PBXNativeTarget "CampusPickPock" */ = {
+		31B7250A2EA693AE003E4B3F /* Build configuration list for PBXNativeTarget "campusPickPock" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				3126D9102E895172004F63B4 /* Debug */,
-				3126D9112E895172004F63B4 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		3126D9142E895172004F63B4 /* Build configuration list for PBXNativeTarget "CampusPickPockTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				3126D9152E895172004F63B4 /* Debug */,
-				3126D9162E895172004F63B4 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		3126D9172E895172004F63B4 /* Build configuration list for PBXNativeTarget "CampusPickPockUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				3126D9182E895172004F63B4 /* Debug */,
-				3126D9192E895172004F63B4 /* Release */,
+				31B7250B2EA693AE003E4B3F /* Debug */,
+				31B7250C2EA693AE003E4B3F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 3126D8DE2E89516F004F63B4 /* Project object */;
+	rootObject = 31B724EF2EA693AC003E4B3F /* Project object */;
 }
