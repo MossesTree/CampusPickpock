@@ -68,11 +68,25 @@ class MyCommentedPostsViewController: UIViewController {
     }()
     
     private var posts: [Post] = []
+    private var postingItems: [PostingItem] = []
+    private var isLoading = false
+    
+    private let loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .medium)
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        indicator.hidesWhenStopped = true
+        return indicator
+    }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupTableView()
+        loadPosts()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         loadPosts()
     }
     
@@ -92,6 +106,7 @@ class MyCommentedPostsViewController: UIViewController {
         
         contentView.addSubview(postsTableView)
         contentView.addSubview(emptyStateView)
+        contentView.addSubview(loadingIndicator)
         
         emptyStateView.addSubview(emptyIconImageView)
         emptyStateView.addSubview(emptyMessageLabel)
@@ -145,7 +160,10 @@ class MyCommentedPostsViewController: UIViewController {
             emptyMessageLabel.topAnchor.constraint(equalTo: emptyIconImageView.bottomAnchor, constant: 16),
             
             emptySubMessageLabel.centerXAnchor.constraint(equalTo: emptyStateView.centerXAnchor),
-            emptySubMessageLabel.topAnchor.constraint(equalTo: emptyMessageLabel.bottomAnchor, constant: 8)
+            emptySubMessageLabel.topAnchor.constraint(equalTo: emptyMessageLabel.bottomAnchor, constant: 8),
+            
+            loadingIndicator.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
         ])
     }
     
@@ -167,14 +185,66 @@ class MyCommentedPostsViewController: UIViewController {
     }
     
     private func loadPosts() {
-        // 현재 사용자가 댓글을 단 게시글만 필터링
-        posts = DataManager.shared.getMyCommentedPosts()
+        print("💬 댓글 단 글 로드 시작")
         
-        // 데이터가 있으면 테이블뷰 표시, 없으면 빈 상태 표시
-        postsTableView.isHidden = posts.isEmpty
-        emptyStateView.isHidden = !posts.isEmpty
+        // 로딩 상태 표시
+        isLoading = true
+        loadingIndicator.startAnimating()
+        postsTableView.isHidden = true
+        emptyStateView.isHidden = true
         
-        postsTableView.reloadData()
+        APIService.shared.getCommentedPostings { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                self?.loadingIndicator.stopAnimating()
+                
+                switch result {
+                case .success(let commentedPostings):
+                    print("✅ 댓글 단 글 로드 성공: \(commentedPostings.count)개 항목")
+                    
+                    self?.postingItems = commentedPostings
+                    
+                    // PostingItem을 Post로 변환
+                    self?.posts = commentedPostings.map { postingItem in
+                        Post(
+                            id: String(postingItem.postingId),
+                            postingId: postingItem.postingId,
+                            title: postingItem.postingTitle,
+                            content: postingItem.postingContent,
+                            images: [],
+                            authorId: postingItem.postingWriterNickName ?? "익명",
+                            authorName: postingItem.postingWriterNickName ?? "익명",
+                            isHidden: false,
+                            createdAt: self?.parseDate(postingItem.postingCreatedAt) ?? Date(),
+                            commentCount: postingItem.commentCount,
+                            type: postingItem.postingCategory == "LOST" ? .lost : .found
+                        )
+                    }
+                    
+                    // 데이터가 있으면 테이블뷰 표시, 없으면 빈 상태 표시
+                    self?.postsTableView.isHidden = self?.posts.isEmpty == true
+                    self?.emptyStateView.isHidden = self?.posts.isEmpty == false
+                    
+                    self?.postsTableView.reloadData()
+                    
+                case .failure(let error):
+                    print("❌ 댓글 단 글 로드 실패: \(error.localizedDescription)")
+                    
+                    // 오류 시 빈 상태 표시
+                    self?.posts = []
+                    self?.postingItems = []
+                    self?.postsTableView.isHidden = true
+                    self?.emptyStateView.isHidden = false
+                    self?.emptyMessageLabel.text = "댓글 단 글을 불러올 수 없습니다"
+                    self?.postsTableView.reloadData()
+                }
+            }
+        }
+    }
+    
+    private func parseDate(_ dateString: String) -> Date {
+        let formatter = ISO8601DateFormatter()
+        return formatter.date(from: dateString) ?? Date()
     }
 }
 

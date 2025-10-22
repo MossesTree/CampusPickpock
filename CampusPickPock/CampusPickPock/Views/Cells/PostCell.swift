@@ -7,7 +7,14 @@
 
 import UIKit
 
+protocol PostCellDelegate: AnyObject {
+    func postCellDidTapJoopjoop(_ cell: PostCell, post: Post)
+}
+
 class PostCell: UITableViewCell {
+    
+    weak var delegate: PostCellDelegate?
+    private var post: Post?
     
     private let titleLabel: UILabel = {
         let label = UILabel()
@@ -61,6 +68,18 @@ class PostCell: UITableViewCell {
         return imageView
     }()
     
+    let joopjoopButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("줍줍", for: .normal)
+        button.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 0.1)
+        button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 12)
+        button.layer.cornerRadius = 16
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.isHidden = true // 기본적으로 숨김
+        return button
+    }()
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
@@ -77,6 +96,10 @@ class PostCell: UITableViewCell {
         contentView.addSubview(dateLabel)
         contentView.addSubview(commentCountLabel)
         contentView.addSubview(thumbnailImageView)
+        contentView.addSubview(joopjoopButton)
+        
+        // 줍줍버튼 액션 추가
+        joopjoopButton.addTarget(self, action: #selector(joopjoopButtonTapped), for: .touchUpInside)
         
         NSLayoutConstraint.activate([
             thumbnailImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
@@ -100,16 +123,25 @@ class PostCell: UITableViewCell {
             dateLabel.centerYAnchor.constraint(equalTo: authorLabel.centerYAnchor),
             
             commentCountLabel.leadingAnchor.constraint(equalTo: dateLabel.trailingAnchor, constant: 8),
-            commentCountLabel.centerYAnchor.constraint(equalTo: authorLabel.centerYAnchor)
+            commentCountLabel.centerYAnchor.constraint(equalTo: authorLabel.centerYAnchor),
+            
+            joopjoopButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            joopjoopButton.trailingAnchor.constraint(equalTo: thumbnailImageView.leadingAnchor, constant: -8),
+            joopjoopButton.widthAnchor.constraint(equalToConstant: 60),
+            joopjoopButton.heightAnchor.constraint(equalToConstant: 32)
         ])
     }
     
     func configure(with post: Post) {
+        self.post = post
         titleLabel.text = post.title
         contentLabel.text = post.isHidden ? "개인 정보가 포함된 게시글입니다" : post.content
         authorLabel.text = post.authorName
         dateLabel.text = formatDate(post.createdAt)
         commentCountLabel.text = "댓글 \(post.commentCount)"
+        
+        // Lost 타입일 때만 줍줍버튼 표시
+        joopjoopButton.isHidden = post.type != .lost
         
         if let firstImage = post.images.first {
             thumbnailImageView.image = firstImage
@@ -123,6 +155,11 @@ class PostCell: UITableViewCell {
         let formatter = DateFormatter()
         formatter.dateFormat = "MM/dd HH:mm"
         return formatter.string(from: date)
+    }
+    
+    @objc private func joopjoopButtonTapped() {
+        guard let post = post else { return }
+        delegate?.postCellDidTapJoopjoop(self, post: post)
     }
 }
 

@@ -239,15 +239,94 @@ class HomeViewController: UIViewController {
         return imageView
     }()
     
+    // MARK: - JupJup Notification Popup
+    private let notificationPopupView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0.8, green: 0.9, blue: 1.0, alpha: 0.95)
+        view.layer.cornerRadius = 16
+        view.layer.shadowColor = UIColor.black.cgColor
+        view.layer.shadowOffset = CGSize(width: 0, height: 4)
+        view.layer.shadowOpacity = 0.3
+        view.layer.shadowRadius = 8
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.isHidden = true
+        return view
+    }()
+    
+    private let notificationCloseButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "xmark"), for: .normal)
+        button.tintColor = .gray
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private let notificationStarIcon: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(systemName: "star.fill")
+        imageView.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
+    private let notificationTitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "줍줍 알림이 도착했어요!"
+        label.font = UIFont.boldSystemFont(ofSize: 18)
+        label.textColor = .primaryTextColor
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let notificationMessageLabel: UILabel = {
+        let label = UILabel()
+        label.text = "누군가 내가 올린 게시글에 줍줍 버튼을 눌렀어요!"
+        label.font = UIFont.systemFont(ofSize: 14)
+        label.textColor = .secondaryTextColor
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let notificationActionButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("게시글 확인하기", for: .normal)
+        button.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+        button.setTitleColor(.white, for: .normal)
+        button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
+        button.layer.cornerRadius = 8
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private var pendingJupJupNotification: JupJupNotificationItem?
+    
+    // MARK: - Data Properties
     private var posts: [Post] = []
+    private var postingItems: [PostingItem] = []
+    private var homePostingItems: [HomePostingItem] = []
+    private var bannerItem: BannerItem?
     private var myPagePopover: PopoverMenuView?
     private var writePopover: PopoverMenuView?
+    private var currentPage = 0
+    private let pageSize = 10
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupTableView()
         setupActions()
+        
+        // 토큰 상태 확인
+        DataManager.shared.checkTokenStatus()
+        
+        // 초기 상태에서 배너 카드 숨기기
+        alertCard.isHidden = true
+        
+        loadBannerData()
         loadPosts()
         updateNotificationBadge()
     }
@@ -256,6 +335,7 @@ class HomeViewController: UIViewController {
         super.viewWillAppear(animated)
         loadPosts()
         updateNotificationBadge()
+        checkJupJupNotifications()
     }
     
     private func setupUI() {
@@ -263,6 +343,7 @@ class HomeViewController: UIViewController {
         
 //        view.addSubview(scrollView)
         view.addSubview(contentView)
+        view.addSubview(notificationPopupView)
         
         contentView.addSubview(headerView)
         contentView.addSubview(alertCard)
@@ -271,6 +352,12 @@ class HomeViewController: UIViewController {
         contentView.addSubview(tableView)
         contentView.addSubview(bottomButtonContainer)
         contentView.addSubview(bottomBar)
+        
+        notificationPopupView.addSubview(notificationCloseButton)
+        notificationPopupView.addSubview(notificationStarIcon)
+        notificationPopupView.addSubview(notificationTitleLabel)
+        notificationPopupView.addSubview(notificationMessageLabel)
+        notificationPopupView.addSubview(notificationActionButton)
         
         bottomButtonContainer.addSubview(writeButton)
         bottomButtonContainer.addSubview(storageButton)
@@ -406,7 +493,37 @@ class HomeViewController: UIViewController {
             bottomBarIcon.trailingAnchor.constraint(equalTo: bottomBar.trailingAnchor, constant: -20),
             bottomBarIcon.centerYAnchor.constraint(equalTo: bottomBar.centerYAnchor),
             bottomBarIcon.widthAnchor.constraint(equalToConstant: 20),
-            bottomBarIcon.heightAnchor.constraint(equalToConstant: 20)
+            bottomBarIcon.heightAnchor.constraint(equalToConstant: 20),
+            
+            // Notification Popup Constraints
+            notificationPopupView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            notificationPopupView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            notificationPopupView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            notificationPopupView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            notificationPopupView.heightAnchor.constraint(equalToConstant: 280),
+            
+            notificationCloseButton.topAnchor.constraint(equalTo: notificationPopupView.topAnchor, constant: 16),
+            notificationCloseButton.trailingAnchor.constraint(equalTo: notificationPopupView.trailingAnchor, constant: -16),
+            notificationCloseButton.widthAnchor.constraint(equalToConstant: 24),
+            notificationCloseButton.heightAnchor.constraint(equalToConstant: 24),
+            
+            notificationStarIcon.topAnchor.constraint(equalTo: notificationPopupView.topAnchor, constant: 40),
+            notificationStarIcon.centerXAnchor.constraint(equalTo: notificationPopupView.centerXAnchor),
+            notificationStarIcon.widthAnchor.constraint(equalToConstant: 60),
+            notificationStarIcon.heightAnchor.constraint(equalToConstant: 60),
+            
+            notificationTitleLabel.topAnchor.constraint(equalTo: notificationStarIcon.bottomAnchor, constant: 16),
+            notificationTitleLabel.leadingAnchor.constraint(equalTo: notificationPopupView.leadingAnchor, constant: 20),
+            notificationTitleLabel.trailingAnchor.constraint(equalTo: notificationPopupView.trailingAnchor, constant: -20),
+            
+            notificationMessageLabel.topAnchor.constraint(equalTo: notificationTitleLabel.bottomAnchor, constant: 8),
+            notificationMessageLabel.leadingAnchor.constraint(equalTo: notificationPopupView.leadingAnchor, constant: 20),
+            notificationMessageLabel.trailingAnchor.constraint(equalTo: notificationPopupView.trailingAnchor, constant: -20),
+            
+            notificationActionButton.topAnchor.constraint(equalTo: notificationMessageLabel.bottomAnchor, constant: 24),
+            notificationActionButton.leadingAnchor.constraint(equalTo: notificationPopupView.leadingAnchor, constant: 20),
+            notificationActionButton.trailingAnchor.constraint(equalTo: notificationPopupView.trailingAnchor, constant: -20),
+            notificationActionButton.heightAnchor.constraint(equalToConstant: 44)
         ])
     }
     
@@ -427,11 +544,83 @@ class HomeViewController: UIViewController {
         moreButton.addTarget(self, action: #selector(moreTapped), for: .touchUpInside)
         writeButton.addTarget(self, action: #selector(writeTapped), for: .touchUpInside)
         storageButton.addTarget(self, action: #selector(storageTapped), for: .touchUpInside)
+        notificationCloseButton.addTarget(self, action: #selector(notificationCloseTapped), for: .touchUpInside)
+        notificationActionButton.addTarget(self, action: #selector(notificationActionTapped), for: .touchUpInside)
+        
+        // 배너 카드 액션 추가
+        let bannerTapGesture = UITapGestureRecognizer(target: self, action: #selector(bannerTapped))
+        alertCard.addGestureRecognizer(bannerTapGesture)
+        alertCard.isUserInteractionEnabled = true
+    }
+    
+    private func loadBannerData() {
+        APIService.shared.getBannerData { [weak self] result in
+            switch result {
+            case .success(let bannerItem):
+                DispatchQueue.main.async {
+                    if let bannerItem = bannerItem {
+                        print("✅ 배너 데이터 로드 성공: 1개")
+                        self?.bannerItem = bannerItem
+                        self?.updateBannerUI()
+                    } else {
+                        print("⚠️ 배너 데이터 없음")
+                        self?.alertCard.isHidden = true
+                    }
+                }
+                
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    print("❌ 배너 데이터 로드 실패: \(error.localizedDescription)")
+                    // 배너 데이터가 없어도 앱은 정상 동작
+                    self?.alertCard.isHidden = true
+                }
+            }
+        }
+    }
+    
+    private func updateBannerUI() {
+        guard let bannerItem = bannerItem else {
+            print("⚠️ 배너 데이터가 없음")
+            // 배너가 없으면 alertCard 숨기기
+            alertCard.isHidden = true
+            return
+        }
+        
+        print("🎯 배너 업데이트: \(bannerItem.postingTitle) - \(bannerItem.postingWriterNickName)")
+        
+        // alertCard 표시
+        alertCard.isHidden = false
+        
+        // 배너 데이터를 UI에 표시
+        alertTitleLabel.text = bannerItem.postingWriterNickName
+        alertSubtitleLabel.text = bannerItem.postingTitle
+        
+        // 배너 아이콘 업데이트 (선택사항)
+        alertIcon.image = UIImage(systemName: "star.fill")
+        alertIcon.tintColor = .systemYellow
     }
     
     private func loadPosts() {
-        posts = DataManager.shared.getPosts()
-        tableView.reloadData()
+        let postType = segmentedControl.selectedSegmentIndex == 0 ? "FOUND" : "LOST"
+        
+        APIService.shared.getHomePostings(type: postType) { [weak self] result in
+            switch result {
+            case .success(let homePostingItems):
+                DispatchQueue.main.async {
+                    print("✅ 홈 게시글 로드 성공: \(homePostingItems.count)개")
+                    self?.homePostingItems = homePostingItems
+                    self?.tableView.reloadData()
+                }
+                
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    print("❌ 홈 게시글 로드 실패: \(error.localizedDescription)")
+                    // 로컬 데이터로 폴백
+                    self?.posts = DataManager.shared.getPosts()
+                    self?.tableView.reloadData()
+                }
+            }
+        }
     }
     
     private func updateNotificationBadge() {
@@ -469,8 +658,58 @@ class HomeViewController: UIViewController {
         }
     }
     
+    @objc private func bannerTapped() {
+        guard let bannerItem = bannerItem else {
+            print("❌ 배너 데이터가 없어서 상세화면으로 이동할 수 없습니다.")
+            return
+        }
+        
+        print("🎯 배너 버튼 탭: postingId = \(bannerItem.postingId)")
+        
+        // 게시글 상세 정보를 가져와서 상세화면으로 이동
+        APIService.shared.getPostDetail(postingId: bannerItem.postingId) { [weak self] result in
+            switch result {
+            case .success(let postDetail):
+                DispatchQueue.main.async {
+                    // PostDetailItem을 Post로 변환
+                    let post = Post(
+                        id: String(bannerItem.postingId),
+                        postingId: bannerItem.postingId,
+                        title: postDetail.postingTitle,
+                        content: postDetail.postingContent,
+                        images: [], // 이미지는 별도로 로드
+                        authorId: String(postDetail.postingWriterId),
+                        authorName: postDetail.postingWriterNickname ?? "익명",
+                        isHidden: !postDetail.isPostingAccessible,
+                        createdAt: self?.parseDate(from: postDetail.postingCreatedAt ?? "") ?? Date(),
+                        commentCount: 0,
+                        type: .found // 배너는 일반적으로 Found 타입으로 가정
+                    )
+                    
+                    let detailVC = PostDetailViewController(post: post)
+                    self?.navigationController?.pushViewController(detailVC, animated: true)
+                }
+                
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    print("❌ 배너 게시글 상세 정보 로드 실패: \(error.localizedDescription)")
+                    
+                    // 에러 알림
+                    let alert = UIAlertController(
+                        title: "오류",
+                        message: "게시글 정보를 불러올 수 없습니다.",
+                        preferredStyle: .alert
+                    )
+                    alert.addAction(UIAlertAction(title: "확인", style: .default))
+                    self?.present(alert, animated: true)
+                }
+            }
+        }
+    }
+    
     @objc private func segmentChanged() {
         // FOUND/LOST 토글 처리
+        currentPage = 0
         loadPosts()
     }
     
@@ -578,9 +817,137 @@ class HomeViewController: UIViewController {
         writePopover = nil
     }
     
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        super.touchesBegan(touches, with: event)
-        hideAllPopovers()
+    // MARK: - JupJup Notification Methods
+    private func checkJupJupNotifications() {
+        print("🔔 줍줍 알림 확인 시작")
+        
+        // Found 타입 알림 확인 (분실물을 찾았다는 알림)
+        APIService.shared.getJupJupNotifications(type: "Found") { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let notifications):
+                    print("✅ 줍줍 알림 확인 성공: \(notifications.count)개")
+                    
+                    if !notifications.isEmpty {
+                        // 첫 번째 알림을 표시
+                        self?.pendingJupJupNotification = notifications.first
+                        self?.showJupJupNotificationPopup()
+                    } else {
+                        print("📭 확인하지 않은 줍줍 알림 없음")
+                    }
+                    
+                case .failure(let error):
+                    print("❌ 줍줍 알림 확인 실패: \(error.localizedDescription)")
+                    // 에러가 발생해도 사용자에게 알리지 않음 (백그라운드 작업)
+                }
+            }
+        }
+    }
+    
+    private func showJupJupNotificationPopup() {
+        print("🔔 줍줍 알림 팝업 표시")
+        
+        notificationPopupView.isHidden = false
+        notificationPopupView.alpha = 0
+        notificationPopupView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+        
+        UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0.5, options: .curveEaseOut) {
+            self.notificationPopupView.alpha = 1
+            self.notificationPopupView.transform = .identity
+        }
+    }
+    
+    private func hideJupJupNotificationPopup() {
+        print("🔔 줍줍 알림 팝업 숨김")
+        
+        UIView.animate(withDuration: 0.2, animations: {
+            self.notificationPopupView.alpha = 0
+            self.notificationPopupView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+        }) { _ in
+            self.notificationPopupView.isHidden = true
+            self.pendingJupJupNotification = nil
+        }
+    }
+    
+    @objc private func notificationCloseTapped() {
+        print("🔔 알림 팝업 닫기 버튼 탭됨")
+        hideJupJupNotificationPopup()
+    }
+    
+    @objc private func notificationActionTapped() {
+        print("🔔 알림 팝업 액션 버튼 탭됨")
+        
+        guard let notification = pendingJupJupNotification else {
+            print("❌ 알림 정보가 없습니다")
+            return
+        }
+        
+        print("🔔 게시글 상세 화면으로 이동: postingId=\(notification.postingId)")
+        
+        // 팝업 숨김
+        hideJupJupNotificationPopup()
+        
+        // 게시글 상세 정보를 가져와서 PostDetailViewController로 이동
+        APIService.shared.getPostDetail(postingId: notification.postingId) { [weak self] result in
+            switch result {
+            case .success(let postDetail):
+                print("✅ 게시글 상세 정보 로드 성공")
+                
+                // PostDetailItem을 Post로 변환
+                let post = Post(
+                    id: UUID().uuidString,
+                    postingId: notification.postingId,
+                    title: postDetail.postingTitle,
+                    content: postDetail.postingContent,
+                    images: [], // 이미지 URL을 UIImage로 변환하는 로직은 복잡하므로 빈 배열로 설정
+                    authorId: String(postDetail.postingWriterId),
+                    authorName: postDetail.postingWriterNickname ?? "익명",
+                    isHidden: !postDetail.isPostingAccessible,
+                    createdAt: self?.parseDate(from: postDetail.postingCreatedAt ?? "") ?? Date(),
+                    commentCount: 0,
+                    type: .found // Found 타입 알림이므로
+                )
+                
+                let detailVC = PostDetailViewController(post: post)
+                self?.navigationController?.pushViewController(detailVC, animated: true)
+                
+            case .failure(let error):
+                print("❌ 게시글 상세 정보 로드 실패: \(error.localizedDescription)")
+                
+                // 에러 알림 표시
+                let alert = UIAlertController(
+                    title: "오류",
+                    message: "게시글을 불러올 수 없습니다: \(error.localizedDescription)",
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: "확인", style: .default))
+                self?.present(alert, animated: true)
+            }
+        }
+    }
+    
+    // MARK: - Helper Methods
+    private func parseDate(from dateString: String) -> Date {
+        // 빈 문자열이면 현재 날짜 반환
+        guard !dateString.isEmpty else {
+            return Date()
+        }
+        
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
+        
+        if let date = dateFormatter.date(from: dateString) {
+            return date
+        } else {
+            // 다른 형식 시도
+            dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
+            if let date = dateFormatter.date(from: dateString) {
+                return date
+            }
+        }
+        
+        // 파싱 실패 시 현재 날짜 반환
+        return Date()
     }
     
     @objc private func storageTapped() {
@@ -594,20 +961,59 @@ class HomeViewController: UIViewController {
 
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return posts.count
+        return homePostingItems.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "PostCell", for: indexPath) as! PostCell
-        cell.configure(with: posts[indexPath.row])
+        let homePostingItem = homePostingItems[indexPath.row]
+        
+        // HomePostingItem을 Post로 변환
+        let post = Post(
+            id: String(homePostingItem.postingId),
+            postingId: homePostingItem.postingId,
+            title: homePostingItem.postingTitle,
+            content: homePostingItem.postingContent,
+            images: [], // 이미지는 별도로 로드
+            authorId: "익명", // HomePostingItem에는 작성자 정보가 없으므로 기본값 사용
+            authorName: "익명",
+            isHidden: false,
+            createdAt: Date(), // HomePostingItem에는 날짜 정보가 없으므로 현재 날짜 사용
+            commentCount: 0,
+            type: segmentedControl.selectedSegmentIndex == 0 ? .found : .lost
+        )
+        
+        cell.configure(with: post)
+        cell.delegate = self
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let post = posts[indexPath.row]
+        let homePostingItem = homePostingItems[indexPath.row]
+        
+        // HomePostingItem을 Post로 변환
+        let post = Post(
+            id: String(homePostingItem.postingId),
+            postingId: homePostingItem.postingId,
+            title: homePostingItem.postingTitle,
+            content: homePostingItem.postingContent,
+            images: [],
+            authorId: "익명", // HomePostingItem에는 작성자 정보가 없으므로 기본값 사용
+            authorName: "익명",
+            isHidden: false,
+            createdAt: Date(), // HomePostingItem에는 날짜 정보가 없으므로 현재 날짜 사용
+            commentCount: 0,
+            type: segmentedControl.selectedSegmentIndex == 0 ? .found : .lost
+        )
+        
         let detailVC = PostDetailViewController(post: post)
         navigationController?.pushViewController(detailVC, animated: true)
+    }
+    
+    private func parseDate(_ dateString: String) -> Date {
+        let formatter = ISO8601DateFormatter()
+        return formatter.date(from: dateString) ?? Date()
     }
 }
 
@@ -701,6 +1107,53 @@ extension HomeViewController: PopoverMenuViewDelegate {
             break
         }
         print("✍️ 글쓰기 메뉴 처리 완료")
+    }
+}
+
+// MARK: - PostCellDelegate
+extension HomeViewController: PostCellDelegate {
+    func postCellDidTapJoopjoop(_ cell: PostCell, post: Post) {
+        // HomePostingItem에서 postingId 찾기
+        guard let homePostingItem = homePostingItems.first(where: { $0.postingTitle == post.title }) else {
+            print("❌ 해당 게시글을 찾을 수 없습니다.")
+            return
+        }
+        
+        print("🎯 홈 화면 줍줍 버튼 클릭: postingId = \(homePostingItem.postingId)")
+        
+        // 로딩 상태 표시
+        cell.joopjoopButton.setTitle("줍줍 중...", for: .normal)
+        cell.joopjoopButton.isEnabled = false
+        
+        APIService.shared.markPostAsPickedUp(postingId: homePostingItem.postingId) { [weak self] result in
+            DispatchQueue.main.async {
+                // 버튼 상태 복원
+                cell.joopjoopButton.setTitle("줍줍", for: .normal)
+                cell.joopjoopButton.isEnabled = true
+                
+                switch result {
+                case .success(let response):
+                    print("✅ 홈 화면 줍줍 성공: \(response.message)")
+                    
+                    // 성공 알림
+                    let alert = UIAlertController(title: "줍줍 완료", message: "해당 게시글이 줍줍되었습니다.", preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "확인", style: .default))
+                    self?.present(alert, animated: true)
+                    
+                    // 게시글 목록 새로고침
+                    self?.currentPage = 0
+                    self?.loadPosts()
+                    
+                case .failure(let error):
+                    print("❌ 홈 화면 줍줍 실패: \(error.localizedDescription)")
+                    
+                    // 실패 알림
+                    let alert = UIAlertController(title: "줍줍 실패", message: error.localizedDescription, preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "확인", style: .default))
+                    self?.present(alert, animated: true)
+                }
+            }
+        }
     }
 }
 

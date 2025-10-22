@@ -26,7 +26,15 @@ class NotificationListViewController: UIViewController {
         return label
     }()
     
-    private var notifications: [AppNotification] = []
+    private let loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .medium)
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        indicator.hidesWhenStopped = true
+        return indicator
+    }()
+    
+    private var notificationItems: [NotificationItem] = []
+    private var isLoading = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -43,6 +51,7 @@ class NotificationListViewController: UIViewController {
         
         view.addSubview(tableView)
         view.addSubview(emptyLabel)
+        view.addSubview(loadingIndicator)
         
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -51,7 +60,10 @@ class NotificationListViewController: UIViewController {
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
             emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+            emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            
+            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
     }
     
@@ -78,53 +90,119 @@ class NotificationListViewController: UIViewController {
     }
     
     private func loadNotifications() {
-        notifications = NotificationManager.shared.getNotifications()
-        emptyLabel.isHidden = !notifications.isEmpty
-        tableView.reloadData()
+        print("🔔 알림 목록 로드 시작")
+        
+        guard !isLoading else {
+            print("⚠️ 이미 로딩 중입니다")
+            return
+        }
+        
+        isLoading = true
+        loadingIndicator.startAnimating()
+        tableView.isHidden = true
+        emptyLabel.isHidden = true
+        
+        APIService.shared.getNotificationList { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                self?.loadingIndicator.stopAnimating()
+                self?.tableView.isHidden = false
+                
+                switch result {
+                case .success(let notifications):
+                    print("✅ 알림 목록 로드 성공: \(notifications.count)개")
+                    self?.notificationItems = notifications
+                    self?.emptyLabel.isHidden = !notifications.isEmpty
+                    self?.tableView.reloadData()
+                    
+                case .failure(let error):
+                    print("❌ 알림 목록 로드 실패: \(error.localizedDescription)")
+                    self?.notificationItems = []
+                    self?.emptyLabel.isHidden = false
+                    self?.emptyLabel.text = "알림을 불러올 수 없습니다"
+                    self?.tableView.reloadData()
+                    
+                    // 에러 알림 표시
+                    let alert = UIAlertController(
+                        title: "오류",
+                        message: "알림을 불러오는데 실패했습니다: \(error.localizedDescription)",
+                        preferredStyle: .alert
+                    )
+                    alert.addAction(UIAlertAction(title: "확인", style: .default))
+                    self?.present(alert, animated: true)
+                }
+            }
+        }
     }
 }
 
 extension NotificationListViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return notifications.count
+        return notificationItems.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "NotificationCell", for: indexPath)
-        let notification = notifications[indexPath.row]
+        let notification = notificationItems[indexPath.row]
         
         var config = cell.defaultContentConfiguration()
-        config.text = notification.message
-        config.secondaryText = formatDate(notification.createdAt)
+        config.text = notification.notificationContent
+        config.secondaryText = formatDate(notification.notificationCreatedAt)
         config.textProperties.font = UIFont.systemFont(ofSize: 14)
         config.secondaryTextProperties.font = UIFont.systemFont(ofSize: 12)
         config.secondaryTextProperties.color = .secondaryTextColor
         
+        // 알림 타입에 따른 아이콘 설정
+        switch notification.notificationType {
+        case "Comment":
+            config.image = UIImage(systemName: "message.fill")
+            config.imageProperties.tintColor = .systemBlue
+        case "PickedUp":
+            config.image = UIImage(systemName: "hand.raised.fill")
+            config.imageProperties.tintColor = .systemGreen
+        case "Found":
+            config.image = UIImage(systemName: "checkmark.circle.fill")
+            config.imageProperties.tintColor = .systemOrange
+        default:
+            config.image = UIImage(systemName: "bell.fill")
+            config.imageProperties.tintColor = .systemGray
+        }
+        
         cell.contentConfiguration = config
-        cell.backgroundColor = notification.isRead ? .backgroundColor : .secondaryBackgroundColor
+        cell.backgroundColor = .backgroundColor
         
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let notification = notifications[indexPath.row]
+        let notification = notificationItems[indexPath.row]
         
-        NotificationManager.shared.markAsRead(notificationId: notification.id)
+        print("🔔 알림 선택됨: postingId=\(notification.postingId)")
         
-        if let postId = notification.postId,
-           let post = DataManager.shared.getPost(by: postId) {
-            let detailVC = PostDetailViewController(post: post)
-            navigationController?.pushViewController(detailVC, animated: true)
-        }
-        
-        loadNotifications()
+        // 게시글 상세 화면으로 이동
+        // TODO: postingId를 사용하여 게시글 상세 정보를 가져와서 PostDetailViewController로 이동
+        // 현재는 간단한 알림만 표시
+        let alert = UIAlertController(
+            title: "알림",
+            message: "게시글 ID: \(notification.postingId)\n알림 타입: \(notification.notificationType)\n내용: \(notification.notificationContent)",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
     }
     
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MM/dd HH:mm"
-        return formatter.string(from: date)
+    private func formatDate(_ dateString: String) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
+        
+        if let date = dateFormatter.date(from: dateString) {
+            let displayFormatter = DateFormatter()
+            displayFormatter.dateFormat = "MM/dd HH:mm"
+            return displayFormatter.string(from: date)
+        } else {
+            return dateString
+        }
     }
 }
 

@@ -7,7 +7,15 @@
 
 import UIKit
 
+protocol LostPostCellDelegate: AnyObject {
+    func lostPostCellDidTapJoopjoop(_ cell: LostPostCell, post: Post)
+}
+
 class LostPostListViewController: UIViewController {
+    
+    private var postingItems: [PostingItem] = []
+    private var currentPage = 0
+    private let pageSize = 20
     
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -82,7 +90,40 @@ class LostPostListViewController: UIViewController {
         setupUI()
         setupTableView()
         setupCategoryButtons()
-        loadPosts()
+        loadLostPosts()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        loadLostPosts()
+    }
+    
+    private func loadLostPosts() {
+        APIService.shared.getPostingList(type: "LOST", page: currentPage, pageSize: pageSize) { [weak self] result in
+            switch result {
+            case .success(let postingItems):
+                DispatchQueue.main.async {
+                    if self?.currentPage == 0 {
+                        self?.postingItems = postingItems
+                    } else {
+                        self?.postingItems.append(contentsOf: postingItems)
+                    }
+                    self?.postsTableView.reloadData()
+                }
+                
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    print("❌ 분실물 게시물 로드 실패: \(error.localizedDescription)")
+                    self?.showAlert(message: "게시물을 불러오는데 실패했습니다.")
+                }
+            }
+        }
+    }
+    
+    private func showAlert(message: String) {
+        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
     }
     
     private func setupUI() {
@@ -239,12 +280,30 @@ class LostPostListViewController: UIViewController {
 // MARK: - UITableViewDelegate, UITableViewDataSource
 extension LostPostListViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return posts.count
+        return postingItems.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "LostPostCell", for: indexPath) as! LostPostCell
-        cell.configure(with: posts[indexPath.row])
+        let postingItem = postingItems[indexPath.row]
+        
+        // PostingItem을 Post로 변환
+        let post = Post(
+            id: String(postingItem.postingId),
+            postingId: postingItem.postingId,
+            title: postingItem.postingTitle,
+            content: postingItem.postingContent,
+            images: [],
+            authorId: postingItem.postingWriterNickName ?? "익명",
+            authorName: postingItem.postingWriterNickName ?? "익명",
+            isHidden: false,
+            createdAt: parseDate(postingItem.postingCreatedAt),
+            commentCount: postingItem.commentCount,
+            type: .lost
+        )
+        
+        cell.configure(with: post)
+        cell.delegate = self
         return cell
     }
     
@@ -254,14 +313,85 @@ extension LostPostListViewController: UITableViewDelegate, UITableViewDataSource
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let post = posts[indexPath.row]
+        let postingItem = postingItems[indexPath.row]
+        
+        // PostingItem을 Post로 변환
+        let post = Post(
+            id: String(postingItem.postingId),
+            postingId: postingItem.postingId,
+            title: postingItem.postingTitle,
+            content: postingItem.postingContent,
+            images: [],
+            authorId: postingItem.postingWriterNickName ?? "익명",
+            authorName: postingItem.postingWriterNickName ?? "익명",
+            isHidden: false,
+            createdAt: parseDate(postingItem.postingCreatedAt),
+            commentCount: postingItem.commentCount,
+            type: .lost
+        )
+        
         let detailVC = PostDetailViewController(post: post)
         navigationController?.pushViewController(detailVC, animated: true)
+    }
+    
+    private func parseDate(_ dateString: String) -> Date {
+        let formatter = ISO8601DateFormatter()
+        return formatter.date(from: dateString) ?? Date()
+    }
+}
+
+// MARK: - LostPostCellDelegate
+extension LostPostListViewController: LostPostCellDelegate {
+    func lostPostCellDidTapJoopjoop(_ cell: LostPostCell, post: Post) {
+        // PostingItem에서 postingId 찾기
+        guard let postingItem = postingItems.first(where: { $0.postingTitle == post.title }) else {
+            print("❌ 해당 게시글을 찾을 수 없습니다.")
+            return
+        }
+        
+        print("🎯 줍줍 버튼 클릭: postingId = \(postingItem.postingId)")
+        
+        // 로딩 상태 표시
+        cell.joopjoopButton.setTitle("줍줍 중...", for: .normal)
+        cell.joopjoopButton.isEnabled = false
+        
+        APIService.shared.markPostAsPickedUp(postingId: postingItem.postingId) { [weak self] result in
+            DispatchQueue.main.async {
+                // 버튼 상태 복원
+                cell.joopjoopButton.setTitle("줍줍", for: .normal)
+                cell.joopjoopButton.isEnabled = true
+                
+                switch result {
+                case .success(let response):
+                    print("✅ 줍줍 성공: \(response.message)")
+                    
+                    // 성공 알림
+                    let alert = UIAlertController(title: "줍줍 완료", message: "해당 게시글이 줍줍되었습니다.", preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "확인", style: .default))
+                    self?.present(alert, animated: true)
+                    
+                    // 게시글 목록 새로고침
+                    self?.currentPage = 0
+                    self?.loadLostPosts()
+                    
+                case .failure(let error):
+                    print("❌ 줍줍 실패: \(error.localizedDescription)")
+                    
+                    // 실패 알림
+                    let alert = UIAlertController(title: "줍줍 실패", message: error.localizedDescription, preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "확인", style: .default))
+                    self?.present(alert, animated: true)
+                }
+            }
+        }
     }
 }
 
 // MARK: - LostPostCell
 class LostPostCell: UITableViewCell {
+    
+    weak var delegate: LostPostCellDelegate?
+    private var post: Post?
     
     private let containerView: UIView = {
         let view = UIView()
@@ -319,7 +449,7 @@ class LostPostCell: UITableViewCell {
         return label
     }()
     
-    private let joopjoopButton: UIButton = {
+    let joopjoopButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("줍줍", for: .normal)
         button.setImage(UIImage(systemName: "sparkles"), for: .normal)
@@ -373,6 +503,9 @@ class LostPostCell: UITableViewCell {
         containerView.addSubview(descriptionLabel)
         containerView.addSubview(commentButton)
         
+        // 줍줍버튼 액션 추가
+        joopjoopButton.addTarget(self, action: #selector(joopjoopButtonTapped), for: .touchUpInside)
+        
         NSLayoutConstraint.activate([
             containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
             containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
@@ -415,6 +548,7 @@ class LostPostCell: UITableViewCell {
     }
     
     func configure(with post: Post) {
+        self.post = post
         usernameLabel.text = post.authorName
         titleLabel.text = post.title
         timeLabel.text = "8시간 전"
@@ -423,5 +557,10 @@ class LostPostCell: UITableViewCell {
         // 샘플 이미지 설정 (실제로는 post.images 사용)
         itemImageView.image = UIImage(systemName: "airpods")
         itemImageView.tintColor = .gray
+    }
+    
+    @objc private func joopjoopButtonTapped() {
+        guard let post = post else { return }
+        delegate?.lostPostCellDidTapJoopjoop(self, post: post)
     }
 }

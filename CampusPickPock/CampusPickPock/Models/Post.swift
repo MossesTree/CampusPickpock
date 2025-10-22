@@ -14,6 +14,7 @@ enum PostType {
 
 struct Post {
     let id: String
+    let postingId: Int?
     let title: String
     let content: String
     let images: [UIImage]
@@ -25,6 +26,7 @@ struct Post {
     let type: PostType
     
     init(id: String = UUID().uuidString, 
+         postingId: Int? = nil,
          title: String, 
          content: String, 
          images: [UIImage] = [], 
@@ -35,6 +37,7 @@ struct Post {
          commentCount: Int = 0,
          type: PostType = .lost) {
         self.id = id
+        self.postingId = postingId
         self.title = title
         self.content = content
         self.images = images

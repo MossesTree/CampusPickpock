@@ -52,7 +52,7 @@ class SplashAnimationViewController: UIViewController {
             cardContainerView.heightAnchor.constraint(equalToConstant: 400)
         ])
         
-        createPostCards()
+//        createPostCards()
     }
     
     private func loadSplashPostings() {

@@ -9,6 +9,10 @@ import UIKit
 
 class FoundPostListViewController: UIViewController {
     
+    private var postingItems: [PostingItem] = []
+    private var currentPage = 0
+    private let pageSize = 20
+    
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -82,7 +86,40 @@ class FoundPostListViewController: UIViewController {
         setupUI()
         setupTableView()
         setupCategoryButtons()
-        loadPosts()
+        loadFoundPosts()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        loadFoundPosts()
+    }
+    
+    private func loadFoundPosts() {
+        APIService.shared.getPostingList(type: "FOUND", page: currentPage, pageSize: pageSize) { [weak self] result in
+            switch result {
+            case .success(let postingItems):
+                DispatchQueue.main.async {
+                    if self?.currentPage == 0 {
+                        self?.postingItems = postingItems
+                    } else {
+                        self?.postingItems.append(contentsOf: postingItems)
+                    }
+                    self?.postsTableView.reloadData()
+                }
+                
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    print("❌ 습득물 게시물 로드 실패: \(error.localizedDescription)")
+                    self?.showAlert(message: "게시물을 불러오는데 실패했습니다.")
+                }
+            }
+        }
+    }
+    
+    private func showAlert(message: String) {
+        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
     }
     
     private func setupUI() {
@@ -239,12 +276,29 @@ class FoundPostListViewController: UIViewController {
 // MARK: - UITableViewDelegate, UITableViewDataSource
 extension FoundPostListViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return posts.count
+        return postingItems.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "FoundPostCell", for: indexPath) as! FoundPostCell
-        cell.configure(with: posts[indexPath.row])
+        let postingItem = postingItems[indexPath.row]
+        
+        // PostingItem을 Post로 변환
+        let post = Post(
+            id: String(postingItem.postingId),
+            postingId: postingItem.postingId,
+            title: postingItem.postingTitle,
+            content: postingItem.postingContent,
+            images: [],
+            authorId: postingItem.postingWriterNickName ?? "익명",
+            authorName: postingItem.postingWriterNickName ?? "익명",
+            isHidden: false,
+            createdAt: parseDate(postingItem.postingCreatedAt),
+            commentCount: postingItem.commentCount,
+            type: .found
+        )
+        
+        cell.configure(with: post)
         return cell
     }
     
@@ -254,9 +308,30 @@ extension FoundPostListViewController: UITableViewDelegate, UITableViewDataSourc
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let post = posts[indexPath.row]
+        let postingItem = postingItems[indexPath.row]
+        
+        // PostingItem을 Post로 변환
+        let post = Post(
+            id: String(postingItem.postingId),
+            postingId: postingItem.postingId,
+            title: postingItem.postingTitle,
+            content: postingItem.postingContent,
+            images: [],
+            authorId: postingItem.postingWriterNickName ?? "익명",
+            authorName: postingItem.postingWriterNickName ?? "익명",
+            isHidden: false,
+            createdAt: parseDate(postingItem.postingCreatedAt),
+            commentCount: postingItem.commentCount,
+            type: .found
+        )
+        
         let detailVC = PostDetailViewController(post: post)
         navigationController?.pushViewController(detailVC, animated: true)
+    }
+    
+    private func parseDate(_ dateString: String) -> Date {
+        let formatter = ISO8601DateFormatter()
+        return formatter.date(from: dateString) ?? Date()
     }
 }
 

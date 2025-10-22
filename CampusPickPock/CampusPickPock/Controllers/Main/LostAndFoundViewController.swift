@@ -96,7 +96,11 @@ class LostAndFoundViewController: UIViewController {
     }()
     
     private var items: [LostAndFoundItem] = []
+    private var postingItems: [PostingItem] = []
     private var selectedCategory = "전체"
+    private var currentPage = 0
+    private let pageSize = 20
+    private var isLoading = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -255,6 +259,8 @@ class LostAndFoundViewController: UIViewController {
         let categories = ["전체", "전자 제품", "카드/지갑", "기타"]
         selectedCategory = categories[sender.tag]
         
+        // 페이지 초기화 후 데이터 로드
+        currentPage = 0
         loadItems()
     }
     
@@ -264,7 +270,57 @@ class LostAndFoundViewController: UIViewController {
     }
     
     private func loadItems() {
-        // 샘플 데이터 로드
+        print("🏠 분실물 보관함 데이터 로드 시작")
+        
+        isLoading = true
+        
+        APIService.shared.getStorageList(page: currentPage, pageSize: pageSize) { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                
+                switch result {
+                case .success(let storageItems):
+                    print("✅ 분실물 보관함 데이터 로드 성공: \(storageItems.count)개 항목")
+                    
+                    if self?.currentPage == 0 {
+                        // 첫 페이지 로드 시 기존 데이터 교체
+                        self?.postingItems = storageItems
+                        self?.items = storageItems.map { postingItem in
+                            LostAndFoundItem(
+                                id: String(postingItem.postingId),
+                                name: postingItem.postingTitle,
+                                image: nil,
+                                registrationDate: self?.formatDate(postingItem.postingCreatedAt) ?? ""
+                            )
+                        }
+                    } else {
+                        // 추가 페이지 로드 시 데이터 추가
+                        self?.postingItems.append(contentsOf: storageItems)
+                        let newItems = storageItems.map { postingItem in
+                            LostAndFoundItem(
+                                id: String(postingItem.postingId),
+                                name: postingItem.postingTitle,
+                                image: nil,
+                                registrationDate: self?.formatDate(postingItem.postingCreatedAt) ?? ""
+                            )
+                        }
+                        self?.items.append(contentsOf: newItems)
+                    }
+                    
+                    self?.itemsCollectionView.reloadData()
+                    
+                case .failure(let error):
+                    print("❌ 분실물 보관함 데이터 로드 실패: \(error.localizedDescription)")
+                    
+                    // 오류 시 샘플 데이터 표시
+                    self?.loadSampleData()
+                }
+            }
+        }
+    }
+    
+    private func loadSampleData() {
+        // 샘플 데이터 로드 (API 실패 시)
         items = [
             LostAndFoundItem(id: "1", name: "물병", image: UIImage(systemName: "waterbottle"), registrationDate: "2024/01/15"),
             LostAndFoundItem(id: "2", name: "물병", image: UIImage(systemName: "waterbottle"), registrationDate: "2024/01/14"),
@@ -275,6 +331,15 @@ class LostAndFoundViewController: UIViewController {
         ]
         
         itemsCollectionView.reloadData()
+    }
+    
+    private func formatDate(_ dateString: String) -> String {
+        let formatter = ISO8601DateFormatter()
+        guard let date = formatter.date(from: dateString) else { return dateString }
+        
+        let displayFormatter = DateFormatter()
+        displayFormatter.dateFormat = "yyyy/MM/dd"
+        return displayFormatter.string(from: date)
     }
 }
 
@@ -294,6 +359,27 @@ extension LostAndFoundViewController: UICollectionViewDelegate, UICollectionView
         collectionView.deselectItem(at: indexPath, animated: true)
         let item = items[indexPath.item]
         print("분실물 아이템 선택됨: \(item.name)")
+    }
+    
+    // MARK: - 페이지네이션
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let offsetY = scrollView.contentOffset.y
+        let contentHeight = scrollView.contentSize.height
+        let height = scrollView.frame.size.height
+        
+        // 스크롤이 끝에 가까워지면 다음 페이지 로드
+        if offsetY > contentHeight - height - 100 {
+            loadNextPage()
+        }
+    }
+    
+    private func loadNextPage() {
+        // 이미 로딩 중이면 중복 요청 방지
+        guard !isLoading else { return }
+        
+        currentPage += 1
+        print("📄 다음 페이지 로드: \(currentPage)")
+        loadItems()
     }
 }
 

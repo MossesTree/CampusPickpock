@@ -154,7 +154,22 @@ class LoginViewController: UIViewController {
     }
     
     private func handleLoginSuccess(response: LoginResponse, autoLoginEnabled: Bool) {
+        print("🔐 로그인 성공 처리 시작")
+        print("🔐 응답 토큰: \(response.token.prefix(20))...")
+        print("🔐 사용자 닉네임: \(response.userNickname)")
+        print("🔐 학번: \(studentIdTextField.text ?? "")")
+        print("🔐 자동 로그인 설정: \(autoLoginEnabled)")
+        
+        print("🔑 인증 토큰 발급 완료 - 사용자 권한 부여 시작")
+        print("📊 사용자 정보:")
+        print("   - 닉네임: \(response.userNickname)")
+        print("   - 학번: \(studentIdTextField.text ?? "")")
+        print("   - 실명: \(response.userRealName)")
+        print("   - 생년월일: \(response.userBirthDate)")
+        print("   - 토큰: \(response.token.prefix(20))...")
+        
         // DataManager에 사용자 정보 저장
+        print("💾 사용자 데이터 저장 시작")
         DataManager.shared.saveLoginData(
             token: response.token,
             userStudentId: studentIdTextField.text ?? "",
@@ -163,6 +178,10 @@ class LoginViewController: UIViewController {
             userNickname: response.userNickname,
             autoLoginEnabled: autoLoginEnabled
         )
+        
+        print("✅ 사용자 데이터 저장 완료")
+        print("🎯 로그인 권한 부여 완료 - 댓글 작성 권한 획득")
+        print("🔐 로그인 데이터 저장 완료, 메인 화면으로 이동")
         
         // 메인 화면으로 이동
         navigateToMainScreen()

@@ -106,6 +106,62 @@ class PostLostViewController: UIViewController {
         return textView
     }()
     
+    // MARK: - Personal Info Section
+    private let personalInfoLabel: UILabel = {
+        let label = UILabel()
+        label.text = "개인정보 입력란"
+        label.font = UIFont.boldSystemFont(ofSize: 16)
+        label.textColor = .primaryTextColor
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let personalInfoDescriptionLabel: UILabel = {
+        let label = UILabel()
+        label.text = "잃어버린 분실물에 등록된 개인 정보를 등록해주세요"
+        label.font = UIFont.systemFont(ofSize: 14)
+        label.textColor = .secondaryTextColor
+        label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let nameTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "이름"
+        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
+        textField.layer.cornerRadius = 8
+        textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 0))
+        textField.leftViewMode = .always
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        return textField
+    }()
+    
+    private let studentIdTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "학번"
+        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
+        textField.layer.cornerRadius = 8
+        textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 0))
+        textField.leftViewMode = .always
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        return textField
+    }()
+    
+    private let birthDateTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "생년월일"
+        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
+        textField.layer.cornerRadius = 8
+        textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 0))
+        textField.leftViewMode = .always
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        return textField
+    }()
+    
     // MARK: - Upload Button
     private let uploadButton: UIButton = {
         let button = UIButton(type: .system)
@@ -159,6 +215,12 @@ class PostLostViewController: UIViewController {
         
         contentView.addSubview(descriptionLabel)
         contentView.addSubview(descriptionTextView)
+        
+        contentView.addSubview(personalInfoLabel)
+        contentView.addSubview(personalInfoDescriptionLabel)
+        contentView.addSubview(nameTextField)
+        contentView.addSubview(studentIdTextField)
+        contentView.addSubview(birthDateTextField)
         
         contentView.addSubview(uploadButton)
         contentView.addSubview(helperLabel)
@@ -226,8 +288,31 @@ class PostLostViewController: UIViewController {
             descriptionTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             descriptionTextView.heightAnchor.constraint(equalToConstant: 120),
             
+            // Personal Info Section
+            personalInfoLabel.topAnchor.constraint(equalTo: descriptionTextView.bottomAnchor, constant: 24),
+            personalInfoLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            
+            personalInfoDescriptionLabel.topAnchor.constraint(equalTo: personalInfoLabel.bottomAnchor, constant: 8),
+            personalInfoDescriptionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            personalInfoDescriptionLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            
+            nameTextField.topAnchor.constraint(equalTo: personalInfoDescriptionLabel.bottomAnchor, constant: 16),
+            nameTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            nameTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            nameTextField.heightAnchor.constraint(equalToConstant: 48),
+            
+            studentIdTextField.topAnchor.constraint(equalTo: nameTextField.bottomAnchor, constant: 12),
+            studentIdTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            studentIdTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            studentIdTextField.heightAnchor.constraint(equalToConstant: 48),
+            
+            birthDateTextField.topAnchor.constraint(equalTo: studentIdTextField.bottomAnchor, constant: 12),
+            birthDateTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            birthDateTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            birthDateTextField.heightAnchor.constraint(equalToConstant: 48),
+            
             // Upload Button
-            uploadButton.topAnchor.constraint(equalTo: descriptionTextView.bottomAnchor, constant: 32),
+            uploadButton.topAnchor.constraint(equalTo: birthDateTextField.bottomAnchor, constant: 32),
             uploadButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             uploadButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             uploadButton.heightAnchor.constraint(equalToConstant: 56),
@@ -274,14 +359,38 @@ class PostLostViewController: UIViewController {
     @objc private func uploadTapped() {
         guard let title = titleTextField.text, !title.isEmpty,
               let description = descriptionTextView.text, !description.isEmpty,
-              description != "캠퍼스 줍줍에서 잃어버린 분실물에 대한 내용을 작성해주세요." else {
-            showAlert(message: "제목과 내용을 입력해주세요.")
+              description != "캠퍼스 줍줍에서 잃어버린 분실물에 대한 내용을 작성해주세요.",
+              let name = nameTextField.text, !name.isEmpty,
+              let studentId = studentIdTextField.text, !studentId.isEmpty,
+              let birthDate = birthDateTextField.text, !birthDate.isEmpty else {
+            showAlert(message: "모든 필수 항목을 입력해주세요.")
             return
         }
         
-        // Create post logic here
-        print("분실물 게시글 업로드: \(title)")
-        navigationController?.popViewController(animated: true)
+        // 로딩 상태 표시
+        uploadButton.isEnabled = false
+        uploadButton.setTitle(selectedImages.isEmpty ? "게시글 작성 중..." : "이미지 업로드 중...", for: .normal)
+        
+        // 이미지가 있는 경우 먼저 업로드
+        if !selectedImages.isEmpty {
+            uploadImagesAndCreatePost(
+                title: title,
+                description: description,
+                name: name,
+                studentId: studentId,
+                birthDate: birthDate
+            )
+        } else {
+            // 이미지가 없는 경우 바로 게시글 작성
+            createPostWithImageUrls(
+                title: title,
+                description: description,
+                name: name,
+                studentId: studentId,
+                birthDate: birthDate,
+                imageUrls: []
+            )
+        }
     }
     
     private func updateImageCount() {
@@ -301,6 +410,123 @@ class PostLostViewController: UIViewController {
     private func showAlert(message: String) {
         let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
+    
+    private func uploadImagesAndCreatePost(title: String, description: String, name: String, studentId: String, birthDate: String) {
+        // 파일명 생성 (타임스탬프 + 인덱스)
+        let timestamp = Int(Date().timeIntervalSince1970)
+        let fileNames = selectedImages.enumerated().map { index, _ in
+            "lost_post_\(timestamp)_\(index).jpg"
+        }
+        
+        print("📸 분실물 이미지 업로드 시작: \(fileNames.count)개")
+        
+        // 1단계: Presigned URL 요청
+        APIService.shared.getPresignedUrls(fileNames: fileNames) { [weak self] result in
+            switch result {
+            case .success(let presignedUrls):
+                print("✅ Presigned URL 획득 성공")
+                self?.uploadImagesToS3(presignedUrls: presignedUrls, title: title, description: description, name: name, studentId: studentId, birthDate: birthDate)
+                
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    self?.uploadButton.isEnabled = true
+                    self?.uploadButton.setTitle("올리기", for: .normal)
+                    print("❌ Presigned URL 획득 실패: \(error.localizedDescription)")
+                    self?.showAlert(message: "이미지 업로드 준비에 실패했습니다: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    private func uploadImagesToS3(presignedUrls: [String], title: String, description: String, name: String, studentId: String, birthDate: String) {
+        let dispatchGroup = DispatchGroup()
+        var uploadedImageUrls: [String] = []
+        var uploadError: APIError?
+        let totalImages = presignedUrls.count
+        
+        for (index, presignedUrl) in presignedUrls.enumerated() {
+            dispatchGroup.enter()
+            
+            APIService.shared.uploadImageToS3(image: selectedImages[index], presignedUrl: presignedUrl) { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let imageUrl):
+                        uploadedImageUrls.append(imageUrl)
+                        print("✅ 분실물 이미지 \(index + 1)/\(totalImages) 업로드 성공")
+                        
+                        // 진행 상황 업데이트
+                        self.uploadButton.setTitle("이미지 업로드 중... \(index + 1)/\(totalImages)", for: .normal)
+                        
+                    case .failure(let error):
+                        uploadError = error
+                        print("❌ 분실물 이미지 \(index + 1)/\(totalImages) 업로드 실패: \(error.localizedDescription)")
+                    }
+                }
+                dispatchGroup.leave()
+            }
+        }
+        
+        dispatchGroup.notify(queue: .main) { [weak self] in
+            if let error = uploadError {
+                self?.uploadButton.isEnabled = true
+                self?.uploadButton.setTitle("올리기", for: .normal)
+                self?.showAlert(message: "이미지 업로드에 실패했습니다: \(error.localizedDescription)")
+                return
+            }
+            
+            // 모든 이미지 업로드 성공 시 게시글 작성
+            self?.uploadButton.setTitle("게시글 작성 중...", for: .normal)
+            self?.createPostWithImageUrls(
+                title: title,
+                description: description,
+                name: name,
+                studentId: studentId,
+                birthDate: birthDate,
+                imageUrls: uploadedImageUrls
+            )
+        }
+    }
+    
+    private func createPostWithImageUrls(title: String, description: String, name: String, studentId: String, birthDate: String, imageUrls: [String]) {
+        print("📝 분실물 게시글 작성 시작")
+        
+        APIService.shared.createPost(
+            postingTitle: title,
+            postingContent: description,
+            postingType: "LOST", // 분실물 게시글
+            itemPlace: "캠퍼스", // TODO: 위치 정보 추가
+            ownerStudentId: studentId,
+            ownerBirthDate: birthDate,
+            ownerName: name,
+            postingImageUrls: imageUrls,
+            postingCategory: "기타", // TODO: 카테고리 선택 기능 추가
+            isPlacedInStorage: false // 분실물은 보관함에 넣지 않음
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                // 버튼 상태 복원
+                self?.uploadButton.isEnabled = true
+                self?.uploadButton.setTitle("올리기", for: .normal)
+                
+                switch result {
+                case .success(let response):
+                    print("✅ 분실물 게시글 작성 성공: \(response)")
+                    self?.showSuccessAlert()
+                    
+                case .failure(let error):
+                    print("❌ 분실물 게시글 작성 실패: \(error.localizedDescription)")
+                    self?.showAlert(message: "게시글 작성에 실패했습니다: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    private func showSuccessAlert() {
+        let alert = UIAlertController(title: "성공", message: "분실물 게시글이 성공적으로 작성되었습니다.", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
+            self?.navigationController?.popViewController(animated: true)
+        })
         present(alert, animated: true)
     }
 }

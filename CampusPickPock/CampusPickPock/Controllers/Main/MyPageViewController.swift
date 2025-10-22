@@ -155,15 +155,13 @@ class MyPageViewController: UIViewController {
     }
     
     private func showMyPosts() {
-        let myPosts = DataManager.shared.getMyPosts()
-        let listVC = PostListViewController(posts: myPosts, title: "내가 쓴 글")
-        navigationController?.pushViewController(listVC, animated: true)
+        let myPostsVC = MyPostsViewController()
+        navigationController?.pushViewController(myPostsVC, animated: true)
     }
     
     private func showMyCommentedPosts() {
-        let commentedPosts = DataManager.shared.getMyCommentedPosts()
-        let listVC = PostListViewController(posts: commentedPosts, title: "댓글 단 글")
-        navigationController?.pushViewController(listVC, animated: true)
+        let myCommentedPostsVC = MyCommentedPostsViewController()
+        navigationController?.pushViewController(myCommentedPostsVC, animated: true)
     }
     
     private func showSavedPosts() {

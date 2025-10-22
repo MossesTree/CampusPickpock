@@ -10,6 +10,15 @@ import UIKit
 class PostDetailViewController: UIViewController {
     
     private let post: Post
+    private var postDetail: PostDetailItem?
+    private var isLoading = false
+    
+    private let loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .medium)
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        indicator.hidesWhenStopped = true
+        return indicator
+    }()
     
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -144,6 +153,8 @@ class PostDetailViewController: UIViewController {
     }()
     
     private var comments: [Comment] = []
+    private var commentItems: [CommentItem] = []
+    private var isCommentPrivate = false
     
     init(post: Post) {
         self.post = post
@@ -158,7 +169,10 @@ class PostDetailViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupTableView()
-        loadComments()
+        
+        // 게시글 상세 로드를 먼저 완료한 후 댓글 로드
+        loadPostDetail()
+        // 댓글 로드는 게시글 상세 로드 성공 후에 호출되도록 수정
     }
     
     private func setupUI() {
@@ -176,6 +190,7 @@ class PostDetailViewController: UIViewController {
         
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
+        view.addSubview(loadingIndicator)
         
         contentView.addSubview(headerView)
         headerView.addSubview(profileImageView)
@@ -195,8 +210,15 @@ class PostDetailViewController: UIViewController {
         commentInputView.addSubview(privateButton)
         commentInputView.addSubview(sendButton)
         
+        // 버튼 액션 추가
+        sendButton.addTarget(self, action: #selector(sendButtonTapped), for: .touchUpInside)
+        privateButton.addTarget(self, action: #selector(privateButtonTapped), for: .touchUpInside)
+        
+        // 초기 상태: 댓글 작성 버튼 비활성화 (게시글 상세 로드 완료 후 활성화)
+        sendButton.isEnabled = false
+        commentTextField.isEnabled = false
+        
         setupConstraints()
-        configureContent()
     }
     
     private func setupCustomBackButton() {
@@ -288,7 +310,10 @@ class PostDetailViewController: UIViewController {
             sendButton.trailingAnchor.constraint(equalTo: commentInputView.trailingAnchor, constant: -16),
             sendButton.centerYAnchor.constraint(equalTo: commentInputView.centerYAnchor),
             sendButton.widthAnchor.constraint(equalToConstant: 24),
-            sendButton.heightAnchor.constraint(equalToConstant: 24)
+            sendButton.heightAnchor.constraint(equalToConstant: 24),
+            
+            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
     }
     
@@ -298,25 +323,196 @@ class PostDetailViewController: UIViewController {
         commentsTableView.register(CommentCell.self, forCellReuseIdentifier: "CommentCell")
     }
     
-    private func configureContent() {
-        usernameLabel.text = post.authorName
-        titleLabel.text = post.title
-        contentLabel.text = post.content
-        commentsCountLabel.text = "댓글 \(post.commentCount)"
+    private func loadPostDetail() {
+        print("🔍 게시글 접근 권한 확인 시작")
         
-        // 샘플 이미지 설정 (실제로는 post.images 사용)
-        itemImageView.image = UIImage(systemName: "airpods")
-        itemImageView.tintColor = .gray
+        guard let postingId = post.postingId else {
+            print("❌ postingId가 없습니다 - 게시글 접근 불가")
+            return
+        }
+        
+        print("📄 게시글 상세 로드 시작: postingId=\(postingId)")
+        print("🔍 게시글 접근 권한 확인을 위한 상세 정보 요청")
+        
+        // 로딩 상태 표시
+        isLoading = true
+        loadingIndicator.startAnimating()
+        scrollView.isHidden = true
+        print("⏳ 게시글 상세 정보 로딩 중...")
+        
+        APIService.shared.getPostDetail(postingId: postingId) { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                self?.loadingIndicator.stopAnimating()
+                
+                switch result {
+                case .success(let postDetail):
+                    print("✅ 게시글 상세 로드 성공")
+                    print("🔍 게시글 접근 권한 확인 결과:")
+                    print("📊 게시글 접근 가능성: \(postDetail.isPostingAccessible)")
+                    print("📊 게시글 제목: \(postDetail.postingTitle)")
+                    print("📊 작성자: \(postDetail.postingWriterNickname ?? "익명")")
+                    print("📊 게시글 ID: \(postDetail.postingWriterId)")
+                    print("📊 줍줍 상태: \(postDetail.isPickedUp)")
+                    
+                    if postDetail.isPostingAccessible {
+                        print("✅ 게시글 접근 권한 확인됨 - 댓글 작성 가능")
+                    } else {
+                        print("❌ 게시글 접근 권한 없음 - 댓글 작성 제한")
+                    }
+                    
+                    self?.postDetail = postDetail
+                    self?.updateContent(with: postDetail)
+                    self?.scrollView.isHidden = false
+                    
+                    // 게시글 상세 로드 성공 후에만 댓글 로드
+                    print("✅ 게시글 상세 로드 완료 - 댓글 로드 시작")
+                    self?.loadComments()
+                    
+                case .failure(let error):
+                    print("❌ 게시글 상세 로드 실패: \(error.localizedDescription)")
+                    print("❌ 오류 타입: \(error)")
+                    print("❌ 게시글 접근 권한 확인 실패 - 댓글 작성 기능 비활성화")
+                    
+                    // 오류 시 기존 Post 데이터로 표시하되 댓글 작성 완전 비활성화
+                    self?.scrollView.isHidden = false
+                    self?.commentInputView.isHidden = true
+                    self?.sendButton.isEnabled = false
+                    self?.commentTextField.isEnabled = false
+                    
+                    // postDetail을 nil로 설정하여 댓글 작성 방지
+                    self?.postDetail = nil
+                    
+                    self?.showErrorAlert(message: "게시글을 불러올 수 없습니다. 댓글 작성이 제한됩니다.")
+                }
+            }
+        }
+    }
+    
+    private func updateContent(with postDetail: PostDetailItem) {
+        print("🔍 게시글 내용 업데이트 시작")
+        print("🔍 게시글 접근 권한 재확인: \(postDetail.isPostingAccessible)")
+        
+        // 작성자 정보 업데이트
+        usernameLabel.text = postDetail.postingWriterNickname ?? "익명"
+        titleLabel.text = postDetail.postingTitle
+        contentLabel.text = postDetail.postingContent
+        
+        print("📊 게시글 정보 업데이트:")
+        print("   - 제목: \(postDetail.postingTitle)")
+        print("   - 작성자: \(postDetail.postingWriterNickname ?? "익명")")
+        print("   - 내용 길이: \(postDetail.postingContent.count) characters")
+        
+        // 게시글 접근 가능성 확인 (완화 모드 - 경고만 표시)
+        if !postDetail.isPostingAccessible {
+            print("⚠️ 경고: 게시글 접근 불가능 상태")
+            print("⚠️ 댓글 작성을 허용하지만 서버에서 거부될 수 있습니다")
+            print("⚠️ 클라이언트 측 제한 완화 - 댓글 작성 UI 활성화")
+            
+            // 경고 메시지만 표시하고 댓글 작성은 허용
+            commentInputView.isHidden = false
+            sendButton.isEnabled = true
+            commentTextField.isEnabled = true
+            sendButton.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+            print("🎯 댓글 작성 UI 활성화 완료 (완화 모드)")
+        } else {
+            // 게시글이 접근 가능한 경우 댓글 작성 기능 활성화
+            print("✅ 게시글 접근 가능 - 댓글 작성 권한 부여")
+            print("✅ 게시글 접근 가능 - 댓글 작성 기능 활성화")
+            commentInputView.isHidden = false
+            sendButton.isEnabled = true
+            commentTextField.isEnabled = true
+            sendButton.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+            print("🎯 댓글 작성 UI 활성화 완료")
+        }
+        
+        // 이미지 처리
+        if let imageUrls = postDetail.postingImageUrls, !imageUrls.isEmpty {
+            print("📸 게시글 이미지 로드 시작: \(imageUrls.count)개")
+            // 첫 번째 이미지 로드 (실제로는 이미지 로딩 라이브러리 사용 권장)
+            if let firstImageUrl = imageUrls.first, let url = URL(string: firstImageUrl) {
+                loadImage(from: url)
+            }
+        } else {
+            print("📸 게시글 이미지 없음")
+            // 기본 이미지 설정
+            itemImageView.image = UIImage(systemName: "airpods")
+            itemImageView.tintColor = .gray
+        }
+        
+        // 댓글 수 업데이트 (실제 댓글 수는 별도 API로 가져와야 함)
+        commentsCountLabel.text = "댓글 \(post.commentCount)"
+        print("✅ 게시글 내용 업데이트 완료")
+    }
+    
+    private func loadImage(from url: URL) {
+        // 간단한 이미지 로딩 (실제로는 Kingfisher 등 사용 권장)
+        DispatchQueue.global().async {
+            if let data = try? Data(contentsOf: url),
+               let image = UIImage(data: data) {
+                DispatchQueue.main.async { [weak self] in
+                    self?.itemImageView.image = image
+                }
+            }
+        }
+    }
+    
+    private func showErrorAlert(message: String) {
+        let alert = UIAlertController(title: "오류", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
     }
     
     private func loadComments() {
-        // 샘플 댓글 데이터
-        comments = [
-            Comment(id: "1", content: "저 그거 어제 학관 분실물 보관함 쪽지 것 같은데 한번 우리학교 분실물 보관 해보세요", authorId: "user1", authorName: "줍줍했줍", postId: post.id, isPrivate: false, createdAt: Date().addingTimeInterval(-5 * 3600)),
-            Comment(id: "2", content: "분실물 보관함 확인해보세요", authorId: "user2", authorName: "이 세상은 나의 것", postId: post.id, isPrivate: true, createdAt: Date().addingTimeInterval(-5 * 3600), parentCommentId: "1")
-        ]
+        guard let postingId = post.postingId else {
+            print("❌ postingId가 없어서 댓글을 불러올 수 없습니다")
+            return
+        }
         
-        commentsTableView.reloadData()
+        print("💬 댓글 로드 시작: postingId=\(postingId)")
+        
+        APIService.shared.getCommentList(postingId: postingId) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let commentItems):
+                    print("✅ 댓글 로드 성공: \(commentItems.count)개 댓글")
+                    
+                    self?.commentItems = commentItems
+                    
+                    // CommentItem을 Comment로 변환
+                    self?.comments = commentItems.map { commentItem in
+                        Comment(
+                            id: String(commentItem.commentId),
+                            content: commentItem.commentContent,
+                            authorId: String(commentItem.commentWriterId),
+                            authorName: commentItem.commentWriterNickName ?? "익명",
+                            postId: self?.post.id ?? "",
+                            isPrivate: commentItem.isCommentSecret,
+                            createdAt: self?.parseDate(commentItem.commentCreatedAt) ?? Date(),
+                            parentCommentId: commentItem.parentCommentId != nil ? String(commentItem.parentCommentId!) : nil
+                        )
+                    }
+                    
+                    self?.commentsTableView.reloadData()
+                    
+                    // 댓글 수 업데이트
+                    self?.commentsCountLabel.text = "댓글 \(commentItems.count)"
+                    
+                case .failure(let error):
+                    print("❌ 댓글 로드 실패: \(error.localizedDescription)")
+                    
+                    // 오류 시 빈 댓글 목록 표시
+                    self?.comments = []
+                    self?.commentItems = []
+                    self?.commentsTableView.reloadData()
+                }
+            }
+        }
+    }
+    
+    private func parseDate(_ dateString: String) -> Date {
+        let formatter = ISO8601DateFormatter()
+        return formatter.date(from: dateString) ?? Date()
     }
     
     @objc private func backTapped() {
@@ -335,13 +531,68 @@ class PostDetailViewController: UIViewController {
         // Lost 타입에만 줍줍 버튼 추가
         if post.type == .lost {
             alert.addAction(UIAlertAction(title: "줍줍", style: .default) { _ in
-                // 줍줍 기능 (분실물을 찾았을 때)
+                self.handleJoopjoopAction()
             })
         }
         
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         
         present(alert, animated: true)
+    }
+    
+    private func handleJoopjoopAction() {
+        guard let postingId = post.postingId else {
+            print("❌ postingId가 없습니다.")
+            let alert = UIAlertController(title: "오류", message: "게시글 정보를 찾을 수 없습니다.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
+        print("🎯 게시글 상세 화면 줍줍 버튼 클릭: postingId = \(postingId)")
+        
+        // 확인 다이얼로그
+        let confirmAlert = UIAlertController(title: "줍줍 확인", message: "이 분실물을 찾으셨나요?", preferredStyle: .alert)
+        
+        confirmAlert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        confirmAlert.addAction(UIAlertAction(title: "줍줍", style: .default) { _ in
+            self.performJoopjoop(postingId: postingId)
+        })
+        
+        present(confirmAlert, animated: true)
+    }
+    
+    private func performJoopjoop(postingId: Int) {
+        // 로딩 표시
+        let loadingAlert = UIAlertController(title: "줍줍 중...", message: "잠시만 기다려주세요.", preferredStyle: .alert)
+        present(loadingAlert, animated: true)
+        
+        APIService.shared.markPostAsPickedUp(postingId: postingId) { [weak self] result in
+            DispatchQueue.main.async {
+                loadingAlert.dismiss(animated: true) {
+                    switch result {
+                    case .success(let response):
+                        print("✅ 게시글 상세 화면 줍줍 성공: \(response.message)")
+                        
+                        // 성공 알림
+                        let alert = UIAlertController(title: "줍줍 완료", message: "해당 게시글이 줍줍되었습니다.", preferredStyle: .alert)
+                        alert.addAction(UIAlertAction(title: "확인", style: .default) { _ in
+                            // 이전 화면으로 돌아가기
+                            self?.navigationController?.popViewController(animated: true)
+                        })
+                        self?.present(alert, animated: true)
+                        
+                    case .failure(let error):
+                        print("❌ 게시글 상세 화면 줍줍 실패: \(error.localizedDescription)")
+                        
+                        // 실패 알림
+                        let alert = UIAlertController(title: "줍줍 실패", message: error.localizedDescription, preferredStyle: .alert)
+                        alert.addAction(UIAlertAction(title: "확인", style: .default))
+                        self?.present(alert, animated: true)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -353,7 +604,14 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "CommentCell", for: indexPath) as! CommentCell
-        cell.configure(with: comments[indexPath.row])
+        
+        // CommentItem을 직접 사용하여 더 정확한 데이터 표시
+        if indexPath.row < commentItems.count {
+            cell.configure(with: commentItems[indexPath.row])
+        } else {
+            cell.configure(with: comments[indexPath.row])
+        }
+        
         return cell
     }
     
@@ -363,6 +621,177 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
         return 100
+    }
+    
+    // MARK: - Comment Actions
+    @objc private func sendButtonTapped() {
+        print("🔍 댓글 작성 권한 확인 시작 (완화된 모드)")
+        
+        // 1. 기본 정보 확인
+        guard let postingId = post.postingId else {
+            print("❌ postingId가 없어서 댓글을 작성할 수 없습니다")
+            print("❌ 댓글 작성 권한 확인 실패 - 게시글 ID 없음")
+            return
+        }
+        
+        print("✅ 게시글 ID 확인됨: \(postingId)")
+        
+        // 2. 로그인 상태 확인 (필수)
+        guard let token = DataManager.shared.getAccessToken(), !token.isEmpty else {
+            print("❌ 인증 토큰이 없습니다 - 로그인 필요")
+            print("❌ 댓글 작성 권한 확인 실패 - 인증 토큰 없음")
+            
+            let alert = UIAlertController(
+                title: "로그인 필요",
+                message: "댓글을 작성하려면 로그인이 필요합니다.",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
+        print("✅ 인증 토큰 확인됨: \(token.prefix(20))...")
+        
+        // 3. 토큰 형식 검증 (경고만, 진행 허용)
+        let tokenParts = token.components(separatedBy: ".")
+        if tokenParts.count != 3 {
+            print("⚠️ 경고: 잘못된 토큰 형식일 수 있음: \(tokenParts.count)개 부분")
+            print("⚠️ 토큰 형식 검증 실패 - 하지만 진행 허용")
+        } else {
+            print("✅ JWT 토큰 형식 유효")
+        }
+        
+        print("🔍 댓글 작성 전 상태 확인:")
+        print("🔍 postDetail 존재 여부: \(postDetail != nil)")
+        print("🔍 isLoading 상태: \(isLoading)")
+        
+        // 4. 게시글 상세 정보 확인 (경고만, 진행 허용)
+        if postDetail == nil {
+            print("⚠️ 경고: 게시글 상세 정보가 로드되지 않았지만 댓글 작성 시도 허용")
+            
+            if isLoading {
+                print("⚠️ 게시글 로딩 중이지만 댓글 작성 시도 허용")
+            }
+        } else {
+            // 게시글 접근 가능성 재확인 (경고만, 진행 허용)
+            if let postDetail = postDetail {
+                print("🔍 게시글 접근 권한 재확인:")
+                print("🔍 게시글 접근 가능성: \(postDetail.isPostingAccessible)")
+                print("🔍 게시글 제목: \(postDetail.postingTitle)")
+                print("🔍 게시글 작성자: \(postDetail.postingWriterNickname ?? "익명")")
+                print("🔍 게시글 ID: \(postDetail.postingWriterId)")
+                print("🔍 줍줍 상태: \(postDetail.isPickedUp)")
+                
+                if !postDetail.isPostingAccessible {
+                    print("⚠️ 경고: 게시글 접근 불가능 상태이지만 댓글 작성 시도 허용")
+                    print("⚠️ 서버에서 최종 권한 검증을 수행합니다")
+                }
+                
+                if postDetail.isPickedUp {
+                    print("⚠️ 경고: 게시글이 줍줍 처리된 상태이지만 댓글 작성 시도 허용")
+                }
+                
+                print("✅ 클라이언트 측 게시글 접근 권한 확인 완료 (완화 모드)")
+            }
+        }
+        
+        // 5. 댓글 내용 확인 (필수)
+        guard let commentText = commentTextField.text, !commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            print("❌ 댓글 내용이 비어있습니다")
+            print("❌ 댓글 작성 권한 확인 실패 - 댓글 내용 없음")
+            return
+        }
+        
+        print("✅ 댓글 내용 확인됨: \(commentText.count) characters")
+        
+        // 6. 모든 권한 확인 완료 (완화 모드)
+        print("🎯 클라이언트 측 권한 확인 완료 - 댓글 작성 시도")
+        print("🎯 서버에서 최종 권한 검증을 수행합니다")
+        print("💬 댓글 작성 시작: \(commentText)")
+        print("🔍 postingId: \(postingId)")
+        print("🔍 댓글 내용 길이: \(commentText.count)")
+        print("🔍 비밀 댓글 여부: \(isCommentPrivate)")
+        
+        // 로딩 상태 표시
+        sendButton.isEnabled = false
+        sendButton.tintColor = .gray
+        
+        let commentRequest = CreateCommentRequest(
+            parentCommentId: nil, // 일반 댓글 (대댓글 아님)
+            isCommentSecret: isCommentPrivate,
+            commentContent: commentText.trimmingCharacters(in: .whitespacesAndNewlines),
+            commentImageUrls: nil // 이미지 기능은 향후 구현
+        )
+        
+        APIService.shared.createComment(postingId: postingId, commentData: commentRequest) { [weak self] result in
+            DispatchQueue.main.async {
+                self?.sendButton.isEnabled = true
+                self?.sendButton.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+                
+                switch result {
+                case .success(let response):
+                    print("✅ 댓글 작성 성공!")
+                    print("✅ 댓글 ID: \(response.commentId)")
+                    print("🎯 댓글 작성 권한 확인 및 실행 완료")
+                    
+                    // 댓글 입력 필드 초기화
+                    self?.commentTextField.text = ""
+                    self?.isCommentPrivate = false
+                    self?.privateButton.tintColor = .gray
+                    
+                    // 댓글 목록 새로고침
+                    self?.loadComments()
+                    
+                case .failure(let error):
+                    print("❌ 댓글 작성 실패: \(error.localizedDescription)")
+                    print("❌ 에러 타입: \(error)")
+                    print("❌ postingId: \(postingId)")
+                    print("❌ 댓글 내용: \(commentText)")
+                    print("❌ 댓글 작성 권한 확인은 성공했으나 서버 처리 실패")
+                    
+                    // 에러 타입에 따른 구체적인 메시지
+                    var errorMessage = error.localizedDescription
+                    var errorTitle = "댓글 작성 실패"
+                    
+                    if case .unauthorized(let message) = error {
+                        errorTitle = "서버 접근 권한 없음"
+                        errorMessage = "서버에서 댓글 작성을 거부했습니다.\n\n가능한 원인:\n- 게시글이 삭제되었거나 비활성화됨\n- 게시글이 '줍줍' 처리되어 댓글 작성 제한\n- 서버 권한 정책 문제\n\n관리자에게 문의하거나 나중에 다시 시도해주세요."
+                        
+                        print("❌ 403 오류 감지 - 서버에서 접근 거부")
+                        print("❌ 게시글 상태 재확인 필요: postingId=\(postingId)")
+                        print("⚠️ 클라이언트 측 제한 완화 모드 - 댓글 입력 영역 유지")
+                        print("⚠️ 사용자가 다시 시도할 수 있도록 허용")
+                        
+                        // 403 오류 발생해도 댓글 입력 영역은 유지 (완화 모드)
+                        // 사용자가 게시글 상태가 변경된 경우 다시 시도할 수 있도록 함
+                        
+                        // 게시글 상세 정보 다시 로드하여 상태 확인
+                        self?.loadPostDetail()
+                    } else if case .notFound(let message) = error {
+                        errorTitle = "게시글을 찾을 수 없음"
+                        errorMessage = message
+                    } else if case .serverError = error {
+                        errorTitle = "서버 오류"
+                        errorMessage = "서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요."
+                    } else if case .networkError(let message) = error {
+                        errorTitle = "네트워크 오류"
+                        errorMessage = "인터넷 연결을 확인해주세요."
+                    }
+                    
+                    // 에러 알림 표시
+                    let alert = UIAlertController(title: errorTitle, message: errorMessage, preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "확인", style: .default))
+                    self?.present(alert, animated: true)
+                }
+            }
+        }
+    }
+    
+    @objc private func privateButtonTapped() {
+        isCommentPrivate.toggle()
+        privateButton.tintColor = isCommentPrivate ? UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0) : .gray
+        print("🔒 비밀 댓글 설정: \(isCommentPrivate)")
     }
 }
 
@@ -491,6 +920,44 @@ class CommentCell: UITableViewCell {
         // 대댓글인 경우 들여쓰기
         if comment.parentCommentId != nil {
             containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 40).isActive = true
+        }
+    }
+    
+    func configure(with commentItem: CommentItem) {
+        usernameLabel.text = commentItem.commentWriterNickName ?? "익명"
+        timeLabel.text = formatDate(commentItem.commentCreatedAt)
+        contentLabel.text = commentItem.commentContent
+        privateIconImageView.isHidden = !commentItem.isCommentSecret
+        
+        // 대댓글인 경우 들여쓰기
+        if commentItem.parentCommentId != nil {
+            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 40).isActive = true
+        }
+        
+        // 댓글 이미지 처리 (향후 구현)
+        // TODO: commentItem.commentImageUrls 처리
+    }
+    
+    private func formatDate(_ dateString: String) -> String {
+        let formatter = ISO8601DateFormatter()
+        guard let date = formatter.date(from: dateString) else {
+            return "방금 전"
+        }
+        
+        let now = Date()
+        let timeInterval = now.timeIntervalSince(date)
+        
+        if timeInterval < 60 {
+            return "방금 전"
+        } else if timeInterval < 3600 {
+            let minutes = Int(timeInterval / 60)
+            return "\(minutes)분 전"
+        } else if timeInterval < 86400 {
+            let hours = Int(timeInterval / 3600)
+            return "\(hours)시간 전"
+        } else {
+            let days = Int(timeInterval / 86400)
+            return "\(days)일 전"
         }
     }
 }

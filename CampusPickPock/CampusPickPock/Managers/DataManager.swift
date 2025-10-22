@@ -76,6 +76,9 @@ class DataManager {
     func logout() {
         currentUser = nil
         clearSavedUser()
+        // 토큰도 삭제
+        userDefaults.removeObject(forKey: "accessToken")
+        userDefaults.synchronize()
     }
     
     func saveUserData(userId: String, name: String, email: String) {
@@ -96,14 +99,17 @@ class DataManager {
     }
     
     func saveLoginData(token: String, userStudentId: String, userBirthDate: String, userRealName: String, userNickname: String, autoLoginEnabled: Bool) {
-        print("💾 로그인 데이터 저장: \(userNickname), 토큰: \(token)")
+        print("💾 로그인 데이터 저장 시작")
+        print("💾 토큰: \(token.prefix(20))...")
+        print("💾 사용자 닉네임: \(userNickname)")
+        print("💾 학번: \(userStudentId)")
         
         // User 객체 생성
         let user = User(id: userStudentId, name: userNickname, email: userStudentId)
         currentUser = user
         
         // UserDefaults에 저장
-        userDefaults.set(token, forKey: "authToken")
+        userDefaults.set(token, forKey: "accessToken")
         userDefaults.set(userStudentId, forKey: savedUserIdKey)
         userDefaults.set(userNickname, forKey: savedUserNameKey)
         userDefaults.set(userStudentId, forKey: savedUserEmailKey)
@@ -111,14 +117,31 @@ class DataManager {
         userDefaults.set(userRealName, forKey: "userRealName")
         userDefaults.set(autoLoginEnabled, forKey: autoLoginEnabledKey)
         
+        // 저장 확인
+        userDefaults.synchronize()
+        let savedToken = userDefaults.string(forKey: "accessToken")
+        print("💾 토큰 저장 확인: \(savedToken != nil ? "성공" : "실패")")
+        if let savedToken = savedToken {
+            print("💾 저장된 토큰: \(savedToken.prefix(20))...")
+        }
+        
         // 로컬 users 배열에도 추가 (샘플 데이터와 함께)
         if !users.contains(where: { $0.id == userStudentId }) {
             users.append(user)
         }
+        
+        print("💾 로그인 데이터 저장 완료")
     }
     
     func autoLogin() -> Bool {
         print("🔄 자동 로그인 시도")
+        
+        // 토큰 확인
+        let token = userDefaults.string(forKey: "accessToken")
+        print("🔄 저장된 토큰: \(token != nil ? "존재함" : "없음")")
+        if let token = token {
+            print("🔄 토큰 값: \(token.prefix(20))...")
+        }
         
         // 자동 로그인이 명시적으로 비활성화되어 있으면 false 반환
         if userDefaults.object(forKey: autoLoginEnabledKey) != nil && !userDefaults.bool(forKey: autoLoginEnabledKey) {
@@ -145,11 +168,64 @@ class DataManager {
             users.append(user)
         }
         
+        print("✅ 자동 로그인 성공")
         return true
     }
     
     func isAutoLoginEnabled() -> Bool {
         return userDefaults.bool(forKey: autoLoginEnabledKey)
+    }
+    
+    func getAccessToken() -> String? {
+        print("🔍 토큰 조회 시작")
+        let token = userDefaults.string(forKey: "accessToken")
+        print("🔍 토큰 조회 결과: \(token != nil ? "존재함" : "없음")")
+        
+        if let token = token {
+            print("🔍 토큰 값: \(token.prefix(20))...")
+            print("🔍 토큰 길이: \(token.count) characters")
+            
+            // JWT 토큰 형식 검증
+            let tokenParts = token.components(separatedBy: ".")
+            print("🔍 JWT 토큰 부분 수: \(tokenParts.count)")
+            if tokenParts.count == 3 {
+                print("✅ JWT 토큰 형식 유효")
+            } else {
+                print("❌ JWT 토큰 형식 무효")
+            }
+        }
+        
+        // UserDefaults에 저장된 모든 키 확인
+        let allKeys = userDefaults.dictionaryRepresentation().keys
+        let tokenKeys = allKeys.filter { $0.lowercased().contains("token") }
+        print("🔍 토큰 관련 키들: \(tokenKeys)")
+        
+        if token != nil {
+            print("✅ 토큰 조회 성공 - 인증 상태 확인됨")
+        } else {
+            print("❌ 토큰 조회 실패 - 인증 필요")
+        }
+        
+        return token
+    }
+    
+    func checkTokenStatus() {
+        print("🔍 토큰 상태 확인 시작")
+        let token = userDefaults.string(forKey: "accessToken")
+        print("🔍 토큰 존재 여부: \(token != nil ? "존재함" : "없음")")
+        
+        if let token = token {
+            print("🔍 토큰 길이: \(token.count)")
+            print("🔍 토큰 시작 부분: \(token.prefix(50))...")
+        }
+        
+        // 모든 UserDefaults 키 확인
+        let allKeys = userDefaults.dictionaryRepresentation().keys
+        print("🔍 모든 UserDefaults 키: \(Array(allKeys).sorted())")
+        
+        // 현재 사용자 정보 확인
+        print("🔍 현재 사용자: \(currentUser?.name ?? "없음")")
+        print("🔍 자동 로그인 활성화: \(isAutoLoginEnabled())")
     }
     
     private func saveUser(_ user: User) {
@@ -171,6 +247,7 @@ class DataManager {
         userDefaults.removeObject(forKey: savedUserEmailKey)
         userDefaults.removeObject(forKey: savedUserNameKey)
         userDefaults.removeObject(forKey: savedUserIdKey)
+        userDefaults.removeObject(forKey: "accessToken")
         userDefaults.synchronize()
     }
     
