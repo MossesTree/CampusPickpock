@@ -1239,7 +1239,8 @@ class APIService {
         }
         
         print("✅ 댓글 작성 API 권한 확인 완료 (완화 모드)")
-        print("✅ 인증 토큰: \(token.prefix(20))...")
+        print("✅ JWT Access Token 확인됨: \(token.prefix(20))...")
+        print("🎯 Authorization 헤더에 Bearer 토큰 추가 예정")
         print("🎯 서버에서 최종 권한 검증 수행")
         
         let createCommentURL = "\(baseURL)/comment/add/\(postingId)"
@@ -1247,7 +1248,7 @@ class APIService {
         print("💬 게시글 ID: \(postingId)")
         print("💬 댓글 내용: \(commentData.commentContent)")
         print("💬 비밀 댓글 여부: \(commentData.isCommentSecret)")
-        print("💬 부모 댓글 ID: \(commentData.parentCommentId?.description ?? "없음")")
+        print("💬 부모 댓글 ID: \(commentData.parentCommentId)")
         
         guard let url = URL(string: createCommentURL) else {
             print("❌ 잘못된 URL: \(createCommentURL)")
@@ -1260,9 +1261,9 @@ class APIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         
-        // 인증 토큰 추가
+        // 인증 토큰 추가 (JWT Access Token)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        print("🔐 인증 토큰 추가됨")
+        print("🔐 인증 토큰 추가됨: Bearer \(token.prefix(20))...")
         
         do {
             let jsonData = try JSONEncoder().encode(commentData)
@@ -1324,23 +1325,12 @@ class APIService {
                 
                 switch httpResponse.statusCode {
                 case 200:
-                    if let data = data, !data.isEmpty {
-                        do {
-                            let createCommentResponse = try JSONDecoder().decode(CreateCommentResponse.self, from: data)
-                            print("✅ 댓글 작성 성공!")
-                            print("✅ 댓글 ID: \(createCommentResponse.commentId)")
-                            print("🎯 댓글 작성 API 권한 확인 및 실행 완료")
-                            completion(.success(createCommentResponse))
-                        } catch {
-                            print("❌ JSON 디코딩 오류: \(error)")
-                            print("❌ 응답 데이터: \(String(data: data, encoding: .utf8) ?? "nil")")
-                            completion(.failure(.decodingError))
-                        }
-                    } else {
-                        print("❌ 응답 데이터 없음 또는 빈 데이터")
-                        print("❌ HTTP 200이지만 응답 본문이 비어있음 - 서버 측 문제 가능성")
-                        completion(.failure(.noData))
-                    }
+                    print("✅ 댓글 작성 성공!")
+                    print("🎯 댓글 작성 API 권한 확인 및 실행 완료")
+                    
+                    // 서버가 응답 본문을 보내지 않을 수 있으므로 200 OK만으로 성공 처리
+                    let successResponse = CreateCommentResponse(commentId: 0, message: "댓글이 성공적으로 작성되었습니다.")
+                    completion(.success(successResponse))
                 case 400:
                     print("❌ 잘못된 요청")
                     print("❌ 댓글 작성 API 권한 확인은 성공했으나 요청 형식 오류")
@@ -2032,12 +2022,12 @@ struct CommentItem: Codable {
 }
 
 struct CreateCommentRequest: Codable {
-    let parentCommentId: Int?
+    let parentCommentId: Int
     let isCommentSecret: Bool
     let commentContent: String
     let commentImageUrls: [String]?
     
-    init(parentCommentId: Int? = nil, isCommentSecret: Bool = false, commentContent: String, commentImageUrls: [String]? = nil) {
+    init(parentCommentId: Int = 0, isCommentSecret: Bool = false, commentContent: String, commentImageUrls: [String]? = nil) {
         self.parentCommentId = parentCommentId
         self.isCommentSecret = isCommentSecret
         self.commentContent = commentContent
@@ -2048,6 +2038,12 @@ struct CreateCommentRequest: Codable {
 struct CreateCommentResponse: Codable {
     let commentId: Int
     let message: String?
+    
+    // 기본 초기화 메서드 추가
+    init(commentId: Int, message: String?) {
+        self.commentId = commentId
+        self.message = message
+    }
     
     // 커스텀 디코딩으로 null 값 처리
     init(from decoder: Decoder) throws {

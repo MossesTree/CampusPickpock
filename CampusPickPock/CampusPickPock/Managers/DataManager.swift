@@ -283,20 +283,20 @@ class DataManager {
     }
     
     // MARK: - Comment Methods
-    func createComment(content: String, postId: String, isPrivate: Bool) {
-        guard let user = currentUser else { return }
-        let newComment = Comment(content: content, authorId: user.id, authorName: user.name, postId: postId, isPrivate: isPrivate)
-        comments.append(newComment)
-        
-        if let index = posts.firstIndex(where: { $0.id == postId }) {
-            var updatedPost = posts[index]
-            updatedPost.commentCount += 1
-            posts[index] = updatedPost
-        }
-        
-        NotificationManager.shared.createNotification(type: .comment, message: "\(user.name)님이 댓글을 작성했습니다.", postId: postId)
-    }
-    
+//    func createComment(content: String, postId: String, isPrivate: Bool) {
+//        guard let user = currentUser else { return }
+//        let newComment = Comment(content: content, authorId: user.id, authorName: user.name, postId: postId, isPrivate: isPrivate)
+//        comments.append(newComment)
+//        
+//        if let index = posts.firstIndex(where: { $0.id == postId }) {
+//            var updatedPost = posts[index]
+//            updatedPost.commentCount += 1
+//            posts[index] = updatedPost
+//        }
+//        
+//        NotificationManager.shared.createNotification(type: .comment, message: "\(user.name)님이 댓글을 작성했습니다.", postId: postId)
+//    }
+//    
     func getComments(for postId: String) -> [Comment] {
         return comments.filter { $0.postId == postId }.sorted { $0.createdAt < $1.createdAt }
     }

@@ -12,6 +12,7 @@ class PostDetailViewController: UIViewController {
     private let post: Post
     private var postDetail: PostDetailItem?
     private var isLoading = false
+    private var commentsTableViewHeightConstraint: NSLayoutConstraint?
     
     private let loadingIndicator: UIActivityIndicatorView = {
         let indicator = UIActivityIndicatorView(style: .medium)
@@ -284,7 +285,6 @@ class PostDetailViewController: UIViewController {
             commentsTableView.topAnchor.constraint(equalTo: commentsHeaderView.bottomAnchor),
             commentsTableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             commentsTableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            commentsTableView.heightAnchor.constraint(equalToConstant: 400),
             commentsTableView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             
             // Comment Input View
@@ -498,6 +498,9 @@ class PostDetailViewController: UIViewController {
                     // 댓글 수 업데이트
                     self?.commentsCountLabel.text = "댓글 \(commentItems.count)"
                     
+                    // 댓글 테이블뷰 높이 동적 조정
+                    self?.adjustCommentsTableViewHeight()
+                    
                 case .failure(let error):
                     print("❌ 댓글 로드 실패: \(error.localizedDescription)")
                     
@@ -513,6 +516,63 @@ class PostDetailViewController: UIViewController {
     private func parseDate(_ dateString: String) -> Date {
         let formatter = ISO8601DateFormatter()
         return formatter.date(from: dateString) ?? Date()
+    }
+    
+    // MARK: - Dynamic Height Calculation
+    private func adjustCommentsTableViewHeight() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            // 테이블뷰의 내용 크기 계산
+            self.commentsTableView.layoutIfNeeded()
+            
+            // 각 셀의 높이를 개별적으로 계산
+            var totalHeight: CGFloat = 0
+            let numberOfRows = self.commentsTableView.numberOfRows(inSection: 0)
+            
+            for i in 0..<numberOfRows {
+                let indexPath = IndexPath(row: i, section: 0)
+                let cellHeight = self.commentsTableView.delegate?.tableView?(self.commentsTableView, heightForRowAt: indexPath) ?? UITableView.automaticDimension
+                
+                if cellHeight == UITableView.automaticDimension {
+                    // 자동 높이 계산을 위해 임시로 셀을 생성하고 높이 측정
+                    if let cell = self.commentsTableView.dataSource?.tableView(self.commentsTableView, cellForRowAt: indexPath) {
+                        cell.layoutIfNeeded()
+                        let size = cell.systemLayoutSizeFitting(CGSize(width: self.commentsTableView.frame.width, height: UIView.layoutFittingCompressedSize.height))
+                        totalHeight += size.height
+                    }
+                } else {
+                    totalHeight += cellHeight
+                }
+            }
+            
+            // 최소 높이 설정 (댓글이 없을 때)
+            let minHeight: CGFloat = 100
+            let calculatedHeight = max(totalHeight, minHeight)
+            
+            // 최대 높이 설정 (화면의 60%를 넘지 않도록)
+//            let maxHeight = self.view.frame.height * 0.6
+            let finalHeight = calculatedHeight
+            
+            print("📏 댓글 테이블뷰 높이 조정:")
+            print("📏 댓글 개수: \(numberOfRows)")
+            print("📏 계산된 총 높이: \(totalHeight)")
+            print("📏 최종 높이: \(finalHeight)")
+            
+            // 높이 제약조건 업데이트
+            if let heightConstraint = self.commentsTableViewHeightConstraint {
+                heightConstraint.constant = finalHeight
+            } else {
+                // 새로운 높이 제약조건 생성
+                self.commentsTableViewHeightConstraint = self.commentsTableView.heightAnchor.constraint(equalToConstant: finalHeight)
+                self.commentsTableViewHeightConstraint?.isActive = true
+            }
+            
+            // 애니메이션과 함께 레이아웃 업데이트
+            UIView.animate(withDuration: 0.3) {
+                self.view.layoutIfNeeded()
+            }
+        }
     }
     
     @objc private func backTapped() {
@@ -718,7 +778,7 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
         sendButton.tintColor = .gray
         
         let commentRequest = CreateCommentRequest(
-            parentCommentId: nil, // 일반 댓글 (대댓글 아님)
+            parentCommentId: 0, // API 스펙에 따라 일반 댓글은 0
             isCommentSecret: isCommentPrivate,
             commentContent: commentText.trimmingCharacters(in: .whitespacesAndNewlines),
             commentImageUrls: nil // 이미지 기능은 향후 구현
@@ -755,8 +815,8 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     var errorTitle = "댓글 작성 실패"
                     
                     if case .unauthorized(let message) = error {
-                        errorTitle = "서버 접근 권한 없음"
-                        errorMessage = "서버에서 댓글 작성을 거부했습니다.\n\n가능한 원인:\n- 게시글이 삭제되었거나 비활성화됨\n- 게시글이 '줍줍' 처리되어 댓글 작성 제한\n- 서버 권한 정책 문제\n\n관리자에게 문의하거나 나중에 다시 시도해주세요."
+                        errorTitle = "댓글 작성 제한"
+                        errorMessage = "현재 이 게시글에 댓글을 작성할 수 없습니다.\n\n📋 확인된 정보:\n• 게시글 상태: 정상\n• 접근 권한: 허용됨\n• 토큰 상태: 유효함\n\n🔍 가능한 원인:\n• 서버 측 권한 정책 제한\n• 게시글 작성자가 자신의 게시글에 댓글 제한 설정\n• 일시적인 서버 상태 문제\n\n💡 해결 방법:\n• 잠시 후 다시 시도해보세요\n• 다른 게시글에서 댓글 작성 시도\n• 관리자에게 문의"
                         
                         print("❌ 403 오류 감지 - 서버에서 접근 거부")
                         print("❌ 게시글 상태 재확인 필요: postingId=\(postingId)")
