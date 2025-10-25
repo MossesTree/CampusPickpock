@@ -223,6 +223,11 @@ class PostCreateViewController: UIViewController {
     private var selectedImages: [UIImage] = []
     private var isStorageChecked = false
     
+    // 수정 모드를 위한 프로퍼티들
+    private var isEditMode = false
+    private var editingPost: Post?
+    private var editingPostDetail: PostDetailItem?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -449,6 +454,73 @@ class PostCreateViewController: UIViewController {
     }
     
     @objc private func uploadTapped() {
+        // 수정 모드인지 확인
+        if isEditMode {
+            handleEditMode()
+        } else {
+            handleCreateMode()
+        }
+    }
+    
+    private func handleEditMode() {
+        guard let title = titleTextField.text, !title.isEmpty,
+              let description = descriptionTextView.text, !description.isEmpty,
+              description != "캠퍼스 줍줍에서 찾은 분실물에 대한 내용을 작성해 주세요." else {
+            showAlert(message: "제목과 내용을 입력해주세요.")
+            return
+        }
+        
+        guard let postingId = editingPost?.postingId else {
+            showAlert(message: "게시글 정보를 찾을 수 없습니다.")
+            return
+        }
+        
+        // 로딩 상태 표시
+        uploadButton.isEnabled = false
+        uploadButton.setTitle("수정 중...", for: .normal)
+        
+        // 기존 이미지 URL들 가져오기
+        var imageUrls: [String] = []
+        if let postDetail = editingPostDetail {
+            imageUrls = postDetail.postingImageUrls ?? []
+        }
+        
+        // 수정 요청 데이터 생성
+        let updateData = UpdatePostRequest(
+            postingCategory: "기타", // TODO: 카테고리 선택 기능 추가
+            postingTitle: title,
+            postingContent: description,
+            itemPlace: "캠퍼스", // TODO: 위치 정보 추가
+            isPlacedInStorage: isStorageChecked,
+            ownerStudentId: "", // 수정 시에는 개인정보 변경 불가
+            ownerBirthDate: "", // 수정 시에는 개인정보 변경 불가
+            ownerName: "", // 수정 시에는 개인정보 변경 불가
+            postingImageUrls: imageUrls
+        )
+        
+        // 수정 API 호출
+        APIService.shared.updatePost(postingId: postingId, updateData: updateData) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                
+                // 버튼 상태 복원
+                self.uploadButton.isEnabled = true
+                self.uploadButton.setTitle("수정하기", for: .normal)
+                
+                switch result {
+                case .success(let response):
+                    print("✅ 게시글 수정 성공: \(response.message)")
+                    self.showSuccessAlert()
+                    
+                case .failure(let error):
+                    print("❌ 게시글 수정 실패: \(error.localizedDescription)")
+                    self.showAlert(message: "게시글 수정에 실패했습니다: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    private func handleCreateMode() {
         guard let title = titleTextField.text, !title.isEmpty,
               let description = descriptionTextView.text, !description.isEmpty,
               description != "캠퍼스 줍줍에서 찾은 분실물에 대한 내용을 작성해 주세요.",
@@ -614,8 +686,62 @@ class PostCreateViewController: UIViewController {
         present(alert, animated: true)
     }
     
+    // MARK: - Edit Mode Configuration
+    func configureForEdit(post: Post, postDetail: PostDetailItem?) {
+        isEditMode = true
+        editingPost = post
+        editingPostDetail = postDetail
+        
+        // 제목 변경
+        title = "게시글 수정"
+        
+        // 기존 데이터로 폼 채우기
+        if let postDetail = postDetail {
+            titleTextField.text = postDetail.postingTitle
+            descriptionTextView.text = postDetail.postingContent
+            descriptionTextView.textColor = .primaryTextColor
+            
+            // 이미지 URL이 있다면 로드
+            if let imageUrls = postDetail.postingImageUrls, !imageUrls.isEmpty {
+                loadImagesFromUrls(imageUrls)
+            }
+        }
+        
+        // 업로드 버튼 텍스트 변경
+        uploadButton.setTitle("수정하기", for: .normal)
+        
+        // 개인정보 섹션은 수정 시 숨김 (제약조건 변경 없이)
+        personalInfoLabel.alpha = 0
+        personalInfoDescriptionLabel.alpha = 0
+        nameTextField.alpha = 0
+        studentIdTextField.alpha = 0
+        birthDateTextField.alpha = 0
+    }
+    
+    private func loadImagesFromUrls(_ imageUrls: [String]) {
+        print("📸 기존 이미지 로드 시작: \(imageUrls.count)개")
+        
+        for imageUrl in imageUrls {
+            guard let url = URL(string: imageUrl) else { continue }
+            
+            DispatchQueue.global().async { [weak self] in
+                if let data = try? Data(contentsOf: url),
+                   let image = UIImage(data: data) {
+                    DispatchQueue.main.async {
+                        self?.selectedImages.append(image)
+                        self?.updateImageCount()
+                        self?.imageCollectionView.reloadData()
+                        print("✅ 이미지 로드 완료: \(imageUrl)")
+                    }
+                }
+            }
+        }
+    }
+    
     private func showSuccessAlert() {
-        let alert = UIAlertController(title: "성공", message: "습득물 게시글이 성공적으로 작성되었습니다.", preferredStyle: .alert)
+        let editMode = isEditMode
+        let message = editMode ? "게시글이 성공적으로 수정되었습니다." : "습득물 게시글이 성공적으로 작성되었습니다."
+        let alert = UIAlertController(title: "성공", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
             self?.navigationController?.popViewController(animated: true)
         })

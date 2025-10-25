@@ -77,6 +77,24 @@ class PostDetailViewController: UIViewController {
         return imageView
     }()
     
+    private lazy var imagesCollectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.minimumInteritemSpacing = 8
+        layout.minimumLineSpacing = 8
+        
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.backgroundColor = .clear
+        collectionView.showsHorizontalScrollIndicator = false
+        collectionView.translatesAutoresizingMaskIntoConstraints = false
+        collectionView.delegate = self
+        collectionView.dataSource = self
+        collectionView.register(ImageCollectionViewCell.self, forCellWithReuseIdentifier: "ImageCell")
+        return collectionView
+    }()
+    
+    private var postImages: [UIImage] = []
+    
     private let contentLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 16)
@@ -198,6 +216,7 @@ class PostDetailViewController: UIViewController {
         headerView.addSubview(usernameLabel)
         headerView.addSubview(titleLabel)
         headerView.addSubview(itemImageView)
+        headerView.addSubview(imagesCollectionView)
         headerView.addSubview(contentLabel)
         
         contentView.addSubview(commentsHeaderView)
@@ -262,12 +281,12 @@ class PostDetailViewController: UIViewController {
             titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
             titleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
             
-            itemImageView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 16),
-            itemImageView.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
-            itemImageView.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
-            itemImageView.heightAnchor.constraint(equalToConstant: 250),
+            imagesCollectionView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 16),
+            imagesCollectionView.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
+            imagesCollectionView.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
+            imagesCollectionView.heightAnchor.constraint(equalToConstant: 250),
             
-            contentLabel.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 16),
+            contentLabel.topAnchor.constraint(equalTo: imagesCollectionView.bottomAnchor, constant: 16),
             contentLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
             contentLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
             contentLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -20),
@@ -429,15 +448,14 @@ class PostDetailViewController: UIViewController {
         // 이미지 처리
         if let imageUrls = postDetail.postingImageUrls, !imageUrls.isEmpty {
             print("📸 게시글 이미지 로드 시작: \(imageUrls.count)개")
-            // 첫 번째 이미지 로드 (실제로는 이미지 로딩 라이브러리 사용 권장)
-            if let firstImageUrl = imageUrls.first, let url = URL(string: firstImageUrl) {
-                loadImage(from: url)
-            }
+            loadAllImages(from: imageUrls)
         } else {
-            print("📸 게시글 이미지 없음")
+            print("📸 게시글 이미지 없음 - 기본 이미지 표시")
             // 기본 이미지 설정
-            itemImageView.image = UIImage(systemName: "airpods")
-            itemImageView.tintColor = .gray
+            let defaultImage = UIImage(systemName: "airpods")
+            postImages = [defaultImage].compactMap { $0 }
+            updateCollectionViewLayout()
+            imagesCollectionView.reloadData()
         }
         
         // 댓글 수 업데이트 (실제 댓글 수는 별도 API로 가져와야 함)
@@ -445,14 +463,37 @@ class PostDetailViewController: UIViewController {
         print("✅ 게시글 내용 업데이트 완료")
     }
     
-    private func loadImage(from url: URL) {
-        // 간단한 이미지 로딩 (실제로는 Kingfisher 등 사용 권장)
-        DispatchQueue.global().async {
-            if let data = try? Data(contentsOf: url),
-               let image = UIImage(data: data) {
-                DispatchQueue.main.async { [weak self] in
-                    self?.itemImageView.image = image
+    private func loadAllImages(from imageUrls: [String]) {
+        postImages = []
+        imagesCollectionView.reloadData()
+        
+        for (index, imageUrl) in imageUrls.enumerated() {
+            guard let url = URL(string: imageUrl) else { continue }
+            
+            DispatchQueue.global().async { [weak self] in
+                if let data = try? Data(contentsOf: url),
+                   let image = UIImage(data: data) {
+                    DispatchQueue.main.async {
+                        self?.postImages.append(image)
+                        self?.updateCollectionViewLayout()
+                        self?.imagesCollectionView.reloadData()
+                        print("✅ 이미지 로드 완료: \(index + 1)/\(imageUrls.count)")
+                    }
                 }
+            }
+        }
+    }
+    
+    private func updateCollectionViewLayout() {
+        if let layout = imagesCollectionView.collectionViewLayout as? UICollectionViewFlowLayout {
+            if postImages.count <= 1 {
+                // 이미지가 하나면 스크롤 비활성화
+                layout.scrollDirection = .vertical
+                imagesCollectionView.isScrollEnabled = false
+            } else {
+                // 여러 개면 가로 스크롤 활성화
+                layout.scrollDirection = .horizontal
+                imagesCollectionView.isScrollEnabled = true
             }
         }
     }
@@ -584,20 +625,98 @@ class PostDetailViewController: UIViewController {
     @objc private func menuTapped() {
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: "URL 공유", style: .default) { _ in
-            // URL 공유 기능
+        // 수정 버튼 추가
+        alert.addAction(UIAlertAction(title: "수정", style: .default) { _ in
+            self.handleEditAction()
         })
         
-        // Lost 타입에만 줍줍 버튼 추가
+        // 삭제 버튼 추가
+        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { _ in
+            self.handleDeleteAction()
+        })
+        
+        // Lost 타입에만 줍줍 완료 버튼 추가
         if post.type == .lost {
-            alert.addAction(UIAlertAction(title: "줍줍", style: .default) { _ in
+            alert.addAction(UIAlertAction(title: "줍줍 완료", style: .default) { _ in
                 self.handleJoopjoopAction()
             })
         }
         
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        
         present(alert, animated: true)
+    }
+    
+    private func handleEditAction() {
+        guard let postingId = post.postingId else {
+            print("❌ postingId가 없습니다.")
+            let alert = UIAlertController(title: "오류", message: "게시글 정보를 찾을 수 없습니다.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
+        print("📝 게시글 수정 버튼 클릭: postingId = \(postingId)")
+        
+        // 게시글 수정 화면으로 이동
+        let editViewController = PostCreateViewController()
+        editViewController.configureForEdit(post: post, postDetail: postDetail)
+        
+        let navigationController = UINavigationController(rootViewController: editViewController)
+        present(navigationController, animated: true)
+    }
+    
+    private func handleDeleteAction() {
+        guard let postingId = post.postingId else {
+            print("❌ postingId가 없습니다.")
+            let alert = UIAlertController(title: "오류", message: "게시글 정보를 찾을 수 없습니다.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
+        print("🗑️ 게시글 삭제 버튼 클릭: postingId = \(postingId)")
+        
+        // 삭제 확인 다이얼로그
+        let confirmAlert = UIAlertController(title: "게시글 삭제", message: "정말로 이 게시글을 삭제하시겠습니까?\n삭제된 게시글은 복구할 수 없습니다.", preferredStyle: .alert)
+        
+        confirmAlert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        confirmAlert.addAction(UIAlertAction(title: "삭제", style: .destructive) { _ in
+            self.performDelete(postingId: postingId)
+        })
+        
+        present(confirmAlert, animated: true)
+    }
+    
+    private func performDelete(postingId: Int) {
+        // 로딩 표시
+        let loadingAlert = UIAlertController(title: "삭제 중...", message: "잠시만 기다려주세요.", preferredStyle: .alert)
+        present(loadingAlert, animated: true)
+        
+        APIService.shared.deletePost(postingId: postingId) { [weak self] result in
+            DispatchQueue.main.async {
+                loadingAlert.dismiss(animated: true) {
+                    switch result {
+                    case .success(let response):
+                        print("✅ 게시글 삭제 성공: \(response.message)")
+                        
+                        // 성공 알림
+                        let alert = UIAlertController(title: "삭제 완료", message: "게시글이 성공적으로 삭제되었습니다.", preferredStyle: .alert)
+                        alert.addAction(UIAlertAction(title: "확인", style: .default) { _ in
+                            // 이전 화면으로 돌아가기
+                            self?.navigationController?.popViewController(animated: true)
+                        })
+                        self?.present(alert, animated: true)
+                        
+                    case .failure(let error):
+                        print("❌ 게시글 삭제 실패: \(error.localizedDescription)")
+                        
+                        // 실패 알림
+                        let alert = UIAlertController(title: "삭제 실패", message: error.localizedDescription, preferredStyle: .alert)
+                        alert.addAction(UIAlertAction(title: "확인", style: .default))
+                        self?.present(alert, animated: true)
+                    }
+                }
+            }
+        }
     }
     
     private func handleJoopjoopAction() {
@@ -1018,6 +1137,73 @@ class CommentCell: UITableViewCell {
         } else {
             let days = Int(timeInterval / 86400)
             return "\(days)일 전"
+        }
+    }
+}
+
+// MARK: - UICollectionViewDataSource & UICollectionViewDelegate
+extension PostDetailViewController: UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return postImages.count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCell", for: indexPath) as! ImageCollectionViewCell
+        cell.configure(with: postImages[indexPath.item])
+        return cell
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        // 이미지가 하나만 있으면 전체 너비로 표시
+        if postImages.count == 1 {
+            let collectionViewWidth = collectionView.frame.width
+            return CGSize(width: collectionViewWidth, height: 200)
+        } else {
+            // 여러 개면 작은 크기로 가로 스크롤
+            return CGSize(width: 200, height: 200)
+        }
+    }
+}
+
+// MARK: - ImageCollectionViewCell
+class ImageCollectionViewCell: UICollectionViewCell {
+    private let imageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        imageView.layer.cornerRadius = 12
+        imageView.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupUI()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func setupUI() {
+        contentView.addSubview(imageView)
+        NSLayoutConstraint.activate([
+            imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+        ])
+    }
+    
+    func configure(with image: UIImage) {
+        imageView.image = image
+        
+        // 시스템 이미지인 경우 회색으로 설정
+        if image.isSymbolImage {
+            imageView.tintColor = .gray
+        } else {
+            imageView.tintColor = nil
         }
     }
 }
