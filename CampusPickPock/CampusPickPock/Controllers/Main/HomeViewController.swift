@@ -32,8 +32,8 @@ class HomeViewController: UIViewController {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "캠퍼스 줍줍에서\n발견하세요"
-        label.font = UIFont.boldSystemFont(ofSize: 24)
-        label.textColor = .primaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 30) ?? UIFont.systemFont(ofSize: 30, weight: .bold)
+        label.textColor = UIColor(red: 19/255, green: 45/255, blue: 100/255, alpha: 1.0) // 132D64
         label.numberOfLines = 0
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -83,7 +83,7 @@ class HomeViewController: UIViewController {
     
     private let alertCard: UIView = {
         let view = UIView()
-        view.backgroundColor = .white
+        view.backgroundColor = UIColor(red: 247/255, green: 247/255, blue: 247/255, alpha: 1.0) // F7F7F7
         view.layer.cornerRadius = 12
         view.layer.shadowColor = UIColor.black.cgColor
         view.layer.shadowOffset = CGSize(width: 0, height: 2)
@@ -143,7 +143,7 @@ class HomeViewController: UIViewController {
         control.selectedSegmentIndex = 0
         control.backgroundColor = .secondaryBackgroundColor
         control.selectedSegmentTintColor = .primaryColor
-        control.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
+        control.setTitleTextAttributes([.foregroundColor: UIColor(red: 247/255, green: 247/255, blue: 247/255, alpha: 1.0)], for: .selected)
         control.setTitleTextAttributes([.foregroundColor: UIColor.secondaryTextColor], for: .normal)
         control.translatesAutoresizingMaskIntoConstraints = false
         return control
@@ -198,33 +198,18 @@ class HomeViewController: UIViewController {
         return button
     }()
     
-    private let storageButton: UIButton = {
+    
+    private let bottomBar: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("분실물 보관함", for: .normal)
-        button.setImage(UIImage(systemName: "archivebox"), for: .normal)
         button.backgroundColor = .primaryColor
-        button.setTitleColor(.white, for: .normal)
-        button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
-        button.layer.cornerRadius = 25
-        button.layer.shadowColor = UIColor.black.cgColor
-        button.layer.shadowOffset = CGSize(width: 0, height: 2)
-        button.layer.shadowOpacity = 0.1
-        button.layer.shadowRadius = 4
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
-    }()
-    
-    private let bottomBar: UIView = {
-        let view = UIView()
-        view.backgroundColor = .primaryColor
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
     }()
     
     private let bottomBarLabel: UILabel = {
         let label = UILabel()
         label.text = "우리 학교 분실물 보관함"
-        label.textColor = .white
+        label.textColor = UIColor(red: 247/255, green: 247/255, blue: 247/255, alpha: 1.0) // F7F7F7
         label.font = UIFont.boldSystemFont(ofSize: 16)
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -234,7 +219,7 @@ class HomeViewController: UIViewController {
     private let bottomBarIcon: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(systemName: "archivebox")
-        imageView.tintColor = .white
+        imageView.tintColor = UIColor(red: 247/255, green: 247/255, blue: 247/255, alpha: 1.0) // F7F7F7
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()
@@ -295,7 +280,7 @@ class HomeViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle("게시글 확인하기", for: .normal)
         button.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
-        button.setTitleColor(.white, for: .normal)
+        button.setTitleColor(UIColor(red: 247/255, green: 247/255, blue: 247/255, alpha: 1.0), for: .normal)
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
         button.layer.cornerRadius = 8
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -360,7 +345,6 @@ class HomeViewController: UIViewController {
         notificationPopupView.addSubview(notificationActionButton)
         
         bottomButtonContainer.addSubview(writeButton)
-        bottomButtonContainer.addSubview(storageButton)
         
         headerView.addSubview(titleLabel)
         headerView.addSubview(titleUnderlineView)
@@ -395,14 +379,14 @@ class HomeViewController: UIViewController {
             headerView.topAnchor.constraint(equalTo: contentView.topAnchor),
             headerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             headerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            headerView.heightAnchor.constraint(equalToConstant: 90),
+            headerView.heightAnchor.constraint(equalToConstant: 150),
             
             titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
-            titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 50),
+            titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 85),
             
             titleUnderlineView.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             titleUnderlineView.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
-            titleUnderlineView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: -8),
+            titleUnderlineView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 37),
             titleUnderlineView.heightAnchor.constraint(equalToConstant: 3),
             
             myPageButton.trailingAnchor.constraint(equalTo: searchButton.leadingAnchor, constant: -16),
@@ -424,31 +408,35 @@ class HomeViewController: UIViewController {
             notificationBadge.heightAnchor.constraint(equalToConstant: 8),
             
             alertCard.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 16),
-            alertCard.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            alertCard.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            alertCard.heightAnchor.constraint(equalToConstant: 100),
+            alertCard.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            alertCard.widthAnchor.constraint(equalToConstant: 325),
+            alertCard.heightAnchor.constraint(equalToConstant: 60),
             
-            alertIcon.leadingAnchor.constraint(equalTo: alertCard.leadingAnchor, constant: 16),
-            alertIcon.topAnchor.constraint(equalTo: alertCard.topAnchor, constant: 16),
-            alertIcon.widthAnchor.constraint(equalToConstant: 24),
-            alertIcon.heightAnchor.constraint(equalToConstant: 24),
+            // 왼쪽 아이콘 (스피커 아이콘으로 변경)
+            alertIcon.leadingAnchor.constraint(equalTo: alertCard.leadingAnchor, constant: 12),
+            alertIcon.centerYAnchor.constraint(equalTo: alertCard.centerYAnchor),
+            alertIcon.widthAnchor.constraint(equalToConstant: 20),
+            alertIcon.heightAnchor.constraint(equalToConstant: 20),
             
-            alertUserIcon.trailingAnchor.constraint(equalTo: alertButton.leadingAnchor, constant: -12),
-            alertUserIcon.topAnchor.constraint(equalTo: alertCard.topAnchor, constant: 16),
-            alertUserIcon.widthAnchor.constraint(equalToConstant: 24),
-            alertUserIcon.heightAnchor.constraint(equalToConstant: 24),
+            // 중앙 텍스트 영역 (닉네임과 메시지 내용)
+            alertTitleLabel.leadingAnchor.constraint(equalTo: alertIcon.trailingAnchor, constant: 12),
+            alertTitleLabel.topAnchor.constraint(equalTo: alertCard.topAnchor, constant: 12),
             
-            alertTitleLabel.trailingAnchor.constraint(equalTo: alertUserIcon.leadingAnchor, constant: -8),
-            alertTitleLabel.topAnchor.constraint(equalTo: alertCard.topAnchor, constant: 16),
-            
-            alertSubtitleLabel.leadingAnchor.constraint(equalTo: alertIcon.trailingAnchor, constant: 12),
-            alertSubtitleLabel.topAnchor.constraint(equalTo: alertIcon.bottomAnchor, constant: 8),
+            alertSubtitleLabel.leadingAnchor.constraint(equalTo: alertTitleLabel.leadingAnchor),
+            alertSubtitleLabel.topAnchor.constraint(equalTo: alertTitleLabel.bottomAnchor, constant: 4),
             alertSubtitleLabel.trailingAnchor.constraint(equalTo: alertButton.leadingAnchor, constant: -12),
             
-            alertButton.trailingAnchor.constraint(equalTo: alertCard.trailingAnchor, constant: -16),
+            // 오른쪽 사용자 아이콘과 이름
+            alertUserIcon.trailingAnchor.constraint(equalTo: alertButton.leadingAnchor, constant: -8),
+            alertUserIcon.topAnchor.constraint(equalTo: alertCard.topAnchor, constant: 12),
+            alertUserIcon.widthAnchor.constraint(equalToConstant: 16),
+            alertUserIcon.heightAnchor.constraint(equalToConstant: 16),
+            
+            // 오른쪽 버튼
+            alertButton.trailingAnchor.constraint(equalTo: alertCard.trailingAnchor, constant: -12),
             alertButton.centerYAnchor.constraint(equalTo: alertCard.centerYAnchor),
             
-            segmentedControl.topAnchor.constraint(equalTo: alertCard.bottomAnchor, constant: 20),
+            segmentedControl.topAnchor.constraint(equalTo: alertCard.bottomAnchor, constant: 37),
             segmentedControl.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             segmentedControl.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             segmentedControl.heightAnchor.constraint(equalToConstant: 40),
@@ -471,15 +459,10 @@ class HomeViewController: UIViewController {
             bottomButtonContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             bottomButtonContainer.heightAnchor.constraint(equalToConstant: 60),
             
-            writeButton.leadingAnchor.constraint(equalTo: bottomButtonContainer.leadingAnchor, constant: 20),
+            writeButton.centerXAnchor.constraint(equalTo: bottomButtonContainer.centerXAnchor),
             writeButton.centerYAnchor.constraint(equalTo: bottomButtonContainer.centerYAnchor),
             writeButton.widthAnchor.constraint(equalToConstant: 120),
             writeButton.heightAnchor.constraint(equalToConstant: 50),
-            
-            storageButton.trailingAnchor.constraint(equalTo: bottomButtonContainer.trailingAnchor, constant: -20),
-            storageButton.centerYAnchor.constraint(equalTo: bottomButtonContainer.centerYAnchor),
-            storageButton.widthAnchor.constraint(equalToConstant: 200),
-            storageButton.heightAnchor.constraint(equalToConstant: 50),
             
             bottomBar.topAnchor.constraint(equalTo: bottomButtonContainer.bottomAnchor, constant: 20),
             bottomBar.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -543,7 +526,7 @@ class HomeViewController: UIViewController {
         segmentedControl.addTarget(self, action: #selector(segmentChanged), for: .valueChanged)
         moreButton.addTarget(self, action: #selector(moreTapped), for: .touchUpInside)
         writeButton.addTarget(self, action: #selector(writeTapped), for: .touchUpInside)
-        storageButton.addTarget(self, action: #selector(storageTapped), for: .touchUpInside)
+        bottomBar.addTarget(self, action: #selector(storageTapped), for: .touchUpInside)
         notificationCloseButton.addTarget(self, action: #selector(notificationCloseTapped), for: .touchUpInside)
         notificationActionButton.addTarget(self, action: #selector(notificationActionTapped), for: .touchUpInside)
         
@@ -595,9 +578,9 @@ class HomeViewController: UIViewController {
         alertTitleLabel.text = bannerItem.postingWriterNickName
         alertSubtitleLabel.text = bannerItem.postingTitle
         
-        // 배너 아이콘 업데이트 (선택사항)
-        alertIcon.image = UIImage(systemName: "star.fill")
-        alertIcon.tintColor = .systemYellow
+        // 배너 아이콘 업데이트 (스피커 아이콘으로 변경)
+        alertIcon.image = UIImage(systemName: "speaker.wave.2.fill")
+        alertIcon.tintColor = .primaryColor
     }
     
     private func loadPosts() {
@@ -844,6 +827,38 @@ class HomeViewController: UIViewController {
         }
     }
     
+    // MARK: - Image Loading
+    private func loadImageFromURL(_ urlString: String, for cell: PostCell) {
+        guard let url = URL(string: urlString) else {
+            print("❌ 잘못된 이미지 URL: \(urlString)")
+            return
+        }
+        
+        print("🖼️ 이미지 로딩 시작: \(urlString)")
+        
+        URLSession.shared.dataTask(with: url) { [weak cell] data, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ 이미지 로딩 실패: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let data = data, let image = UIImage(data: data) else {
+                    print("❌ 이미지 데이터 변환 실패")
+                    return
+                }
+                
+                print("✅ 이미지 로딩 성공: \(urlString)")
+                
+                // 셀이 여전히 화면에 표시되고 있는지 확인
+                guard let cell = cell else { return }
+                
+                // PostCell에 이미지 설정
+                cell.setThumbnailImage(image)
+            }
+        }.resume()
+    }
+    
     private func showJupJupNotificationPopup() {
         print("🔔 줍줍 알림 팝업 표시")
         
@@ -951,12 +966,13 @@ class HomeViewController: UIViewController {
     }
     
     @objc private func storageTapped() {
-        print("🏠 분실물 보관함 버튼 탭됨")
+        print("🏠 하단 분실물 보관함 버튼 탭됨")
         print("🏠 현재 navigationController: \(navigationController != nil ? "존재함" : "nil")")
         let lostAndFoundVC = LostAndFoundViewController()
         navigationController?.pushViewController(lostAndFoundVC, animated: true)
         print("🏠 LostAndFoundViewController로 이동 완료")
     }
+    
 }
 
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
@@ -974,6 +990,7 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
             postingId: homePostingItem.postingId,
             title: homePostingItem.postingTitle,
             content: homePostingItem.postingContent,
+            location: homePostingItem.itemPlace, // 위치 정보 추가
             images: [], // 이미지는 별도로 로드
             authorId: "익명", // HomePostingItem에는 작성자 정보가 없으므로 기본값 사용
             authorName: "익명",
@@ -984,6 +1001,11 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         )
         
         cell.configure(with: post)
+        
+        // 이미지 URL이 있으면 로드
+        if !homePostingItem.postingImageUrl.isEmpty {
+            loadImageFromURL(homePostingItem.postingImageUrl, for: cell)
+        }
         cell.delegate = self
         return cell
     }

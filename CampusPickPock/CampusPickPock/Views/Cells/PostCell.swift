@@ -25,35 +25,19 @@ class PostCell: UITableViewCell {
         return label
     }()
     
+    private let locationLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 12)
+        label.textColor = .secondaryTextColor
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
     private let contentLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
+        label.font = UIFont.systemFont(ofSize: 12)
         label.textColor = .secondaryTextColor
         label.numberOfLines = 2
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    
-    private let authorLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 12)
-        label.textColor = .secondaryTextColor
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    
-    private let dateLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 12)
-        label.textColor = .secondaryTextColor
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    
-    private let commentCountLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 12)
-        label.textColor = .primaryColor
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -90,43 +74,39 @@ class PostCell: UITableViewCell {
     }
     
     private func setupUI() {
-        contentView.addSubview(titleLabel)
-        contentView.addSubview(contentLabel)
-        contentView.addSubview(authorLabel)
-        contentView.addSubview(dateLabel)
-        contentView.addSubview(commentCountLabel)
         contentView.addSubview(thumbnailImageView)
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(locationLabel)
+        contentView.addSubview(contentLabel)
         contentView.addSubview(joopjoopButton)
         
         // 줍줍버튼 액션 추가
         joopjoopButton.addTarget(self, action: #selector(joopjoopButtonTapped), for: .touchUpInside)
         
         NSLayoutConstraint.activate([
-            thumbnailImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            // 왼쪽에 대표 사진
+            thumbnailImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             thumbnailImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            thumbnailImageView.widthAnchor.constraint(equalToConstant: 80),
-            thumbnailImageView.heightAnchor.constraint(equalToConstant: 80),
+            thumbnailImageView.widthAnchor.constraint(equalToConstant: 60),
+            thumbnailImageView.heightAnchor.constraint(equalToConstant: 60),
             
+            // 오른쪽에 제목, 위치, 본문내용
             titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            titleLabel.trailingAnchor.constraint(equalTo: thumbnailImageView.leadingAnchor, constant: -12),
+            titleLabel.leadingAnchor.constraint(equalTo: thumbnailImageView.trailingAnchor, constant: 12),
+            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
-            contentLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            locationLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            locationLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            locationLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
+            
+            contentLabel.topAnchor.constraint(equalTo: locationLabel.bottomAnchor, constant: 4),
             contentLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             contentLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
+            contentLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -12),
             
-            authorLabel.topAnchor.constraint(equalTo: contentLabel.bottomAnchor, constant: 8),
-            authorLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            authorLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
-            
-            dateLabel.leadingAnchor.constraint(equalTo: authorLabel.trailingAnchor, constant: 8),
-            dateLabel.centerYAnchor.constraint(equalTo: authorLabel.centerYAnchor),
-            
-            commentCountLabel.leadingAnchor.constraint(equalTo: dateLabel.trailingAnchor, constant: 8),
-            commentCountLabel.centerYAnchor.constraint(equalTo: authorLabel.centerYAnchor),
-            
+            // 줍줍버튼 (Lost 타입일 때만 표시)
             joopjoopButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            joopjoopButton.trailingAnchor.constraint(equalTo: thumbnailImageView.leadingAnchor, constant: -8),
+            joopjoopButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             joopjoopButton.widthAnchor.constraint(equalToConstant: 60),
             joopjoopButton.heightAnchor.constraint(equalToConstant: 32)
         ])
@@ -135,10 +115,15 @@ class PostCell: UITableViewCell {
     func configure(with post: Post) {
         self.post = post
         titleLabel.text = post.title
-        contentLabel.text = post.isHidden ? "개인 정보가 포함된 게시글입니다" : post.content
-        authorLabel.text = post.authorName
-        dateLabel.text = formatDate(post.createdAt)
-        commentCountLabel.text = "댓글 \(post.commentCount)"
+        locationLabel.text = post.location ?? "위치 정보 없음"
+        
+        // 본문내용 일부분만 표시 (최대 50자)
+        let content = post.isHidden ? "개인 정보가 포함된 게시글입니다" : post.content
+        if content.count > 50 {
+            contentLabel.text = String(content.prefix(50)) + "..."
+        } else {
+            contentLabel.text = content
+        }
         
         // Lost 타입일 때만 줍줍버튼 표시
         joopjoopButton.isHidden = post.type != .lost
@@ -151,10 +136,9 @@ class PostCell: UITableViewCell {
         }
     }
     
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MM/dd HH:mm"
-        return formatter.string(from: date)
+    func setThumbnailImage(_ image: UIImage) {
+        thumbnailImageView.image = image
+        thumbnailImageView.isHidden = false
     }
     
     @objc private func joopjoopButtonTapped() {

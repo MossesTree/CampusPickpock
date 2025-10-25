@@ -48,7 +48,7 @@ class SplashViewController: UIViewController {
     }
     
     private func setupUI() {
-        view.backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.99, alpha: 1.0) // 연한 회색 배경
+        view.backgroundColor = .backgroundColor
         
         view.addSubview(logoImageView)
         view.addSubview(subtitleLabel)

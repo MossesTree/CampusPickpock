@@ -39,7 +39,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     // MARK: - Header Section
     private let headerView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.99, alpha: 1.0)
+        view.backgroundColor = .backgroundColor
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -206,7 +206,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     }
     
     private func setupUI() {
-        view.backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.99, alpha: 1.0)
+        view.backgroundColor = .backgroundColor
         
         // 네비게이션 바 설정
         if let post = post {
@@ -1469,7 +1469,7 @@ class CommentCell: UITableViewCell {
     }
     
     private func setupUI() {
-        backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.99, alpha: 1.0)
+        backgroundColor = .backgroundColor
         selectionStyle = .none
         
         contentView.addSubview(containerView)

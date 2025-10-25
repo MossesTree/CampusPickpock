@@ -92,7 +92,7 @@ class MyCommentedPostsViewController: UIViewController {
     
     private func setupUI() {
         title = "댓글 단 글"
-        view.backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.99, alpha: 1.0)
+        view.backgroundColor = .backgroundColor
         
         setupCustomBackButton()
         
