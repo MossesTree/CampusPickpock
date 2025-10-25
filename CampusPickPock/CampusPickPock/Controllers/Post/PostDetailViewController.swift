@@ -10,7 +10,8 @@ import PhotosUI
 
 class PostDetailViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, PHPickerViewControllerDelegate {
     
-    private let post: Post
+    private let post: Post?
+    private var postingId: Int?
     private var postDetail: PostDetailItem?
     private var isLoading = false
     private var commentsTableViewHeightConstraint: NSLayoutConstraint?
@@ -180,6 +181,13 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     
     init(post: Post) {
         self.post = post
+        self.postingId = post.postingId
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    init(postingId: Int) {
+        self.post = nil
+        self.postingId = postingId
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -201,7 +209,11 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         view.backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.99, alpha: 1.0)
         
         // 네비게이션 바 설정
-        title = post.type == .lost ? "잃어버렸어요" : "주인을 찾아요"
+        if let post = post {
+            title = post.type == .lost ? "잃어버렸어요" : "주인을 찾아요"
+        } else {
+            title = "게시글 상세"
+        }
         
         setupCustomBackButton()
         
@@ -349,7 +361,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     private func loadPostDetail() {
         print("🔍 게시글 접근 권한 확인 시작")
         
-        guard let postingId = post.postingId else {
+        guard let postingId = self.postingId else {
             print("❌ postingId가 없습니다 - 게시글 접근 불가")
             return
         }
@@ -385,6 +397,12 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
                     }
                     
                     self?.postDetail = postDetail
+                    
+                    // 네비게이션 타이틀 업데이트 (post가 nil인 경우)
+                    if self?.post == nil {
+                        self?.title = postDetail.postingTitle
+                    }
+                    
                     self?.updateContent(with: postDetail)
                     self?.scrollView.isHidden = false
                     
@@ -463,7 +481,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         }
         
         // 댓글 수 업데이트 (실제 댓글 수는 별도 API로 가져와야 함)
-        commentsCountLabel.text = "댓글 \(post.commentCount)"
+        commentsCountLabel.text = "댓글 \(post?.commentCount ?? 0)"
         print("✅ 게시글 내용 업데이트 완료")
     }
     
@@ -503,7 +521,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     }
     
     private func loadComments() {
-        guard let postingId = post.postingId else {
+        guard let postingId = self.postingId else {
             print("❌ postingId가 없어서 댓글을 불러올 수 없습니다")
             return
         }
@@ -525,7 +543,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
                             content: commentItem.commentContent,
                             authorId: String(commentItem.commentWriterId),
                             authorName: commentItem.commentWriterNickName ?? "익명",
-                            postId: self?.post.id ?? "",
+                            postId: self?.postingId?.description ?? "",
                             isPrivate: commentItem.isCommentSecret,
                             createdAt: self?.parseDate(commentItem.commentCreatedAt) ?? Date(),
                             parentCommentId: commentItem.parentCommentId != nil ? String(commentItem.parentCommentId!) : nil
@@ -634,7 +652,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         })
         
         // Lost 타입에만 줍줍 완료 버튼 추가
-        if post.type == .lost {
+        if post?.type == .lost {
             alert.addAction(UIAlertAction(title: "줍줍 완료", style: .default) { _ in
                 self.handleJoopjoopAction()
             })
@@ -644,7 +662,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     }
     
     private func handleEditAction() {
-        guard let postingId = post.postingId else {
+        guard let postingId = self.postingId else {
             print("❌ postingId가 없습니다.")
             let alert = UIAlertController(title: "오류", message: "게시글 정보를 찾을 수 없습니다.", preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "확인", style: .default))
@@ -656,14 +674,32 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         
         // 게시글 수정 화면으로 이동
         let editViewController = PostCreateViewController()
-        editViewController.configureForEdit(post: post, postDetail: postDetail)
+        
+        // post가 nil인 경우 Post 객체 생성
+        if let post = post {
+            editViewController.configureForEdit(post: post, postDetail: postDetail)
+        } else if let postDetail = postDetail {
+            // postingId만 있는 경우 Post 객체 생성
+            let tempPost = Post(
+                id: String(postingId),
+                postingId: postingId,
+                title: postDetail.postingTitle,
+                content: postDetail.postingContent,
+                authorId: String(postDetail.postingWriterId),
+                authorName: postDetail.postingWriterNickname ?? "익명",
+                createdAt: Date(),
+                commentCount: 0,
+                type: postDetail.isPickedUp ? .found : .lost
+            )
+            editViewController.configureForEdit(post: tempPost, postDetail: postDetail)
+        }
         
         let navigationController = UINavigationController(rootViewController: editViewController)
         present(navigationController, animated: true)
     }
     
     private func handleDeleteAction() {
-        guard let postingId = post.postingId else {
+        guard let postingId = self.postingId else {
             print("❌ postingId가 없습니다.")
             let alert = UIAlertController(title: "오류", message: "게시글 정보를 찾을 수 없습니다.", preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "확인", style: .default))
@@ -718,7 +754,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     }
     
     private func handleJoopjoopAction() {
-        guard let postingId = post.postingId else {
+        guard let postingId = self.postingId else {
             print("❌ postingId가 없습니다.")
             let alert = UIAlertController(title: "오류", message: "게시글 정보를 찾을 수 없습니다.", preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "확인", style: .default))
@@ -845,7 +881,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             commentImageUrls: []
         )
         
-        APIService.shared.createComment(postingId: post.postingId ?? 0, commentData: replyData) { [weak self] result in
+        APIService.shared.createComment(postingId: postingId ?? 0, commentData: replyData) { [weak self] result in
             guard let self = self else { return }
             
             switch result {
@@ -985,7 +1021,7 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
         print("🔍 댓글 작성 권한 확인 시작 (완화된 모드)")
         
         // 1. 기본 정보 확인
-        guard let postingId = post.postingId else {
+        guard let postingId = self.postingId else {
             print("❌ postingId가 없어서 댓글을 작성할 수 없습니다")
             print("❌ 댓글 작성 권한 확인 실패 - 게시글 ID 없음")
             return
@@ -1129,7 +1165,7 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     private func createCommentWithImages(imageUrls: [String], commentText: String) {
-        guard let postingId = post.postingId else { return }
+        guard let postingId = self.postingId else { return }
         
         let commentRequest = CreateCommentRequest(
             parentCommentId: 0, // API 스펙에 따라 일반 댓글은 0
@@ -1170,7 +1206,7 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     var errorMessage = error.localizedDescription
                     var errorTitle = "댓글 작성 실패"
                     
-                    if case .unauthorized(let _) = error {
+                    if case .unauthorized = error {
                         errorTitle = "댓글 작성 제한"
                         errorMessage = "현재 이 게시글에 댓글을 작성할 수 없습니다.\n\n📋 확인된 정보:\n• 게시글 상태: 정상\n• 접근 권한: 허용됨\n• 토큰 상태: 유효함\n\n🔍 가능한 원인:\n• 서버 측 권한 정책 제한\n• 게시글 작성자가 자신의 게시글에 댓글 제한 설정\n• 일시적인 서버 상태 문제\n\n💡 해결 방법:\n• 잠시 후 다시 시도해보세요\n• 다른 게시글에서 댓글 작성 시도\n• 관리자에게 문의"
                         

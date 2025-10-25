@@ -308,7 +308,7 @@ class APIService {
                 
                 switch httpResponse.statusCode {
                 case 200:
-                    if let data = data {
+                    if let data = data, !data.isEmpty {
                         do {
                             let createPostResponse = try JSONDecoder().decode(CreatePostResponse.self, from: data)
                             print("✅ 게시글 작성 성공")
@@ -318,8 +318,14 @@ class APIService {
                             completion(.failure(.decodingError))
                         }
                     } else {
-                        print("❌ 응답 데이터 없음")
-                        completion(.failure(.noData))
+                        print("✅ 게시글 작성 성공 (빈 응답)")
+                        // 빈 응답인 경우 기본 성공 응답 생성
+                        let successResponse = CreatePostResponse(
+                            success: true,
+                            message: "게시글이 성공적으로 작성되었습니다.",
+                            postingId: nil
+                        )
+                        completion(.success(successResponse))
                     }
                 case 400:
                     print("❌ 잘못된 요청")
@@ -643,7 +649,7 @@ class APIService {
     }
     
     // MARK: - Get Storage List
-    func getStorageList(page: Int, pageSize: Int, completion: @escaping (Result<[PostingItem], APIError>) -> Void) {
+    func getStorageList(page: Int, pageSize: Int, completion: @escaping (Result<[StorageItem], APIError>) -> Void) {
         
         let storageListURL = "\(baseURL)/posting/storage/list?page=\(page)&pageSize=\(pageSize)"
         print("🌐 분실물 보관함 API 호출: \(storageListURL)")
@@ -693,7 +699,7 @@ class APIService {
                 case 200:
                     if let data = data {
                         do {
-                            let storageItems = try JSONDecoder().decode([PostingItem].self, from: data)
+                            let storageItems = try JSONDecoder().decode([StorageItem].self, from: data)
                             print("✅ 분실물 보관함 조회 성공: \(storageItems.count)개 항목")
                             completion(.success(storageItems))
                         } catch {
@@ -2264,6 +2270,13 @@ struct CreateCommentResponse: Codable {
         case commentId
         case message
     }
+}
+
+struct StorageItem: Codable {
+    let postingId: Int
+    let postingImageUrl: String?
+    let postingCreatedAt: String
+    let postingCategory: String?
 }
 
 struct PostingItem: Codable {

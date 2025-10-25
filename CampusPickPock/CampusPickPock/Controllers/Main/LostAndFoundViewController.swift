@@ -96,7 +96,7 @@ class LostAndFoundViewController: UIViewController {
     }()
     
     private var items: [LostAndFoundItem] = []
-    private var postingItems: [PostingItem] = []
+    private var storageItems: [StorageItem] = []
     private var selectedCategory = "전체"
     private var currentPage = 0
     private let pageSize = 20
@@ -270,7 +270,7 @@ class LostAndFoundViewController: UIViewController {
     }
     
     private func loadItems() {
-        print("🏠 분실물 보관함 데이터 로드 시작")
+        print("🏠 분실물 보관함 데이터 로드 시작 - 페이지: \(currentPage), 페이지 크기: \(pageSize)")
         
         isLoading = true
         
@@ -282,26 +282,32 @@ class LostAndFoundViewController: UIViewController {
                 case .success(let storageItems):
                     print("✅ 분실물 보관함 데이터 로드 성공: \(storageItems.count)개 항목")
                     
+                    if storageItems.isEmpty && self?.currentPage == 0 {
+                        print("📭 분실물 보관함이 비어있습니다")
+                        self?.showEmptyState()
+                        return
+                    }
+                    
                     if self?.currentPage == 0 {
                         // 첫 페이지 로드 시 기존 데이터 교체
-                        self?.postingItems = storageItems
-                        self?.items = storageItems.map { postingItem in
+                        self?.storageItems = storageItems
+                        self?.items = storageItems.map { storageItem in
                             LostAndFoundItem(
-                                id: String(postingItem.postingId),
-                                name: postingItem.postingTitle,
-                                image: nil,
-                                registrationDate: self?.formatDate(postingItem.postingCreatedAt) ?? ""
+                                id: String(storageItem.postingId),
+                                name: storageItem.postingCategory ?? "분실물",
+                                image: UIImage(systemName: "photo"),
+                                registrationDate: self?.formatDate(storageItem.postingCreatedAt) ?? ""
                             )
                         }
                     } else {
                         // 추가 페이지 로드 시 데이터 추가
-                        self?.postingItems.append(contentsOf: storageItems)
-                        let newItems = storageItems.map { postingItem in
+                        self?.storageItems.append(contentsOf: storageItems)
+                        let newItems = storageItems.map { storageItem in
                             LostAndFoundItem(
-                                id: String(postingItem.postingId),
-                                name: postingItem.postingTitle,
-                                image: nil,
-                                registrationDate: self?.formatDate(postingItem.postingCreatedAt) ?? ""
+                                id: String(storageItem.postingId),
+                                name: storageItem.postingCategory ?? "분실물",
+                                image: UIImage(systemName: "photo"),
+                                registrationDate: self?.formatDate(storageItem.postingCreatedAt) ?? ""
                             )
                         }
                         self?.items.append(contentsOf: newItems)
@@ -341,6 +347,25 @@ class LostAndFoundViewController: UIViewController {
         displayFormatter.dateFormat = "yyyy/MM/dd"
         return displayFormatter.string(from: date)
     }
+    
+    private func showEmptyState() {
+        items = []
+        itemsCollectionView.reloadData()
+        
+        // 빈 상태 메시지 표시
+        let emptyLabel = UILabel()
+        emptyLabel.text = "분실물 보관함이 비어있습니다"
+        emptyLabel.textAlignment = .center
+        emptyLabel.textColor = .secondaryTextColor
+        emptyLabel.font = UIFont.systemFont(ofSize: 16)
+        emptyLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        view.addSubview(emptyLabel)
+        NSLayoutConstraint.activate([
+            emptyLabel.centerXAnchor.constraint(equalTo: itemsCollectionView.centerXAnchor),
+            emptyLabel.centerYAnchor.constraint(equalTo: itemsCollectionView.centerYAnchor)
+        ])
+    }
 }
 
 // MARK: - UICollectionViewDelegate, UICollectionViewDataSource
@@ -357,8 +382,13 @@ extension LostAndFoundViewController: UICollectionViewDelegate, UICollectionView
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
-        let item = items[indexPath.item]
-        print("분실물 아이템 선택됨: \(item.name)")
+        
+        let storageItem = storageItems[indexPath.item]
+        print("분실물 아이템 선택됨: ID \(storageItem.postingId)")
+        
+        // PostDetailViewController로 이동
+        let postDetailVC = PostDetailViewController(postingId: storageItem.postingId)
+        navigationController?.pushViewController(postDetailVC, animated: true)
     }
     
     // MARK: - 페이지네이션
