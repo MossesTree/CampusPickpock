@@ -6,13 +6,15 @@
 //
 
 import UIKit
+import PhotosUI
 
-class PostDetailViewController: UIViewController {
+class PostDetailViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, PHPickerViewControllerDelegate {
     
     private let post: Post
     private var postDetail: PostDetailItem?
     private var isLoading = false
     private var commentsTableViewHeightConstraint: NSLayoutConstraint?
+    private var commentImages: [UIImage] = []
     
     private let loadingIndicator: UIActivityIndicatorView = {
         let indicator = UIActivityIndicatorView(style: .medium)
@@ -124,6 +126,7 @@ class PostDetailViewController: UIViewController {
         let tableView = UITableView()
         tableView.backgroundColor = .clear
         tableView.separatorStyle = .none
+        tableView.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.96, alpha: 1.0)
         tableView.isScrollEnabled = false
         tableView.translatesAutoresizingMaskIntoConstraints = false
         return tableView
@@ -233,6 +236,7 @@ class PostDetailViewController: UIViewController {
         // 버튼 액션 추가
         sendButton.addTarget(self, action: #selector(sendButtonTapped), for: .touchUpInside)
         privateButton.addTarget(self, action: #selector(privateButtonTapped), for: .touchUpInside)
+        attachButton.addTarget(self, action: #selector(attachButtonTapped), for: .touchUpInside)
         
         // 초기 상태: 댓글 작성 버튼 비활성화 (게시글 상세 로드 완료 후 활성화)
         sendButton.isEnabled = false
@@ -496,12 +500,6 @@ class PostDetailViewController: UIViewController {
                 imagesCollectionView.isScrollEnabled = true
             }
         }
-    }
-    
-    private func showErrorAlert(message: String) {
-        let alert = UIAlertController(title: "오류", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
-        present(alert, animated: true)
     }
     
     private func loadComments() {
@@ -773,6 +771,186 @@ class PostDetailViewController: UIViewController {
             }
         }
     }
+    
+    private func handleCommentMenuTapped(_ commentItem: CommentItem) {
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        
+        // 대댓글 달기
+        alert.addAction(UIAlertAction(title: "대댓글 달기", style: .default) { _ in
+            self.handleReplyToComment(commentItem)
+        })
+        
+        // 수정 (본인 댓글인 경우만)
+        if commentItem.commentWriterId == getCurrentUserId() {
+            alert.addAction(UIAlertAction(title: "수정", style: .default) { _ in
+                self.handleEditComment(commentItem)
+            })
+            
+            // 삭제 (본인 댓글인 경우만)
+            alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { _ in
+                self.handleDeleteComment(commentItem)
+            })
+        }
+        
+        // 테스트를 위해 모든 댓글에 수정/삭제 버튼 표시
+        alert.addAction(UIAlertAction(title: "수정", style: .default) { _ in
+            self.handleEditComment(commentItem)
+        })
+        
+        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { _ in
+            self.handleDeleteComment(commentItem)
+        })
+        
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        
+        present(alert, animated: true)
+    }
+    
+    private func handleReplyToComment(_ commentItem: CommentItem) {
+        print("📝 대댓글 작성 시작: 부모 댓글 ID \(commentItem.commentId)")
+        
+        let alert = UIAlertController(title: "대댓글 작성", message: "\(commentItem.commentWriterNickName ?? "익명")님의 댓글에 답글을 작성합니다.", preferredStyle: .alert)
+        
+        alert.addTextField { textField in
+            textField.placeholder = "대댓글을 입력하세요..."
+            textField.text = ""
+        }
+        
+        let writeAction = UIAlertAction(title: "작성", style: .default) { _ in
+            guard let textField = alert.textFields?.first,
+                  let content = textField.text,
+                  !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                print("❌ 대댓글 내용이 비어있음")
+                return
+            }
+            
+            self.performReplyToComment(parentCommentId: commentItem.commentId, content: content)
+        }
+        
+        let cancelAction = UIAlertAction(title: "취소", style: .cancel)
+        
+        alert.addAction(writeAction)
+        alert.addAction(cancelAction)
+        
+        present(alert, animated: true)
+    }
+    
+    private func performReplyToComment(parentCommentId: Int, content: String) {
+        print("📝 대댓글 작성 API 호출: 부모 댓글 ID \(parentCommentId), 내용: \(content)")
+        
+        let replyData = CreateCommentRequest(
+            parentCommentId: parentCommentId,
+            isCommentSecret: false,
+            commentContent: content,
+            commentImageUrls: []
+        )
+        
+        APIService.shared.createComment(postingId: post.postingId ?? 0, commentData: replyData) { [weak self] result in
+            guard let self = self else { return }
+            
+            switch result {
+            case .success(let response):
+                print("✅ 대댓글 작성 성공: \(response.commentId)")
+                DispatchQueue.main.async {
+                    self.showSuccessAlert(message: "대댓글이 성공적으로 작성되었습니다.")
+                    // 댓글 목록 새로고침
+                    self.loadComments()
+                }
+            case .failure(let error):
+                print("❌ 대댓글 작성 실패: \(error)")
+                DispatchQueue.main.async {
+                    self.showErrorAlert(message: "대댓글 작성에 실패했습니다: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    private func handleEditComment(_ commentItem: CommentItem) {
+        let alert = UIAlertController(title: "댓글 수정", message: nil, preferredStyle: .alert)
+        
+        alert.addTextField { textField in
+            textField.text = commentItem.commentContent
+            textField.placeholder = "댓글을 입력하세요"
+        }
+        
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "수정", style: .default) { _ in
+            guard let newContent = alert.textFields?.first?.text, !newContent.isEmpty else { return }
+            self.performEditComment(commentItem, newContent: newContent)
+        })
+        
+        present(alert, animated: true)
+    }
+    
+    private func handleDeleteComment(_ commentItem: CommentItem) {
+        let alert = UIAlertController(title: "댓글 삭제", message: "정말로 이 댓글을 삭제하시겠습니까?", preferredStyle: .alert)
+        
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { _ in
+            self.performDeleteComment(commentItem)
+        })
+        
+        present(alert, animated: true)
+    }
+    
+    private func performEditComment(_ commentItem: CommentItem, newContent: String) {
+        let updateData = UpdateCommentRequest(
+            isCommentSecret: commentItem.isCommentSecret,
+            commentContent: newContent,
+            commentImageUrls: commentItem.commentImageUrls ?? []
+        )
+        
+        APIService.shared.updateComment(commentId: commentItem.commentId, updateData: updateData) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let response):
+                    print("✅ 댓글 수정 성공: \(response.message)")
+                    self?.loadComments()
+                case .failure(let error):
+                    print("❌ 댓글 수정 실패: \(error.localizedDescription)")
+                    self?.showErrorAlert(message: "댓글 수정에 실패했습니다: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    private func performDeleteComment(_ commentItem: CommentItem) {
+        APIService.shared.deleteComment(commentId: commentItem.commentId) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let response):
+                    print("✅ 댓글 삭제 성공: \(response.message)")
+                    self?.loadComments()
+                case .failure(let error):
+                    print("❌ 댓글 삭제 실패: \(error.localizedDescription)")
+                    self?.showErrorAlert(message: "댓글 삭제에 실패했습니다: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    private func getCurrentUserId() -> Int? {
+        // DataManager에서 현재 사용자 ID 가져오기
+        guard let userIdString = DataManager.shared.currentUser?.id,
+              let userId = Int(userIdString) else {
+            print("❌ 현재 사용자 ID를 가져올 수 없음")
+            return nil
+        }
+        print("✅ 현재 사용자 ID: \(userId)")
+        return userId
+    }
+    
+    private func showSuccessAlert(message: String) {
+        let alert = UIAlertController(title: "성공", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
+    
+    private func showErrorAlert(message: String) {
+        let alert = UIAlertController(title: "오류", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
 }
 
 // MARK: - UITableViewDelegate, UITableViewDataSource
@@ -786,7 +964,7 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         // CommentItem을 직접 사용하여 더 정확한 데이터 표시
         if indexPath.row < commentItems.count {
-            cell.configure(with: commentItems[indexPath.row])
+            cell.configure(with: commentItems[indexPath.row], onMenuTapped: handleCommentMenuTapped)
         } else {
             cell.configure(with: comments[indexPath.row])
         }
@@ -799,7 +977,7 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 100
+        return 150
     }
     
     // MARK: - Comment Actions
@@ -896,11 +1074,68 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
         sendButton.isEnabled = false
         sendButton.tintColor = .gray
         
+        // 이미지가 있으면 먼저 업로드
+        if !commentImages.isEmpty {
+            uploadCommentImages { [weak self] imageUrls in
+                self?.createCommentWithImages(imageUrls: imageUrls, commentText: commentText)
+            }
+        } else {
+            createCommentWithImages(imageUrls: [], commentText: commentText)
+        }
+    }
+    
+    private func uploadCommentImages(completion: @escaping ([String]) -> Void) {
+        print("📷 댓글 이미지 업로드 시작: \(commentImages.count)개")
+        
+        let group = DispatchGroup()
+        var uploadedUrls: [String] = []
+        
+        for (index, image) in commentImages.enumerated() {
+            group.enter()
+            
+            // presigned URL 요청
+            let fileName = "comment_\(Int(Date().timeIntervalSince1970))_\(index).jpg"
+            APIService.shared.getPresignedUrls(fileNames: [fileName]) { result in
+                switch result {
+                case .success(let presignedUrls):
+                    guard let presignedUrl = presignedUrls.first else {
+                        print("❌ 이미지 \(index) presigned URL이 비어있음")
+                        group.leave()
+                        return
+                    }
+                    
+                    // S3에 업로드
+                    APIService.shared.uploadImageToS3(image: image, presignedUrl: presignedUrl) { uploadResult in
+                        switch uploadResult {
+                        case .success(let imageUrl):
+                            uploadedUrls.append(imageUrl)
+                            print("✅ 이미지 \(index) 업로드 성공: \(imageUrl)")
+                        case .failure(let error):
+                            print("❌ 이미지 \(index) 업로드 실패: \(error)")
+                        }
+                        group.leave()
+                    }
+                case .failure(let error):
+                    print("❌ 이미지 \(index) presigned URL 요청 실패: \(error)")
+                    group.leave()
+                }
+            }
+        }
+        
+        group.notify(queue: .main) {
+            print("📷 댓글 이미지 업로드 완료: \(uploadedUrls.count)개")
+            completion(uploadedUrls)
+        }
+    }
+    
+    private func createCommentWithImages(imageUrls: [String], commentText: String) {
+        guard let postingId = post.postingId else { return }
+        
         let commentRequest = CreateCommentRequest(
             parentCommentId: 0, // API 스펙에 따라 일반 댓글은 0
             isCommentSecret: isCommentPrivate,
             commentContent: commentText.trimmingCharacters(in: .whitespacesAndNewlines),
-            commentImageUrls: nil // 이미지 기능은 향후 구현
+            commentImageUrls: imageUrls.isEmpty ? nil : imageUrls
         )
         
         APIService.shared.createComment(postingId: postingId, commentData: commentRequest) { [weak self] result in
@@ -918,6 +1153,8 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     self?.commentTextField.text = ""
                     self?.isCommentPrivate = false
                     self?.privateButton.tintColor = .gray
+                    self?.commentImages.removeAll()
+                    self?.updateAttachButtonAppearance()
                     
                     // 댓글 목록 새로고침
                     self?.loadComments()
@@ -933,7 +1170,7 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     var errorMessage = error.localizedDescription
                     var errorTitle = "댓글 작성 실패"
                     
-                    if case .unauthorized(let message) = error {
+                    if case .unauthorized(let _) = error {
                         errorTitle = "댓글 작성 제한"
                         errorMessage = "현재 이 게시글에 댓글을 작성할 수 없습니다.\n\n📋 확인된 정보:\n• 게시글 상태: 정상\n• 접근 권한: 허용됨\n• 토큰 상태: 유효함\n\n🔍 가능한 원인:\n• 서버 측 권한 정책 제한\n• 게시글 작성자가 자신의 게시글에 댓글 제한 설정\n• 일시적인 서버 상태 문제\n\n💡 해결 방법:\n• 잠시 후 다시 시도해보세요\n• 다른 게시글에서 댓글 작성 시도\n• 관리자에게 문의"
                         
@@ -972,6 +1209,132 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
         privateButton.tintColor = isCommentPrivate ? UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0) : .gray
         print("🔒 비밀 댓글 설정: \(isCommentPrivate)")
     }
+    
+    @objc private func attachButtonTapped() {
+        print("📷 댓글 사진 첨부 버튼 클릭")
+        
+        let alert = UIAlertController(title: "사진 첨부", message: "사진을 선택하세요", preferredStyle: .actionSheet)
+        
+        // 카메라 옵션
+        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+            alert.addAction(UIAlertAction(title: "카메라", style: .default) { _ in
+                self.presentImagePicker(sourceType: .camera)
+            })
+        }
+        
+        // 사진 라이브러리 옵션
+        alert.addAction(UIAlertAction(title: "사진 라이브러리", style: .default) { _ in
+            self.presentImagePicker(sourceType: .photoLibrary)
+        })
+        
+        // 선택된 이미지가 있으면 제거 옵션
+        if !commentImages.isEmpty {
+            alert.addAction(UIAlertAction(title: "첨부된 사진 제거", style: .destructive) { _ in
+                self.commentImages.removeAll()
+                self.updateAttachButtonAppearance()
+            })
+        }
+        
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        
+        // iPad에서 actionSheet가 크래시되지 않도록 설정
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = attachButton
+            popover.sourceRect = attachButton.bounds
+        }
+        
+        present(alert, animated: true)
+    }
+    
+    private func presentImagePicker(sourceType: UIImagePickerController.SourceType) {
+        if #available(iOS 14.0, *) {
+            // iOS 14+ 에서는 PHPicker 사용 (여러장 선택 가능)
+            var config = PHPickerConfiguration()
+            config.selectionLimit = 5 // 최대 5장까지 선택 가능
+            config.filter = .images
+            
+            let picker = PHPickerViewController(configuration: config)
+            picker.delegate = self
+            present(picker, animated: true)
+        } else {
+            // iOS 14 미만에서는 UIImagePickerController 사용
+            let picker = UIImagePickerController()
+            picker.sourceType = sourceType
+            picker.delegate = self
+            picker.allowsEditing = true
+            present(picker, animated: true)
+        }
+    }
+    
+    private func updateAttachButtonAppearance() {
+        if commentImages.isEmpty {
+            attachButton.tintColor = .gray
+            attachButton.setImage(UIImage(systemName: "photo.on.rectangle"), for: .normal)
+        } else {
+            attachButton.tintColor = .systemBlue
+            attachButton.setImage(UIImage(systemName: "photo.on.rectangle.fill"), for: .normal)
+        }
+    }
+}
+
+// MARK: - UIImagePickerControllerDelegate
+extension PostDetailViewController {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        picker.dismiss(animated: true)
+        
+        if let editedImage = info[.editedImage] as? UIImage {
+            commentImages.append(editedImage)
+            print("📷 댓글용 이미지 선택됨: \(commentImages.count)개")
+            updateAttachButtonAppearance()
+        } else if let originalImage = info[.originalImage] as? UIImage {
+            commentImages.append(originalImage)
+            print("📷 댓글용 이미지 선택됨: \(commentImages.count)개")
+            updateAttachButtonAppearance()
+        }
+    }
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true)
+        print("📷 이미지 선택 취소됨")
+    }
+}
+
+// MARK: - PHPickerViewControllerDelegate
+extension PostDetailViewController {
+    @available(iOS 14.0, *)
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        picker.dismiss(animated: true)
+        
+        guard !results.isEmpty else {
+            print("📷 이미지 선택 취소됨")
+            return
+        }
+        
+        print("📷 선택된 이미지 개수: \(results.count)")
+        
+        let group = DispatchGroup()
+        
+        for (index, result) in results.enumerated() {
+            group.enter()
+            
+            result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] object, error in
+                DispatchQueue.main.async {
+                    if let image = object as? UIImage {
+                        self?.commentImages.append(image)
+                        print("✅ 이미지 \(index + 1) 로드 성공")
+                    } else if let error = error {
+                        print("❌ 이미지 \(index + 1) 로드 실패: \(error)")
+                    }
+                    group.leave()
+                }
+            }
+        }
+        
+        group.notify(queue: .main) {
+            print("📷 모든 이미지 로드 완료: \(self.commentImages.count)개")
+            self.updateAttachButtonAppearance()
+        }
+    }
 }
 
 // MARK: - CommentCell
@@ -979,7 +1342,12 @@ class CommentCell: UITableViewCell {
     
     private let containerView: UIView = {
         let view = UIView()
-        view.backgroundColor = .clear
+        view.backgroundColor = .white
+        view.layer.cornerRadius = 8
+        view.layer.shadowColor = UIColor.black.cgColor
+        view.layer.shadowOffset = CGSize(width: 0, height: 1)
+        view.layer.shadowOpacity = 0.1
+        view.layer.shadowRadius = 2
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -1030,10 +1398,30 @@ class CommentCell: UITableViewCell {
     private let menuButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "ellipsis.vertical"), for: .normal)
-        button.tintColor = .gray
+        button.tintColor = .systemBlue
+        button.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.1)
+        button.layer.cornerRadius = 12
         button.translatesAutoresizingMaskIntoConstraints = false
+        button.isHidden = false
         return button
     }()
+    
+    private let commentImagesCollectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.minimumInteritemSpacing = 8
+        layout.minimumLineSpacing = 8
+        
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.backgroundColor = .clear
+        collectionView.showsHorizontalScrollIndicator = false
+        collectionView.translatesAutoresizingMaskIntoConstraints = false
+        collectionView.register(CommentImageCell.self, forCellWithReuseIdentifier: "CommentImageCell")
+        collectionView.isHidden = true
+        return collectionView
+    }()
+    
+    private var collectionViewHeightConstraint: NSLayoutConstraint?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -1045,7 +1433,7 @@ class CommentCell: UITableViewCell {
     }
     
     private func setupUI() {
-        backgroundColor = .clear
+        backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.99, alpha: 1.0)
         selectionStyle = .none
         
         contentView.addSubview(containerView)
@@ -1055,12 +1443,26 @@ class CommentCell: UITableViewCell {
         containerView.addSubview(privateIconImageView)
         containerView.addSubview(contentLabel)
         containerView.addSubview(menuButton)
+        containerView.addSubview(commentImagesCollectionView)
+        
+        // 메뉴 버튼 액션 추가
+        menuButton.addTarget(self, action: #selector(menuButtonTapped), for: .touchUpInside)
+        
+        // 컬렉션뷰 설정
+        commentImagesCollectionView.delegate = self
+        commentImagesCollectionView.dataSource = self
+        commentImagesCollectionView.isHidden = true
+        
+        // 높이 제약조건 설정
+        collectionViewHeightConstraint = commentImagesCollectionView.heightAnchor.constraint(equalToConstant: 0)
+        collectionViewHeightConstraint?.isActive = true
         
         NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
             containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
+            containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 100),
             
             profileImageView.topAnchor.constraint(equalTo: containerView.topAnchor),
             profileImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
@@ -1078,15 +1480,18 @@ class CommentCell: UITableViewCell {
             privateIconImageView.widthAnchor.constraint(equalToConstant: 12),
             privateIconImageView.heightAnchor.constraint(equalToConstant: 12),
             
-            contentLabel.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 8),
+            contentLabel.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 12),
             contentLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             contentLabel.trailingAnchor.constraint(equalTo: menuButton.leadingAnchor, constant: -8),
-            contentLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+            
+            commentImagesCollectionView.topAnchor.constraint(equalTo: contentLabel.bottomAnchor, constant: 12),
+            commentImagesCollectionView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            commentImagesCollectionView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
             
             menuButton.topAnchor.constraint(equalTo: containerView.topAnchor),
             menuButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-            menuButton.widthAnchor.constraint(equalToConstant: 24),
-            menuButton.heightAnchor.constraint(equalToConstant: 24)
+            menuButton.widthAnchor.constraint(equalToConstant: 32),
+            menuButton.heightAnchor.constraint(equalToConstant: 32)
         ])
     }
     
@@ -1115,6 +1520,74 @@ class CommentCell: UITableViewCell {
         
         // 댓글 이미지 처리 (향후 구현)
         // TODO: commentItem.commentImageUrls 처리
+    }
+    
+    private var commentItem: CommentItem?
+    private var onMenuTapped: ((CommentItem) -> Void)?
+    private var commentImages: [UIImage] = []
+    
+    func configure(with commentItem: CommentItem, onMenuTapped: @escaping (CommentItem) -> Void) {
+        self.commentItem = commentItem
+        self.onMenuTapped = onMenuTapped
+        
+        usernameLabel.text = commentItem.commentWriterNickName ?? "익명"
+        timeLabel.text = formatDate(commentItem.commentCreatedAt)
+        contentLabel.text = commentItem.commentContent
+        privateIconImageView.isHidden = !commentItem.isCommentSecret
+        
+        // 대댓글인 경우 들여쓰기
+        if commentItem.parentCommentId != nil {
+            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 40).isActive = true
+        }
+        
+        // 댓글 이미지 처리
+        loadCommentImages(from: commentItem.commentImageUrls ?? [])
+    }
+    
+    private func loadCommentImages(from imageUrls: [String]) {
+        print("🖼️ 댓글 이미지 로드 시작: \(imageUrls.count)개")
+        commentImages.removeAll()
+        
+        if imageUrls.isEmpty {
+            print("🖼️ 이미지 URL이 없음 - 컬렉션뷰 숨김")
+            commentImagesCollectionView.isHidden = true
+            collectionViewHeightConstraint?.constant = 0
+            return
+        }
+        
+        print("🖼️ 이미지 URL 있음 - 컬렉션뷰 표시")
+        commentImagesCollectionView.isHidden = false
+        collectionViewHeightConstraint?.constant = 80
+        
+        let group = DispatchGroup()
+        
+        for imageUrl in imageUrls {
+            group.enter()
+            
+            guard let url = URL(string: imageUrl) else {
+                group.leave()
+                continue
+            }
+            
+            URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+                DispatchQueue.main.async {
+                    if let data = data, let image = UIImage(data: data) {
+                        self?.commentImages.append(image)
+                    }
+                    group.leave()
+                }
+            }.resume()
+        }
+        
+        group.notify(queue: .main) { [weak self] in
+            print("🖼️ 댓글 이미지 로드 완료: \(self?.commentImages.count ?? 0)개")
+            self?.commentImagesCollectionView.reloadData()
+        }
+    }
+    
+    @objc private func menuButtonTapped() {
+        guard let commentItem = commentItem else { return }
+        onMenuTapped?(commentItem)
     }
     
     private func formatDate(_ dateString: String) -> String {
@@ -1165,6 +1638,49 @@ extension PostDetailViewController: UICollectionViewDataSource, UICollectionView
     }
 }
 
+// MARK: - CommentImageCell
+class CommentImageCell: UICollectionViewCell {
+    
+    private let imageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        imageView.layer.cornerRadius = 8
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupUI()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func setupUI() {
+        contentView.addSubview(imageView)
+        NSLayoutConstraint.activate([
+            imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+        ])
+    }
+    
+    func configure(with image: UIImage) {
+        imageView.image = image
+        
+        // 시스템 이미지인 경우 회색으로 설정
+        if image.isSymbolImage {
+            imageView.tintColor = .gray
+        } else {
+            imageView.tintColor = nil
+        }
+    }
+}
+
 // MARK: - ImageCollectionViewCell
 class ImageCollectionViewCell: UICollectionViewCell {
     private let imageView: UIImageView = {
@@ -1205,5 +1721,22 @@ class ImageCollectionViewCell: UICollectionViewCell {
         } else {
             imageView.tintColor = nil
         }
+    }
+}
+
+// MARK: - CommentCell CollectionView Extensions
+extension CommentCell: UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return commentImages.count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CommentImageCell", for: indexPath) as! CommentImageCell
+        cell.configure(with: commentImages[indexPath.item])
+        return cell
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return CGSize(width: 80, height: 80)
     }
 }

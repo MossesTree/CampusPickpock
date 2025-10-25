@@ -98,7 +98,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 31B724F22EA693AC003E4B3F /* Build configuration list for PBXProject "campusPickPock" */;
+			buildConfigurationList = 31B724F22EA693AC003E4B3F /* Build configuration list for PBXProject "CampusPickPock" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -322,7 +322,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		31B724F22EA693AC003E4B3F /* Build configuration list for PBXProject "campusPickPock" */ = {
+		31B724F22EA693AC003E4B3F /* Build configuration list for PBXProject "CampusPickPock" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				31B7250D2EA693AE003E4B3F /* Debug */,
