@@ -18,7 +18,12 @@ class PostCell: UITableViewCell {
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.boldSystemFont(ofSize: 16)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 15) {
+            let descriptor = pretendardFont.fontDescriptor.addingAttributes([.traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.semibold.rawValue]])
+            label.font = UIFont(descriptor: descriptor, size: 15)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 15, weight: .semibold)
+        }
         label.textColor = .primaryTextColor
         label.numberOfLines = 2
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -27,15 +32,25 @@ class PostCell: UITableViewCell {
     
     private let locationLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 12)
-        label.textColor = .secondaryTextColor
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 10) {
+            let descriptor = pretendardFont.fontDescriptor.addingAttributes([.traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.medium.rawValue]])
+            label.font = UIFont(descriptor: descriptor, size: 10)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 10, weight: .medium)
+        }
+        label.textColor = UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
     private let contentLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 12)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 13) {
+            let descriptor = pretendardFont.fontDescriptor.addingAttributes([.traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.medium.rawValue]])
+            label.font = UIFont(descriptor: descriptor, size: 13)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 13, weight: .medium)
+        }
         label.textColor = .secondaryTextColor
         label.numberOfLines = 2
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -66,6 +81,11 @@ class PostCell: UITableViewCell {
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
+        
+        // 셀 전체 배경 투명하게 설정
+        backgroundColor = .clear
+        selectionStyle = .none
+        
         setupUI()
     }
     
@@ -74,6 +94,12 @@ class PostCell: UITableViewCell {
     }
     
     private func setupUI() {
+        // contentView 스타일 설정
+        contentView.backgroundColor = UIColor(red: 0xF7/255.0, green: 0xF7/255.0, blue: 0xF7/255.0, alpha: 1.0)
+        contentView.layer.cornerRadius = 12
+        contentView.layer.borderWidth = 1
+        contentView.layer.borderColor = UIColor(red: 0xDD/255.0, green: 0xDD/255.0, blue: 0xDD/255.0, alpha: 1.0).cgColor
+        
         contentView.addSubview(thumbnailImageView)
         contentView.addSubview(titleLabel)
         contentView.addSubview(locationLabel)
@@ -84,29 +110,36 @@ class PostCell: UITableViewCell {
         joopjoopButton.addTarget(self, action: #selector(joopjoopButtonTapped), for: .touchUpInside)
         
         NSLayoutConstraint.activate([
-            // 왼쪽에 대표 사진
-            thumbnailImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            thumbnailImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            thumbnailImageView.widthAnchor.constraint(equalToConstant: 60),
-            thumbnailImageView.heightAnchor.constraint(equalToConstant: 60),
+            // contentView 높이를 81로 고정 (사진 75 + 상단 6)
+            contentView.heightAnchor.constraint(equalToConstant: 81),
+            contentView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+            contentView.centerYAnchor.constraint(equalTo: self.centerYAnchor),
+            
+            // 왼쪽에 대표 사진 (좌단 6pt, 상단 6pt, 하단 여백 없음)
+            thumbnailImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 6),
+            thumbnailImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
+            thumbnailImageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            thumbnailImageView.widthAnchor.constraint(equalToConstant: 75),
+            thumbnailImageView.heightAnchor.constraint(equalToConstant: 75),
             
             // 오른쪽에 제목, 위치, 본문내용
-            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            titleLabel.leadingAnchor.constraint(equalTo: thumbnailImageView.trailingAnchor, constant: 12),
-            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
+            titleLabel.leadingAnchor.constraint(equalTo: thumbnailImageView.trailingAnchor, constant: 11),
+            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
             
-            locationLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            locationLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 1.6),
             locationLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             locationLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
             
-            contentLabel.topAnchor.constraint(equalTo: locationLabel.bottomAnchor, constant: 4),
+            contentLabel.topAnchor.constraint(equalTo: locationLabel.bottomAnchor, constant: 6),
             contentLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             contentLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
-            contentLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -12),
+            contentLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -6),
             
             // 줍줍버튼 (Lost 타입일 때만 표시)
-            joopjoopButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            joopjoopButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            joopjoopButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 0),
+            joopjoopButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
             joopjoopButton.widthAnchor.constraint(equalToConstant: 60),
             joopjoopButton.heightAnchor.constraint(equalToConstant: 32)
         ])
@@ -125,8 +158,8 @@ class PostCell: UITableViewCell {
             contentLabel.text = content
         }
         
-        // Lost 타입일 때만 줍줍버튼 표시
-        joopjoopButton.isHidden = post.type != .lost
+        // 홈에서는 줍줍버튼 안 보이게
+        joopjoopButton.isHidden = true
         
         if let firstImage = post.images.first {
             thumbnailImageView.image = firstImage
