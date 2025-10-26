@@ -230,14 +230,12 @@ class HomeViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle("글쓰기", for: .normal)
         button.setImage(UIImage(systemName: "pencil"), for: .normal)
-        button.backgroundColor = .secondaryBackgroundColor
+        button.backgroundColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0) // CED6E9
         button.setTitleColor(.primaryColor, for: .normal)
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
-        button.layer.cornerRadius = 25
-        button.layer.shadowColor = UIColor.black.cgColor
-        button.layer.shadowOffset = CGSize(width: 0, height: 2)
-        button.layer.shadowOpacity = 0.1
-        button.layer.shadowRadius = 4
+        button.layer.cornerRadius = 10
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0).cgColor
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -340,6 +338,7 @@ class HomeViewController: UIViewController {
     private var bannerItem: BannerItem?
     private var myPagePopover: PopoverMenuView?
     private var writePopover: PopoverMenuView?
+    private var backgroundTapGesture: UITapGestureRecognizer?
     private var currentPage = 0
     private let pageSize = 10
     
@@ -478,13 +477,13 @@ class HomeViewController: UIViewController {
             alertButtonLabel.centerYAnchor.constraint(equalTo: alertCard.centerYAnchor),
             
             segmentedControlContainer.topAnchor.constraint(equalTo: alertCard.bottomAnchor, constant: 37),
-            segmentedControlContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            segmentedControlContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 25),
             segmentedControlContainer.widthAnchor.constraint(equalToConstant: 324),
             segmentedControlContainer.heightAnchor.constraint(equalToConstant: 48),
             
             segmentedControl.topAnchor.constraint(equalTo: alertCard.bottomAnchor, constant: 37),
-            segmentedControl.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            segmentedControl.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            segmentedControl.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 25),
+            segmentedControl.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -25),
             segmentedControl.heightAnchor.constraint(equalToConstant: 40),
             
             foundButton.leadingAnchor.constraint(equalTo: segmentedControlContainer.leadingAnchor, constant: 4),
@@ -516,15 +515,15 @@ class HomeViewController: UIViewController {
             bottomButtonContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             bottomButtonContainer.heightAnchor.constraint(equalToConstant: 60),
             
-            writeButton.centerXAnchor.constraint(equalTo: bottomButtonContainer.centerXAnchor),
-            writeButton.centerYAnchor.constraint(equalTo: bottomButtonContainer.centerYAnchor),
-            writeButton.widthAnchor.constraint(equalToConstant: 120),
-            writeButton.heightAnchor.constraint(equalToConstant: 50),
+            writeButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 147),
+            writeButton.topAnchor.constraint(equalTo: view.topAnchor, constant: 663),
+            writeButton.widthAnchor.constraint(equalToConstant: 81),
+            writeButton.heightAnchor.constraint(equalToConstant: 30),
             
             bottomBar.topAnchor.constraint(equalTo: bottomButtonContainer.bottomAnchor, constant: 20),
             bottomBar.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             bottomBar.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            bottomBar.heightAnchor.constraint(equalToConstant: 60),
+            bottomBar.heightAnchor.constraint(equalToConstant: 72),
             bottomBar.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             
             bottomBarLabel.centerXAnchor.constraint(equalTo: bottomBar.centerXAnchor),
@@ -675,7 +674,13 @@ class HomeViewController: UIViewController {
     }
     
     @objc private func myPageTapped() {
-        showMyPagePopover()
+        if myPagePopover != nil {
+            // 이미 팝오버가 열려있으면 닫기
+            hideAllPopovers()
+        } else {
+            // 팝오버가 없으면 열기
+            showMyPagePopover()
+        }
     }
     
     @objc private func writeTapped() {
@@ -817,6 +822,12 @@ class HomeViewController: UIViewController {
         print("📱 showMyPagePopover 호출됨")
         hideAllPopovers()
         
+        // 배경 터치 가능하게 만들기
+        backgroundTapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
+        if let tapGesture = backgroundTapGesture {
+            view.addGestureRecognizer(tapGesture)
+        }
+        
         let menuItems = [
             MenuItem(title: DataManager.shared.currentUser?.name ?? "사용자", iconName: "person.circle"),
             MenuItem(title: "내가 쓴 글", iconName: "doc.text"),
@@ -842,8 +853,8 @@ class HomeViewController: UIViewController {
         popover.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            popover.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            popover.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 80),
+            popover.trailingAnchor.constraint(equalTo: myPageButton.trailingAnchor),
+            popover.topAnchor.constraint(equalTo: myPageButton.bottomAnchor, constant: 7),
             popover.widthAnchor.constraint(equalToConstant: 200)
         ])
         
@@ -854,6 +865,11 @@ class HomeViewController: UIViewController {
             popover.alpha = 1
             popover.transform = .identity
         }
+    }
+    
+    @objc private func backgroundTapped() {
+        print("📱 배경 터치됨 - 팝오버 닫기")
+        hideAllPopovers()
     }
     
     private func showWritePopover() {
@@ -902,6 +918,12 @@ class HomeViewController: UIViewController {
         writePopover?.removeFromSuperview()
         myPagePopover = nil
         writePopover = nil
+        
+        // 배경 제스처 제거
+        if let tapGesture = backgroundTapGesture {
+            view.removeGestureRecognizer(tapGesture)
+            backgroundTapGesture = nil
+        }
     }
     
     // MARK: - JupJup Notification Methods
