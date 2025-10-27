@@ -1821,14 +1821,70 @@ class CommentCell: UITableViewCell {
     }
     
     private func formatDate(_ dateString: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        guard let date = formatter.date(from: dateString) else {
+        var date: Date?
+        
+        // ISO8601 형식 먼저 시도
+        let iso8601Formatter = ISO8601DateFormatter()
+        iso8601Formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let parsedDate = iso8601Formatter.date(from: dateString) {
+            date = parsedDate
+        } else {
+            // DateFormatter로 시도
+            let formatters: [DateFormatter] = [
+                {
+                    let f = DateFormatter()
+                    f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
+                    f.timeZone = TimeZone(abbreviation: "UTC")
+                    return f
+                }(),
+                {
+                    let f = DateFormatter()
+                    f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
+                    f.timeZone = TimeZone(abbreviation: "UTC")
+                    return f
+                }()
+            ]
+            
+            for formatter in formatters {
+                if let parsedDate = formatter.date(from: dateString) {
+                    date = parsedDate
+                    break
+                }
+            }
+        }
+        
+        guard let date = date else {
+            print("⚠️ 날짜 파싱 실패: \(dateString)")
             return "방금 전"
         }
         
+        // 현재 시간은 로컬(한국) 시간
         let now = Date()
+        
+        // 서버 시간과 현재 시간의 차이 계산
+        // 만약 서버가 이미 한국 시간으로 보내고 있다면 변환 불필요
+        // 만약 서버가 UTC로 보내고 있다면 9시간을 더해야 함
         let timeInterval = now.timeIntervalSince(date)
         
+        print("📅 날짜 정보:")
+        print("   원본: \(dateString)")
+        print("   파싱된 날짜: \(date)")
+        print("   현재 시간: \(now)")
+        print("   시간 차이: \(timeInterval)초 (\(timeInterval/60)분, \(timeInterval/3600)시간)")
+        
+        // 시간 차이가 음수이거나 매우 작으면 서버가 이미 한국 시간을 보내고 있을 가능성
+        if timeInterval < -300 { // -5분보다 작으면 (서버가 미래 시간을 보냄)
+            // UTC로 간주하고 9시간 변환
+            let koreanDate = date.addingTimeInterval(9 * 60 * 60)
+            let adjustedInterval = now.timeIntervalSince(koreanDate)
+            print("   조정된 시간 차이: \(adjustedInterval)초")
+            return formatTimeInterval(adjustedInterval)
+        }
+        
+        return formatTimeInterval(timeInterval)
+    }
+    
+    private func formatTimeInterval(_ timeInterval: TimeInterval) -> String {
         if timeInterval < 60 {
             return "방금 전"
         } else if timeInterval < 3600 {

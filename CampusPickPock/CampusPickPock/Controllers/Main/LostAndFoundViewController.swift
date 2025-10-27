@@ -9,6 +9,22 @@ import UIKit
 
 class LostAndFoundViewController: UIViewController {
     
+    // MARK: - Custom Navigation Header
+    private let customNavHeader: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let backButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "arrow.left"), for: .normal)
+        button.tintColor = UIColor(red: 0x51/255.0, green: 0x5B/255.0, blue: 0x70/255.0, alpha: 1.0)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -113,7 +129,12 @@ class LostAndFoundViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = .backgroundColor
         
-        setupCustomBackButton()
+        // Hide default navigation bar
+        navigationController?.setNavigationBarHidden(true, animated: false)
+        
+        // Add custom header
+        view.addSubview(customNavHeader)
+        customNavHeader.addSubview(backButton)
         
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
@@ -129,23 +150,26 @@ class LostAndFoundViewController: UIViewController {
         
         view.addSubview(addButton)
         
+        backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
+        
         setupConstraints()
         setupActions()
     }
     
-    private func setupCustomBackButton() {
-        let backButton = UIButton(type: .system)
-        backButton.setImage(UIImage(systemName: "arrow.left"), for: .normal)
-        backButton.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
-        backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
-        
-        let backBarButtonItem = UIBarButtonItem(customView: backButton)
-        navigationItem.leftBarButtonItem = backBarButtonItem
-    }
-    
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            // Custom navigation header
+            customNavHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            customNavHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            customNavHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            customNavHeader.heightAnchor.constraint(equalToConstant: 44),
+            
+            backButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 16),
+            backButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
+            backButton.widthAnchor.constraint(equalToConstant: 24),
+            backButton.heightAnchor.constraint(equalToConstant: 24),
+            
+            scrollView.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: addButton.topAnchor, constant: -16),
@@ -265,8 +289,10 @@ class LostAndFoundViewController: UIViewController {
     }
     
     @objc private func addButtonTapped() {
-        // 분실물 추가 기능 (필요시 구현)
-        print("분실물 추가 버튼 탭됨")
+        // Found 포스팅 작성 페이지로 이동
+        print("분실물 추가 버튼 탭됨 - Found 포스팅 작성 페이지로 이동")
+        let postCreateVC = PostCreateViewController()
+        navigationController?.pushViewController(postCreateVC, animated: true)
     }
     
     private func loadItems() {
@@ -295,7 +321,7 @@ class LostAndFoundViewController: UIViewController {
                             LostAndFoundItem(
                                 id: String(storageItem.postingId),
                                 name: storageItem.postingCategory ?? "분실물",
-                                image: UIImage(systemName: "photo"),
+                                imageUrl: storageItem.postingImageUrl,
                                 registrationDate: self?.formatDate(storageItem.postingCreatedAt) ?? ""
                             )
                         }
@@ -306,7 +332,7 @@ class LostAndFoundViewController: UIViewController {
                             LostAndFoundItem(
                                 id: String(storageItem.postingId),
                                 name: storageItem.postingCategory ?? "분실물",
-                                image: UIImage(systemName: "photo"),
+                                imageUrl: storageItem.postingImageUrl,
                                 registrationDate: self?.formatDate(storageItem.postingCreatedAt) ?? ""
                             )
                         }
@@ -328,12 +354,12 @@ class LostAndFoundViewController: UIViewController {
     private func loadSampleData() {
         // 샘플 데이터 로드 (API 실패 시)
         items = [
-            LostAndFoundItem(id: "1", name: "물병", image: UIImage(systemName: "waterbottle"), registrationDate: "2024/01/15"),
-            LostAndFoundItem(id: "2", name: "물병", image: UIImage(systemName: "waterbottle"), registrationDate: "2024/01/14"),
-            LostAndFoundItem(id: "3", name: "물병", image: UIImage(systemName: "waterbottle"), registrationDate: "2024/01/13"),
-            LostAndFoundItem(id: "4", name: "물병", image: UIImage(systemName: "waterbottle"), registrationDate: "2024/01/12"),
-            LostAndFoundItem(id: "5", name: "물병", image: UIImage(systemName: "waterbottle"), registrationDate: "2024/01/11"),
-            LostAndFoundItem(id: "6", name: "물병", image: UIImage(systemName: "waterbottle"), registrationDate: "2024/01/10")
+            LostAndFoundItem(id: "1", name: "물병", imageUrl: nil, registrationDate: "2024/01/15"),
+            LostAndFoundItem(id: "2", name: "물병", imageUrl: nil, registrationDate: "2024/01/14"),
+            LostAndFoundItem(id: "3", name: "물병", imageUrl: nil, registrationDate: "2024/01/13"),
+            LostAndFoundItem(id: "4", name: "물병", imageUrl: nil, registrationDate: "2024/01/12"),
+            LostAndFoundItem(id: "5", name: "물병", imageUrl: nil, registrationDate: "2024/01/11"),
+            LostAndFoundItem(id: "6", name: "물병", imageUrl: nil, registrationDate: "2024/01/10")
         ]
         
         itemsCollectionView.reloadData()
@@ -425,7 +451,7 @@ extension LostAndFoundViewController: UICollectionViewDelegateFlowLayout {
 struct LostAndFoundItem {
     let id: String
     let name: String
-    let image: UIImage?
+    let imageUrl: String?
     let registrationDate: String
 }
 
@@ -484,8 +510,12 @@ class LostAndFoundItemCell: UICollectionViewCell {
     private let dateLabel: UILabel = {
         let label = UILabel()
         label.text = "등록일 : 0000/00/00"
-        label.font = UIFont.systemFont(ofSize: 12)
+        label.font = UIFont.systemFont(ofSize: 11)
         label.textColor = .white
+        label.numberOfLines = 0
+        label.lineBreakMode = .byWordWrapping
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.8
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -527,7 +557,7 @@ class LostAndFoundItemCell: UICollectionViewCell {
             dateOverlayView.leadingAnchor.constraint(equalTo: itemImageView.leadingAnchor),
             dateOverlayView.trailingAnchor.constraint(equalTo: itemImageView.trailingAnchor),
             dateOverlayView.bottomAnchor.constraint(equalTo: itemImageView.bottomAnchor),
-            dateOverlayView.heightAnchor.constraint(equalToConstant: 30),
+            dateOverlayView.heightAnchor.constraint(equalToConstant: 35),
             
             clockIconImageView.leadingAnchor.constraint(equalTo: dateOverlayView.leadingAnchor, constant: 8),
             clockIconImageView.centerYAnchor.constraint(equalTo: dateOverlayView.centerYAnchor),
@@ -541,8 +571,28 @@ class LostAndFoundItemCell: UICollectionViewCell {
     }
     
     func configure(with item: LostAndFoundItem) {
-        itemImageView.image = item.image
-        itemImageView.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+        // URL로부터 이미지 로드
+        if let imageUrl = item.imageUrl, !imageUrl.isEmpty, let url = URL(string: imageUrl) {
+            itemImageView.image = nil // 기본 이미지 초기화
+            
+            // 비동기적으로 이미지 로드
+            URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+                DispatchQueue.main.async {
+                    if let data = data, let image = UIImage(data: data) {
+                        self?.itemImageView.image = image
+                    } else {
+                        // 이미지 로드 실패 시 플레이스홀더 표시
+                        self?.itemImageView.image = UIImage(systemName: "photo")
+                        self?.itemImageView.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+                    }
+                }
+            }.resume()
+        } else {
+            // 이미지 URL이 없는 경우 플레이스홀더 표시
+            itemImageView.image = UIImage(systemName: "photo")
+            itemImageView.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+        }
+        
         dateLabel.text = "등록일 : \(item.registrationDate)"
     }
 }

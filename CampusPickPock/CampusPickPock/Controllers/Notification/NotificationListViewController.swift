@@ -9,6 +9,33 @@ import UIKit
 
 class NotificationListViewController: UIViewController {
     
+    // MARK: - Custom Navigation Header
+    private let customNavHeader: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "알림"
+        label.font = UIFont.boldSystemFont(ofSize: 18)
+        label.textColor = .primaryTextColor
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let closeButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("×", for: .normal)
+        button.setTitleColor(.primaryTextColor, for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 28, weight: .light)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
     private let tableView: UITableView = {
         let table = UITableView()
         table.translatesAutoresizingMaskIntoConstraints = false
@@ -44,17 +71,40 @@ class NotificationListViewController: UIViewController {
     }
     
     private func setupUI() {
-        title = "알림"
         view.backgroundColor = .backgroundColor
         
-        setupCustomBackButton()
+        // Hide default navigation bar
+        navigationController?.setNavigationBarHidden(true, animated: false)
         
+        // Add custom header
+        view.addSubview(customNavHeader)
+        customNavHeader.addSubview(titleLabel)
+        customNavHeader.addSubview(closeButton)
+        
+        // Add table view and other elements
         view.addSubview(tableView)
         view.addSubview(emptyLabel)
         view.addSubview(loadingIndicator)
         
+        closeButton.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
+        
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            // Custom header constraints
+            customNavHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            customNavHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            customNavHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            customNavHeader.heightAnchor.constraint(equalToConstant: 44),
+            
+            titleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
+            titleLabel.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
+            
+            closeButton.trailingAnchor.constraint(equalTo: customNavHeader.trailingAnchor, constant: -16),
+            closeButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
+            closeButton.widthAnchor.constraint(equalToConstant: 44),
+            closeButton.heightAnchor.constraint(equalToConstant: 44),
+            
+            // Table view constraints - start below custom header
+            tableView.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -67,18 +117,8 @@ class NotificationListViewController: UIViewController {
         ])
     }
     
-    private func setupCustomBackButton() {
-        let backButton = UIButton(type: .system)
-        backButton.setImage(UIImage(systemName: "arrow.left"), for: .normal)
-        backButton.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
-        backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
-        
-        let backBarButtonItem = UIBarButtonItem(customView: backButton)
-        navigationItem.leftBarButtonItem = backBarButtonItem
-    }
-    
-    @objc private func backTapped() {
-        print("🔙 NotificationListViewController 뒤로가기 버튼 탭됨")
+    @objc private func closeTapped() {
+        print("❌ 알림창 닫기 버튼 탭됨")
         navigationController?.popViewController(animated: true)
         print("🔙 메인화면으로 복귀 완료")
     }

@@ -17,6 +17,22 @@ class LostPostListViewController: UIViewController {
     private var currentPage = 0
     private let pageSize = 20
     
+    // MARK: - Custom Navigation Header
+    private let customNavHeader: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let backButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "arrow.left"), for: .normal)
+        button.tintColor = UIColor(red: 0x51/255.0, green: 0x5B/255.0, blue: 0x70/255.0, alpha: 1.0)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -129,7 +145,12 @@ class LostPostListViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = .backgroundColor
         
-        setupCustomBackButton()
+        // Hide default navigation bar
+        navigationController?.setNavigationBarHidden(true, animated: false)
+        
+        // Add custom header
+        view.addSubview(customNavHeader)
+        customNavHeader.addSubview(backButton)
         
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
@@ -143,12 +164,25 @@ class LostPostListViewController: UIViewController {
         
         contentView.addSubview(postsTableView)
         
+        backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
+        
         setupConstraints()
     }
     
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            // Custom navigation header
+            customNavHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            customNavHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            customNavHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            customNavHeader.heightAnchor.constraint(equalToConstant: 44),
+            
+            backButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 16),
+            backButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
+            backButton.widthAnchor.constraint(equalToConstant: 24),
+            backButton.heightAnchor.constraint(equalToConstant: 24),
+            
+            scrollView.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -190,16 +224,6 @@ class LostPostListViewController: UIViewController {
             postsTableView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             postsTableView.heightAnchor.constraint(equalToConstant: 600)
         ])
-    }
-    
-    private func setupCustomBackButton() {
-        let backButton = UIButton(type: .system)
-        backButton.setImage(UIImage(systemName: "arrow.left"), for: .normal)
-        backButton.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
-        backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
-        
-        let backBarButtonItem = UIBarButtonItem(customView: backButton)
-        navigationItem.leftBarButtonItem = backBarButtonItem
     }
     
     private func setupTableView() {
@@ -335,8 +359,65 @@ extension LostPostListViewController: UITableViewDelegate, UITableViewDataSource
     }
     
     private func parseDate(_ dateString: String) -> Date {
-        let formatter = ISO8601DateFormatter()
-        return formatter.date(from: dateString) ?? Date()
+        var date: Date?
+        
+        // ISO8601DateFormatter 시도 (fractional seconds 포함)
+        let iso8601Formatter = ISO8601DateFormatter()
+        iso8601Formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let parsedDate = iso8601Formatter.date(from: dateString) {
+            date = parsedDate
+        } else {
+            // DateFormatter들로 시도
+            let dateFormatters: [DateFormatter] = [
+                {
+                    let f = DateFormatter()
+                    f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
+                    f.timeZone = TimeZone(abbreviation: "UTC")
+                    return f
+                }(),
+                {
+                    let f = DateFormatter()
+                    f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+                    f.timeZone = TimeZone(abbreviation: "UTC")
+                    return f
+                }(),
+                {
+                    let f = DateFormatter()
+                    f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
+                    f.timeZone = TimeZone(abbreviation: "UTC")
+                    return f
+                }()
+            ]
+            
+            for formatter in dateFormatters {
+                if let parsedDate = formatter.date(from: dateString) {
+                    date = parsedDate
+                    break
+                }
+            }
+        }
+        
+        guard let date = date else {
+            print("⚠️ 날짜 파싱 실패: \(dateString), 현재 시간 반환")
+            return Date()
+        }
+        
+        let now = Date()
+        let timeInterval = now.timeIntervalSince(date)
+        
+        print("📅 Lost 포스팅 파싱:")
+        print("   원본: \(dateString)")
+        print("   파싱된 날짜(UTC): \(date)")
+        print("   현재 시간: \(now)")
+        print("   시간 차이(변환 전): \(timeInterval)초 (\(timeInterval/60)분, \(timeInterval/3600)시간)")
+        
+        // 서버가 UTC로 보내므로 한국 시간(KST)으로 변환 (UTC+9)
+        let koreanDate = date.addingTimeInterval(9 * 60 * 60)
+        let adjustedInterval = now.timeIntervalSince(koreanDate)
+        print("   한국 시간: \(koreanDate)")
+        print("   시간 차이(변환 후): \(adjustedInterval)초 (\(adjustedInterval/60)분, \(adjustedInterval/3600)시간)")
+        
+        return koreanDate
     }
 }
 
@@ -551,12 +632,37 @@ class LostPostCell: UITableViewCell {
         self.post = post
         usernameLabel.text = post.authorName
         titleLabel.text = post.title
-        timeLabel.text = "8시간 전"
+        timeLabel.text = formatRelativeTime(post.createdAt)
         descriptionLabel.text = post.content
         
         // 샘플 이미지 설정 (실제로는 post.images 사용)
         itemImageView.image = UIImage(systemName: "airpods")
         itemImageView.tintColor = .gray
+        
+        print("📅 Lost 포스팅 시간 정보:")
+        print("   작성 시간: \(post.createdAt)")
+        print("   현재 시간: \(Date())")
+        print("   표시 시간: \(timeLabel.text ?? "")")
+    }
+    
+    private func formatRelativeTime(_ date: Date) -> String {
+        let now = Date()
+        let timeInterval = now.timeIntervalSince(date)
+        
+        print("   시간 차이: \(timeInterval)초 (\(timeInterval/60)분, \(timeInterval/3600)시간)")
+        
+        if timeInterval < 60 {
+            return "방금 전"
+        } else if timeInterval < 3600 {
+            let minutes = Int(timeInterval / 60)
+            return "\(minutes)분 전"
+        } else if timeInterval < 86400 {
+            let hours = Int(timeInterval / 3600)
+            return "\(hours)시간 전"
+        } else {
+            let days = Int(timeInterval / 86400)
+            return "\(days)일 전"
+        }
     }
     
     @objc private func joopjoopButtonTapped() {

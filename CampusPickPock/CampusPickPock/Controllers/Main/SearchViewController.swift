@@ -9,15 +9,57 @@ import UIKit
 
 class SearchViewController: UIViewController {
     
-    private let searchBar: UISearchBar = {
-        let searchBar = UISearchBar()
-        searchBar.placeholder = "분실물 검색..."
-        searchBar.translatesAutoresizingMaskIntoConstraints = false
-        return searchBar
+    // MARK: - Custom Header
+    private let customHeader: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
     }()
     
+    private let backButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "arrow.left"), for: .normal)
+        button.tintColor = UIColor(red: 0x51/255.0, green: 0x5B/255.0, blue: 0x70/255.0, alpha: 1.0)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private let searchTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "잃어버린 물건을 검색해 보세요."
+        textField.backgroundColor = UIColor(red: 0xF5/255.0, green: 0xF5/255.0, blue: 0xF5/255.0, alpha: 1.0)
+        textField.layer.cornerRadius = 20
+        textField.font = UIFont.systemFont(ofSize: 15)
+        textField.leftViewMode = .always
+        textField.clearButtonMode = .whileEditing
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 왼쪽에 돋보기 아이콘 추가
+        let searchIcon = UIImageView(image: UIImage(systemName: "magnifyingglass"))
+        searchIcon.tintColor = .gray
+        searchIcon.frame = CGRect(x: 0, y: 0, width: 20, height: 20)
+        searchIcon.contentMode = .scaleAspectFit
+        
+        let iconContainer = UIView(frame: CGRect(x: 0, y: 0, width: 30, height: 20))
+        iconContainer.addSubview(searchIcon)
+        searchIcon.center = iconContainer.center
+        
+        textField.leftView = iconContainer
+        
+        // 텍스트 왼쪽 여백
+        textField.leftViewMode = .always
+        let leftPaddingView = UIView(frame: CGRect(x: 0, y: 0, width: 15, height: 20))
+        textField.leftView?.addSubview(leftPaddingView)
+        
+        return textField
+    }()
+    
+    // UISearchBar delegate를 유지하기 위한 속성
+    private var searchBar: UISearchBar?
+    
     private let segmentedControl: UISegmentedControl = {
-        let control = UISegmentedControl(items: ["전체", "분실물", "습득물"])
+        let control = UISegmentedControl(items: ["FOUND", "LOST"])
         control.selectedSegmentIndex = 0
         control.translatesAutoresizingMaskIntoConstraints = false
         return control
@@ -59,26 +101,45 @@ class SearchViewController: UIViewController {
     }
     
     private func setupUI() {
-        title = "검색"
         view.backgroundColor = .backgroundColor
         
-        setupCustomBackButton()
+        // Hide default navigation bar
+        navigationController?.setNavigationBarHidden(true, animated: false)
         
-        view.addSubview(searchBar)
+        // Add custom header with back button and search text field
+        view.addSubview(customHeader)
+        customHeader.addSubview(backButton)
+        customHeader.addSubview(searchTextField)
+        
+        // Add segmented control, table view and other elements
         view.addSubview(segmentedControl)
         view.addSubview(tableView)
         view.addSubview(emptyLabel)
         view.addSubview(loadingIndicator)
         
-        searchBar.delegate = self
+        searchTextField.delegate = self
+        searchTextField.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
         segmentedControl.addTarget(self, action: #selector(segmentChanged), for: .valueChanged)
+        backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
         
         NSLayoutConstraint.activate([
-            searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            // Custom header constraints
+            customHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            customHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            customHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            customHeader.heightAnchor.constraint(equalToConstant: 60),
             
-            segmentedControl.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 16),
+            backButton.leadingAnchor.constraint(equalTo: customHeader.leadingAnchor, constant: 16),
+            backButton.centerYAnchor.constraint(equalTo: customHeader.centerYAnchor),
+            backButton.widthAnchor.constraint(equalToConstant: 24),
+            backButton.heightAnchor.constraint(equalToConstant: 24),
+            
+            searchTextField.leadingAnchor.constraint(equalTo: backButton.trailingAnchor, constant: 8),
+            searchTextField.trailingAnchor.constraint(equalTo: customHeader.trailingAnchor, constant: -16),
+            searchTextField.centerYAnchor.constraint(equalTo: customHeader.centerYAnchor),
+            searchTextField.heightAnchor.constraint(equalToConstant: 40),
+            
+            segmentedControl.topAnchor.constraint(equalTo: customHeader.bottomAnchor, constant: 16),
             segmentedControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             segmentedControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             
@@ -98,16 +159,6 @@ class SearchViewController: UIViewController {
         emptyLabel.isHidden = false
     }
     
-    private func setupCustomBackButton() {
-        let backButton = UIButton(type: .system)
-        backButton.setImage(UIImage(systemName: "arrow.left"), for: .normal)
-        backButton.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
-        backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
-        
-        let backBarButtonItem = UIBarButtonItem(customView: backButton)
-        navigationItem.leftBarButtonItem = backBarButtonItem
-    }
-    
     @objc private func backTapped() {
         print("🔙 SearchViewController 뒤로가기 버튼 탭됨")
         navigationController?.popViewController(animated: true)
@@ -123,10 +174,15 @@ class SearchViewController: UIViewController {
     }
     
     @objc private func segmentChanged() {
-        let searchText = searchBar.text ?? ""
+        let searchText = searchTextField.text ?? ""
         if !searchText.isEmpty {
             performSearch(query: searchText)
         }
+    }
+    
+    @objc private func textFieldDidChange() {
+        let searchText = searchTextField.text ?? ""
+        performSearch(query: searchText)
     }
     
     private func performSearch(query: String) {
@@ -140,16 +196,12 @@ class SearchViewController: UIViewController {
             return
         }
         
-        // 검색 타입 결정 - ALL일 때는 두 번의 API 호출
+        // 검색 타입 결정
         let searchType: String
         switch segmentedControl.selectedSegmentIndex {
-        case 0: 
-            // 전체 검색 - LOST와 FOUND를 각각 검색
-            performCombinedSearch(query: query)
-            return
+        case 0: searchType = "FOUND"
         case 1: searchType = "LOST"
-        case 2: searchType = "FOUND"
-        default: searchType = "LOST"
+        default: searchType = "FOUND"
         }
         
         currentSearchType = searchType
@@ -212,110 +264,16 @@ class SearchViewController: UIViewController {
         }
     }
     
-    private func performCombinedSearch(query: String) {
-        // 로딩 상태 표시
-        isLoading = true
-        tableView.isHidden = false
-        emptyLabel.isHidden = true
-        loadingIndicator.startAnimating()
-        
-        print("🔍 전체 검색 시작: keyword=\(query)")
-        
-        let group = DispatchGroup()
-        var lostResults: [PostingItem] = []
-        var foundResults: [PostingItem] = []
-        var searchError: APIError?
-        
-        // LOST 검색
-        group.enter()
-        APIService.shared.searchPosts(type: "LOST", keyword: query) { result in
-            switch result {
-            case .success(let results):
-                lostResults = results
-                print("✅ LOST 검색 성공: \(results.count)개 결과")
-            case .failure(let error):
-                print("❌ LOST 검색 실패: \(error.localizedDescription)")
-                searchError = error
-            }
-            group.leave()
-        }
-        
-        // FOUND 검색
-        group.enter()
-        APIService.shared.searchPosts(type: "FOUND", keyword: query) { result in
-            switch result {
-            case .success(let results):
-                foundResults = results
-                print("✅ FOUND 검색 성공: \(results.count)개 결과")
-            case .failure(let error):
-                print("❌ FOUND 검색 실패: \(error.localizedDescription)")
-                searchError = error
-            }
-            group.leave()
-        }
-        
-        // 모든 검색 완료 후 결과 처리
-        group.notify(queue: .main) { [weak self] in
-            self?.isLoading = false
-            self?.loadingIndicator.stopAnimating()
-            
-            if let error = searchError {
-                print("❌ 검색 실패: \(error.localizedDescription)")
-                self?.searchResults = []
-                self?.postingItems = []
-                self?.emptyLabel.isHidden = false
-                self?.emptyLabel.text = "검색 중 오류가 발생했습니다"
-                self?.tableView.reloadData()
-                return
-            }
-            
-            // 결과 합치기
-            let combinedResults = lostResults + foundResults
-            print("✅ 전체 검색 완료: 총 \(combinedResults.count)개 결과 (LOST: \(lostResults.count), FOUND: \(foundResults.count))")
-            
-            self?.postingItems = combinedResults
-            
-            // PostingItem을 Post로 변환
-            self?.searchResults = combinedResults.map { postingItem in
-                Post(
-                    id: String(postingItem.postingId),
-                    postingId: postingItem.postingId,
-                    title: postingItem.postingTitle,
-                    content: postingItem.postingContent,
-                    images: [],
-                    authorId: postingItem.postingWriterNickName ?? "익명",
-                    authorName: postingItem.postingWriterNickName ?? "익명",
-                    isHidden: false,
-                    createdAt: self?.parseDate(postingItem.postingCreatedAt) ?? Date(),
-                    commentCount: postingItem.commentCount,
-                    type: postingItem.postingCategory == "LOST" ? .lost : .found
-                )
-            }
-            
-            if self?.searchResults.isEmpty == true {
-                self?.emptyLabel.isHidden = false
-                self?.emptyLabel.text = "'\(query)'에 대한 검색 결과가 없습니다"
-            } else {
-                self?.emptyLabel.isHidden = true
-            }
-            
-            self?.tableView.reloadData()
-        }
-    }
-    
     private func parseDate(_ dateString: String) -> Date {
         let formatter = ISO8601DateFormatter()
         return formatter.date(from: dateString) ?? Date()
     }
 }
 
-extension SearchViewController: UISearchBarDelegate {
-    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        performSearch(query: searchText)
-    }
-    
-    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        searchBar.resignFirstResponder()
+extension SearchViewController: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        return true
     }
 }
 
