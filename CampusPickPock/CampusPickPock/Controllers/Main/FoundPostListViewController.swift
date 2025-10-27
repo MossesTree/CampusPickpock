@@ -205,7 +205,7 @@ class FoundPostListViewController: UIViewController {
     }
     
     private func setupCategoryButtons() {
-        let categories = ["전체", "전자 제품", "카드/지갑", "기타"]
+        let categories = ["전체", "전자제품", "지갑·카드", "의류·잡화", "학용품", "생활용품", "기타"]
         
         for (index, category) in categories.enumerated() {
             let button = UIButton(type: .system)
@@ -253,7 +253,7 @@ class FoundPostListViewController: UIViewController {
         sender.setTitleColor(.white, for: .normal)
         
         // 카테고리 업데이트
-        let categories = ["전체", "전자 제품", "카드/지갑", "기타"]
+        let categories = ["전체", "전자제품", "지갑·카드", "의류·잡화", "학용품", "생활용품", "기타"]
         selectedCategory = categories[sender.tag]
         
         loadPosts()

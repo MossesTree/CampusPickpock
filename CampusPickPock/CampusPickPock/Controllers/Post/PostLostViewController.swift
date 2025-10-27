@@ -63,6 +63,24 @@ class PostLostViewController: UIViewController {
         return collectionView
     }()
     
+    // MARK: - Category Section
+    private let categoryLabel: UILabel = {
+        let label = UILabel()
+        label.text = "카테고리"
+        label.font = UIFont.boldSystemFont(ofSize: 16)
+        label.textColor = .primaryTextColor
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let categoryStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.spacing = 8
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        return stackView
+    }()
+    
     // MARK: - Title Section
     private let titleLabel: UILabel = {
         let label = UILabel()
@@ -187,6 +205,8 @@ class PostLostViewController: UIViewController {
     }()
     
     private var selectedImages: [UIImage] = []
+    private var selectedCategory: String?
+    private var selectedLocation: String?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -210,6 +230,9 @@ class PostLostViewController: UIViewController {
         imageUploadView.addSubview(imageCountLabel)
         imageUploadView.addSubview(imageCollectionView)
         
+        contentView.addSubview(categoryLabel)
+        contentView.addSubview(categoryStackView)
+        
         contentView.addSubview(titleLabel)
         contentView.addSubview(titleTextField)
         
@@ -226,6 +249,7 @@ class PostLostViewController: UIViewController {
         contentView.addSubview(helperLabel)
         
         setupConstraints()
+        setupCategoryButtons()
     }
     
     private func setupCustomBackButton() {
@@ -270,8 +294,16 @@ class PostLostViewController: UIViewController {
             imageCollectionView.trailingAnchor.constraint(equalTo: imageUploadView.trailingAnchor, constant: -16),
             imageCollectionView.heightAnchor.constraint(equalToConstant: 80),
             
+            // Category Section
+            categoryLabel.topAnchor.constraint(equalTo: imageUploadView.bottomAnchor, constant: 24),
+            categoryLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            
+            categoryStackView.topAnchor.constraint(equalTo: categoryLabel.bottomAnchor, constant: 12),
+            categoryStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            categoryStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            
             // Title Section
-            titleLabel.topAnchor.constraint(equalTo: imageUploadView.bottomAnchor, constant: 24),
+            titleLabel.topAnchor.constraint(equalTo: categoryStackView.bottomAnchor, constant: 24),
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             
             titleTextField.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
@@ -323,6 +355,57 @@ class PostLostViewController: UIViewController {
             helperLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             helperLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -32)
         ])
+    }
+    
+    private func setupCategoryButtons() {
+        let categories = ["전자제품", "지갑·카드", "의류·잡화", "학용품", "생활용품", "기타"]
+        
+        // 3개씩 나누어서 가로 스택뷰로 배치
+        let firstRow = ["전자제품", "지갑·카드", "의류·잡화"]
+        let secondRow = ["학용품", "생활용품", "기타"]
+        
+        let firstRowStack = UIStackView()
+        firstRowStack.axis = .horizontal
+        firstRowStack.spacing = 8
+        firstRowStack.distribution = .fill
+        firstRowStack.translatesAutoresizingMaskIntoConstraints = false
+        
+        let secondRowStack = UIStackView()
+        secondRowStack.axis = .horizontal
+        secondRowStack.spacing = 8
+        secondRowStack.distribution = .fill
+        secondRowStack.translatesAutoresizingMaskIntoConstraints = false
+        
+        let buttonWidth: CGFloat = (UIScreen.main.bounds.width - 40 - 16) / 3 // 화면 너비에서 여백 빼고 3으로 나눔
+        
+        for category in firstRow {
+            let button = UIButton(type: .system)
+            button.setTitle(category, for: .normal)
+            button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
+            button.backgroundColor = UIColor(red: 0.9, green: 0.93, blue: 1.0, alpha: 1.0)
+            button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
+            button.layer.cornerRadius = 8
+            button.heightAnchor.constraint(equalToConstant: 40).isActive = true
+            button.widthAnchor.constraint(equalToConstant: buttonWidth).isActive = true
+            button.addTarget(self, action: #selector(categoryButtonTapped(_:)), for: .touchUpInside)
+            firstRowStack.addArrangedSubview(button)
+        }
+        
+        for category in secondRow {
+            let button = UIButton(type: .system)
+            button.setTitle(category, for: .normal)
+            button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
+            button.backgroundColor = UIColor(red: 0.9, green: 0.93, blue: 1.0, alpha: 1.0)
+            button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
+            button.layer.cornerRadius = 8
+            button.heightAnchor.constraint(equalToConstant: 40).isActive = true
+            button.widthAnchor.constraint(equalToConstant: buttonWidth).isActive = true
+            button.addTarget(self, action: #selector(categoryButtonTapped(_:)), for: .touchUpInside)
+            secondRowStack.addArrangedSubview(button)
+        }
+        
+        categoryStackView.addArrangedSubview(firstRowStack)
+        categoryStackView.addArrangedSubview(secondRowStack)
     }
     
     private func setupCollectionView() {
@@ -496,12 +579,12 @@ class PostLostViewController: UIViewController {
             postingTitle: title,
             postingContent: description,
             postingType: "LOST", // 분실물 게시글
-            itemPlace: "캠퍼스", // TODO: 위치 정보 추가
+            itemPlace: selectedLocation ?? "캠퍼스",
             ownerStudentId: studentId,
             ownerBirthDate: birthDate,
             ownerName: name,
             postingImageUrls: imageUrls,
-            postingCategory: "기타", // TODO: 카테고리 선택 기능 추가
+            postingCategory: selectedCategory ?? "기타",
             isPlacedInStorage: false // 분실물은 보관함에 넣지 않음
         ) { [weak self] result in
             DispatchQueue.main.async {
@@ -520,6 +603,27 @@ class PostLostViewController: UIViewController {
                 }
             }
         }
+    }
+    
+    @objc private func categoryButtonTapped(_ sender: UIButton) {
+        // 모든 버튼을 초기 상태로 리셋
+        for subview in categoryStackView.arrangedSubviews {
+            if let stackView = subview as? UIStackView {
+                for arrangedSubview in stackView.arrangedSubviews {
+                    if let button = arrangedSubview as? UIButton {
+                        button.backgroundColor = UIColor(red: 0.9, green: 0.93, blue: 1.0, alpha: 1.0)
+                        button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
+                    }
+                }
+            }
+        }
+        
+        // 선택된 버튼 표시
+        sender.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+        sender.setTitleColor(.white, for: .normal)
+        
+        // 선택된 카테고리 저장
+        selectedCategory = sender.title(for: .normal)
     }
     
     private func showSuccessAlert() {

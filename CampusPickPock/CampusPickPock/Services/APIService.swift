@@ -2074,6 +2074,7 @@ struct PostDetailItem: Codable {
     let postingImageUrls: [String]?
     let postingContent: String
     let postingCreatedAt: String?
+    let postingCategory: String?
     
     // 커스텀 디코딩으로 null 값 처리
     init(from decoder: Decoder) throws {
@@ -2087,6 +2088,7 @@ struct PostDetailItem: Codable {
         postingImageUrls = try container.decodeIfPresent([String].self, forKey: .postingImageUrls)
         postingContent = try container.decode(String.self, forKey: .postingContent)
         postingCreatedAt = try container.decodeIfPresent(String.self, forKey: .postingCreatedAt)
+        postingCategory = try container.decodeIfPresent(String.self, forKey: .postingCategory)
     }
     
     private enum CodingKeys: String, CodingKey {
@@ -2098,6 +2100,7 @@ struct PostDetailItem: Codable {
         case postingImageUrls
         case postingContent
         case postingCreatedAt
+        case postingCategory
     }
 }
 

@@ -222,6 +222,8 @@ class PostCreateViewController: UIViewController {
     
     private var selectedImages: [UIImage] = []
     private var isStorageChecked = false
+    private var selectedCategory: String?
+    private var selectedLocation: String?
     
     // 수정 모드를 위한 프로퍼티들
     private var isEditMode = false
@@ -386,31 +388,54 @@ class PostCreateViewController: UIViewController {
     }
     
     private func setupCategoryButtons() {
-        let categories = [
-            ["전자 제품", "전자 제품", "전자 제품"],
-            ["전자 제품", "전자 제품", "전자 제품"],
-            ["카드/지갑", "카드/지갑", "카드/지갑"]
-        ]
+        let categories = ["전자제품", "지갑·카드", "의류·잡화", "학용품", "생활용품", "기타"]
         
-        for row in categories {
-            let rowStackView = UIStackView()
-            rowStackView.axis = .horizontal
-            rowStackView.spacing = 8
-            rowStackView.distribution = .fillEqually
-            
-            for category in row {
-                let button = UIButton(type: .system)
-                button.setTitle(category, for: .normal)
-                button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
-                button.backgroundColor = UIColor(red: 0.9, green: 0.93, blue: 1.0, alpha: 1.0)
-                button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
-                button.layer.cornerRadius = 8
-                button.heightAnchor.constraint(equalToConstant: 40).isActive = true
-                rowStackView.addArrangedSubview(button)
-            }
-            
-            categoryStackView.addArrangedSubview(rowStackView)
+        // 3개씩 나누어서 가로 스택뷰로 배치
+        let firstRow = ["전자제품", "지갑·카드", "의류·잡화"]
+        let secondRow = ["학용품", "생활용품", "기타"]
+        
+        let firstRowStack = UIStackView()
+        firstRowStack.axis = .horizontal
+        firstRowStack.spacing = 8
+        firstRowStack.distribution = .fill
+        firstRowStack.translatesAutoresizingMaskIntoConstraints = false
+        
+        let secondRowStack = UIStackView()
+        secondRowStack.axis = .horizontal
+        secondRowStack.spacing = 8
+        secondRowStack.distribution = .fill
+        secondRowStack.translatesAutoresizingMaskIntoConstraints = false
+        
+        let buttonWidth: CGFloat = (UIScreen.main.bounds.width - 40 - 16) / 3 // 화면 너비에서 여백 빼고 3으로 나눔
+        
+        for category in firstRow {
+            let button = UIButton(type: .system)
+            button.setTitle(category, for: .normal)
+            button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
+            button.backgroundColor = UIColor(red: 0.9, green: 0.93, blue: 1.0, alpha: 1.0)
+            button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
+            button.layer.cornerRadius = 8
+            button.heightAnchor.constraint(equalToConstant: 40).isActive = true
+            button.widthAnchor.constraint(equalToConstant: buttonWidth).isActive = true
+            button.addTarget(self, action: #selector(categoryButtonTapped(_:)), for: .touchUpInside)
+            firstRowStack.addArrangedSubview(button)
         }
+        
+        for category in secondRow {
+            let button = UIButton(type: .system)
+            button.setTitle(category, for: .normal)
+            button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
+            button.backgroundColor = UIColor(red: 0.9, green: 0.93, blue: 1.0, alpha: 1.0)
+            button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
+            button.layer.cornerRadius = 8
+            button.heightAnchor.constraint(equalToConstant: 40).isActive = true
+            button.widthAnchor.constraint(equalToConstant: buttonWidth).isActive = true
+            button.addTarget(self, action: #selector(categoryButtonTapped(_:)), for: .touchUpInside)
+            secondRowStack.addArrangedSubview(button)
+        }
+        
+        categoryStackView.addArrangedSubview(firstRowStack)
+        categoryStackView.addArrangedSubview(secondRowStack)
     }
     
     private func setupCollectionView() {
@@ -424,10 +449,31 @@ class PostCreateViewController: UIViewController {
     }
     
     private func setupActions() {
+        locationButton.addTarget(self, action: #selector(locationButtonTapped), for: .touchUpInside)
         storageCheckbox.addTarget(self, action: #selector(storageCheckboxTapped), for: .touchUpInside)
         uploadButton.addTarget(self, action: #selector(uploadTapped), for: .touchUpInside)
         
         descriptionTextView.delegate = self
+    }
+    
+    @objc private func locationButtonTapped() {
+        let alert = UIAlertController(title: "위치 입력", message: "습득한 위치를 입력해주세요.", preferredStyle: .alert)
+        
+        alert.addTextField { [weak self] textField in
+            textField.placeholder = "예: 캠퍼스, 도서관, 강의실"
+            textField.text = self?.selectedLocation
+        }
+        
+        alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
+            if let textField = alert.textFields?.first, let text = textField.text, !text.isEmpty {
+                self?.selectedLocation = text
+                self?.locationButton.setTitle(text, for: .normal)
+            }
+        })
+        
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        
+        present(alert, animated: true)
     }
     
     @objc private func backTapped() {
@@ -487,10 +533,10 @@ class PostCreateViewController: UIViewController {
         
         // 수정 요청 데이터 생성
         let updateData = UpdatePostRequest(
-            postingCategory: "기타", // TODO: 카테고리 선택 기능 추가
+            postingCategory: selectedCategory ?? "기타",
             postingTitle: title,
             postingContent: description,
-            itemPlace: "캠퍼스", // TODO: 위치 정보 추가
+            itemPlace: selectedLocation ?? "캠퍼스",
             isPlacedInStorage: isStorageChecked,
             ownerStudentId: "", // 수정 시에는 개인정보 변경 불가
             ownerBirthDate: "", // 수정 시에는 개인정보 변경 불가
@@ -640,12 +686,12 @@ class PostCreateViewController: UIViewController {
             postingTitle: title,
             postingContent: description,
             postingType: "FOUND", // 습득물 게시글
-            itemPlace: "캠퍼스", // TODO: 위치 정보 추가
+            itemPlace: selectedLocation ?? "캠퍼스",
             ownerStudentId: studentId,
             ownerBirthDate: birthDate,
             ownerName: name,
             postingImageUrls: imageUrls,
-            postingCategory: "기타", // TODO: 카테고리 선택 기능 추가
+            postingCategory: selectedCategory ?? "기타",
             isPlacedInStorage: isStorageChecked
         ) { [weak self] result in
             DispatchQueue.main.async {
@@ -678,6 +724,27 @@ class PostCreateViewController: UIViewController {
             imageCountLabel.isHidden = true
             imageCollectionView.isHidden = false
         }
+    }
+    
+    @objc private func categoryButtonTapped(_ sender: UIButton) {
+        // 모든 버튼을 초기 상태로 리셋
+        for subview in categoryStackView.arrangedSubviews {
+            if let stackView = subview as? UIStackView {
+                for arrangedSubview in stackView.arrangedSubviews {
+                    if let button = arrangedSubview as? UIButton {
+                        button.backgroundColor = UIColor(red: 0.9, green: 0.93, blue: 1.0, alpha: 1.0)
+                        button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
+                    }
+                }
+            }
+        }
+        
+        // 선택된 버튼 표시
+        sender.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+        sender.setTitleColor(.white, for: .normal)
+        
+        // 선택된 카테고리 저장
+        selectedCategory = sender.title(for: .normal)
     }
     
     private func showAlert(message: String) {

@@ -36,39 +36,6 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         return view
     }()
     
-    // MARK: - Custom Navigation Header
-    private let customNavHeader: UIView = {
-        let view = UIView()
-        view.backgroundColor = .clear
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
-
-    private let navBackButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "arrow.left"), for: .normal)
-        button.tintColor = UIColor(red: 0x51/255.0, green: 0x5B/255.0, blue: 0x70/255.0, alpha: 1.0)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
-
-    private let navTitleLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont.boldSystemFont(ofSize: 18)
-        label.textColor = .primaryTextColor
-        label.textAlignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-
-    private let navMoreButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setImage(UIImage(named: "DotsIcon"), for: .normal)
-        button.tintColor = UIColor(red: 0x51/255.0, green: 0x5B/255.0, blue: 0x70/255.0, alpha: 1.0)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
-
     // MARK: - Header Section
     private let headerView: UIView = {
         let view = UIView()
@@ -254,24 +221,16 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     private func setupUI() {
         view.backgroundColor = .backgroundColor
         
-        // 네비게이션 바 완전히 숨기기
-        navigationController?.isNavigationBarHidden = true
-        
-        // 커스텀 네비게이션 헤더 추가
-        view.addSubview(customNavHeader)
-        customNavHeader.addSubview(navBackButton)
-        customNavHeader.addSubview(navTitleLabel)
-        customNavHeader.addSubview(navMoreButton)
-        
-        navBackButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
-        navMoreButton.addTarget(self, action: #selector(menuTapped), for: .touchUpInside)
-        
-        // 타이틀 설정
+        // 네비게이션 바 설정
         if let post = post {
-            navTitleLabel.text = post.type == .lost ? "잃어버렸어요" : "주인을 찾아요"
+            title = post.type == .lost ? "잃어버렸어요" : "주인을 찾아요"
         } else {
-            navTitleLabel.text = "게시글 상세"
+            title = "게시글 상세"
         }
+        
+        // 모든 네비게이션 바 버튼 제거
+        navigationItem.leftBarButtonItem = nil
+        navigationItem.rightBarButtonItem = nil
         
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
@@ -341,26 +300,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            // Custom Navigation Header
-            customNavHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            customNavHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            customNavHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            customNavHeader.heightAnchor.constraint(equalToConstant: 44),
-            
-            navBackButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 16),
-            navBackButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
-            navBackButton.widthAnchor.constraint(equalToConstant: 44),
-            navBackButton.heightAnchor.constraint(equalToConstant: 44),
-            
-            navTitleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
-            navTitleLabel.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
-            
-            navMoreButton.trailingAnchor.constraint(equalTo: customNavHeader.trailingAnchor, constant: -16),
-            navMoreButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
-            navMoreButton.widthAnchor.constraint(equalToConstant: 44),
-            navMoreButton.heightAnchor.constraint(equalToConstant: 44),
-            
-            scrollView.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: commentInputView.topAnchor),
@@ -689,8 +629,8 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             }
         }
         
-        // 원댓글과 대댓글을 역순으로 정렬 (오래된 댓글이 위에)
-        for comment in commentMap.values.sorted(by: { $0.commentId < $1.commentId }) {
+        // 원댓글과 대댓글을 순서대로 정렬
+        for comment in commentMap.values {
             sortedComments.append(comment)
             
             // 해당 댓글의 대댓글들을 추가
