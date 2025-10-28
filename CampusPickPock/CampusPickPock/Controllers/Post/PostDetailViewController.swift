@@ -16,6 +16,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     private var isLoading = false
     private var commentsTableViewHeightConstraint: NSLayoutConstraint?
     private var commentImages: [UIImage] = []
+    private var imagesCollectionViewHeightConstraint: NSLayoutConstraint?
     
     private let loadingIndicator: UIActivityIndicatorView = {
         let indicator = UIActivityIndicatorView(style: .medium)
@@ -79,8 +80,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     
     private let profileImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "person.circle.fill")
-        imageView.tintColor = .gray
+        imageView.image = UIImage(named: "ProfileIcon")
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
@@ -224,7 +224,8 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     // MARK: - Comment Input Section
     private let commentInputView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor(red: 0xB4/255.0, green: 0xC6/255.0, blue: 0xEC/255.0, alpha: 1.0)
+        view.backgroundColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0)
+        view.layer.cornerRadius = 15
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -239,13 +240,13 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     
     private let commentTextField: UITextField = {
         let textField = UITextField()
-        textField.font = UIFont.systemFont(ofSize: 16)
-        textField.backgroundColor = UIColor(red: 0xF1/255.0, green: 0xF1/255.0, blue: 0xF1/255.0, alpha: 1.0)
-        textField.layer.cornerRadius = 8
+        textField.font = UIFont(name: "Pretendard Variable", size: 15) ?? UIFont.systemFont(ofSize: 15)
+        textField.backgroundColor = .white
+        textField.layer.cornerRadius = 10
         textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 0))
         textField.leftViewMode = .always
         textField.translatesAutoresizingMaskIntoConstraints = false
-        textField.attributedPlaceholder = NSAttributedString(string: "", attributes: [NSAttributedString.Key.foregroundColor: UIColor.clear])
+        textField.attributedPlaceholder = NSAttributedString(string: "댓글을 입력하세요", attributes: [NSAttributedString.Key.foregroundColor: UIColor(red: 0x97/255.0, green: 0x97/255.0, blue: 0x97/255.0, alpha: 1.0), NSAttributedString.Key.font: UIFont(name: "Pretendard Variable", size: 15) ?? UIFont.systemFont(ofSize: 15)])
         return textField
     }()
     
@@ -447,7 +448,6 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             imagesCollectionView.topAnchor.constraint(equalTo: categoryLabel.bottomAnchor, constant: 8),
             imagesCollectionView.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
             imagesCollectionView.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
-            imagesCollectionView.heightAnchor.constraint(equalToConstant: 250),
             
             // Hidden Box View (같은 위치에 배치)
             hiddenBoxView.topAnchor.constraint(equalTo: categoryLabel.bottomAnchor, constant: 8),
@@ -473,7 +473,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             hiddenLabel3.leadingAnchor.constraint(equalTo: hiddenBoxView.leadingAnchor, constant: 20),
             hiddenLabel3.trailingAnchor.constraint(equalTo: hiddenBoxView.trailingAnchor, constant: -20),
             
-            contentLabel.topAnchor.constraint(equalTo: imagesCollectionView.bottomAnchor, constant: 16),
+            contentLabel.topAnchor.constraint(equalTo: imagesCollectionView.bottomAnchor, constant: 10),
             contentLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
             contentLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
             contentLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -20),
@@ -496,23 +496,25 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             // Comment Input View
             commentInputView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             commentInputView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            commentInputView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            commentInputView.heightAnchor.constraint(equalToConstant: 60),
+            commentInputView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            commentInputView.heightAnchor.constraint(equalToConstant: 67),
             
             attachButton.leadingAnchor.constraint(equalTo: commentInputView.leadingAnchor, constant: 16),
             attachButton.centerYAnchor.constraint(equalTo: commentInputView.centerYAnchor),
-            attachButton.widthAnchor.constraint(equalToConstant: 24),
-            attachButton.heightAnchor.constraint(equalToConstant: 24),
+            attachButton.widthAnchor.constraint(equalToConstant: 35),
+            attachButton.heightAnchor.constraint(equalToConstant: 35),
             
             commentTextField.leadingAnchor.constraint(equalTo: attachButton.trailingAnchor, constant: 12),
             commentTextField.centerYAnchor.constraint(equalTo: commentInputView.centerYAnchor),
-            commentTextField.trailingAnchor.constraint(equalTo: privateButton.leadingAnchor, constant: -12),
+            commentTextField.widthAnchor.constraint(equalToConstant: 267),
+            commentTextField.heightAnchor.constraint(equalToConstant: 37),
             
-            privateButton.trailingAnchor.constraint(equalTo: sendButton.leadingAnchor, constant: -12),
+            privateButton.leadingAnchor.constraint(equalTo: commentTextField.trailingAnchor, constant: -40),
             privateButton.centerYAnchor.constraint(equalTo: commentInputView.centerYAnchor),
             privateButton.widthAnchor.constraint(equalToConstant: 13),
             privateButton.heightAnchor.constraint(equalToConstant: 17),
             
+            sendButton.leadingAnchor.constraint(equalTo: commentTextField.trailingAnchor, constant: 8),
             sendButton.trailingAnchor.constraint(equalTo: commentInputView.trailingAnchor, constant: -16),
             sendButton.centerYAnchor.constraint(equalTo: commentInputView.centerYAnchor),
             sendButton.widthAnchor.constraint(equalToConstant: 31),
@@ -521,12 +523,32 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
+        
+        // 이미지 컬렉션뷰 높이 제약조건 추가
+        imagesCollectionViewHeightConstraint = imagesCollectionView.heightAnchor.constraint(equalToConstant: 0)
+        imagesCollectionViewHeightConstraint?.isActive = true
     }
     
     private func setupTableView() {
         commentsTableView.delegate = self
         commentsTableView.dataSource = self
         commentsTableView.register(CommentCell.self, forCellReuseIdentifier: "CommentCell")
+    }
+    
+    private func updateCollectionViewHeight() {
+        if postImages.isEmpty {
+            imagesCollectionViewHeightConstraint?.constant = 0
+        } else {
+            // 이미지가 있으면 컬렉션뷰의 실제 컨텐츠 높이에 맞춤
+            imagesCollectionView.layoutIfNeeded()
+            let height = imagesCollectionView.contentSize.height
+            imagesCollectionViewHeightConstraint?.constant = max(height, 100)
+        }
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateCollectionViewHeight()
     }
     
     private func loadPostDetail() {
@@ -1929,7 +1951,7 @@ class CommentCell: UITableViewCell {
         replyIndicatorView.isHidden = false
         replyArrowImageView.isHidden = false
         profileLeadingConstraint?.isActive = false
-        profileLeadingConstraint = profileImageView.leadingAnchor.constraint(equalTo: replyIndicatorView.trailingAnchor, constant: 8)
+        profileLeadingConstraint = profileImageView.leadingAnchor.constraint(equalTo: replyIndicatorView.trailingAnchor, constant: 10)
         profileLeadingConstraint?.isActive = true
     }
     

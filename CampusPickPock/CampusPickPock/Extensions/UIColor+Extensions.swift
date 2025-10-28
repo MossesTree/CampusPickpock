@@ -24,5 +24,11 @@ extension UIColor {
     static let accentColor = UIColor(red: 1.0, green: 0.59, blue: 0.0, alpha: 1.0) // 주황색
     static let dangerColor = UIColor.systemRed
     static let successColor = UIColor.systemGreen
+    
+    // 줍줍 상태 색상
+    static let pickedUpColor = UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0) // 132D64
+    
+    // 네비게이션 색상
+    static let navigationColor = UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0) // 132D64
 }
 

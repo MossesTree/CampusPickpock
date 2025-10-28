@@ -26,6 +26,7 @@ struct Post {
     let createdAt: Date
     var commentCount: Int
     let type: PostType
+    let isPickedUp: Bool
     
     init(id: String = UUID().uuidString, 
          postingId: Int? = nil,
@@ -39,7 +40,8 @@ struct Post {
          isHidden: Bool = false, 
          createdAt: Date = Date(),
          commentCount: Int = 0,
-         type: PostType = .lost) {
+         type: PostType = .lost,
+         isPickedUp: Bool = false) {
         self.id = id
         self.postingId = postingId
         self.title = title
@@ -53,6 +55,7 @@ struct Post {
         self.createdAt = createdAt
         self.commentCount = commentCount
         self.type = type
+        self.isPickedUp = isPickedUp
     }
 }
 

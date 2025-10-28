@@ -300,7 +300,8 @@ extension FoundPostListViewController: UITableViewDelegate, UITableViewDataSourc
             isHidden: false,
             createdAt: parseDate(postingItem.postingCreatedAt),
             commentCount: postingItem.commentCount,
-            type: .found
+            type: .found,
+            isPickedUp: postingItem.isPickedUp
         )
         
         cell.configure(with: post)
@@ -328,7 +329,8 @@ extension FoundPostListViewController: UITableViewDelegate, UITableViewDataSourc
             isHidden: false,
             createdAt: parseDate(postingItem.postingCreatedAt),
             commentCount: postingItem.commentCount,
-            type: .found
+            type: .found,
+            isPickedUp: postingItem.isPickedUp
         )
         
         let detailVC = PostDetailViewController(post: post)
@@ -452,6 +454,13 @@ class FoundPostCell: UITableViewCell {
         return label
     }()
     
+    private let pickedUpIconImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "StarIcon1")
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
     
     private let descriptionLabel: UILabel = {
         let label = UILabel()
@@ -491,6 +500,7 @@ class FoundPostCell: UITableViewCell {
         containerView.addSubview(itemImageView)
         containerView.addSubview(titleLabel)
         containerView.addSubview(locationTimeLabel)
+        containerView.addSubview(pickedUpIconImageView)
         containerView.addSubview(descriptionLabel)
         containerView.addSubview(commentButton)
         
@@ -515,7 +525,12 @@ class FoundPostCell: UITableViewCell {
             
             titleLabel.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 12),
             titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            titleLabel.trailingAnchor.constraint(equalTo: pickedUpIconImageView.leadingAnchor, constant: -8),
+            
+            pickedUpIconImageView.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 12),
+            pickedUpIconImageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            pickedUpIconImageView.widthAnchor.constraint(equalToConstant: 24),
+            pickedUpIconImageView.heightAnchor.constraint(equalToConstant: 24),
             
             locationTimeLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
             locationTimeLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
@@ -542,6 +557,17 @@ class FoundPostCell: UITableViewCell {
         } else {
             itemImageView.image = UIImage(systemName: "airpods")
             itemImageView.tintColor = .gray
+        }
+        
+        // isPickedUp 상태에 따라 아이콘 표시
+        if post.isPickedUp {
+            // FillStarIcon1 사용
+            pickedUpIconImageView.image = UIImage(named: "FillStarIcon1")
+            pickedUpIconImageView.tintColor = nil
+        } else {
+            // 빈 아이콘 (채우지 않음)
+            pickedUpIconImageView.image = UIImage(named: "StarIcon1")
+            pickedUpIconImageView.tintColor = nil
         }
         
         print("📅 Found 포스팅 시간 정보:")

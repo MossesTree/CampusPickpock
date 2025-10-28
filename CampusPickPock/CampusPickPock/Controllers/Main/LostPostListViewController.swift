@@ -7,10 +7,6 @@
 
 import UIKit
 
-protocol LostPostCellDelegate: AnyObject {
-    func lostPostCellDidTapJoopjoop(_ cell: LostPostCell, post: Post)
-}
-
 class LostPostListViewController: UIViewController {
     
     private var postingItems: [PostingItem] = []
@@ -304,11 +300,11 @@ extension LostPostListViewController: UITableViewDelegate, UITableViewDataSource
             isHidden: false,
             createdAt: parseDate(postingItem.postingCreatedAt),
             commentCount: postingItem.commentCount,
-            type: .lost
+            type: .lost,
+            isPickedUp: postingItem.isPickedUp
         )
         
         cell.configure(with: post)
-        cell.delegate = self
         return cell
     }
     
@@ -333,7 +329,8 @@ extension LostPostListViewController: UITableViewDelegate, UITableViewDataSource
             isHidden: false,
             createdAt: parseDate(postingItem.postingCreatedAt),
             commentCount: postingItem.commentCount,
-            type: .lost
+            type: .lost,
+            isPickedUp: postingItem.isPickedUp
         )
         
         let detailVC = PostDetailViewController(post: post)
@@ -403,57 +400,10 @@ extension LostPostListViewController: UITableViewDelegate, UITableViewDataSource
     }
 }
 
-// MARK: - LostPostCellDelegate
-extension LostPostListViewController: LostPostCellDelegate {
-    func lostPostCellDidTapJoopjoop(_ cell: LostPostCell, post: Post) {
-        // PostingItem에서 postingId 찾기
-        guard let postingItem = postingItems.first(where: { $0.postingTitle == post.title }) else {
-            print("❌ 해당 게시글을 찾을 수 없습니다.")
-            return
-        }
-        
-        print("🎯 줍줍 버튼 클릭: postingId = \(postingItem.postingId)")
-        
-        // 로딩 상태 표시
-        cell.joopjoopButton.setTitle("줍줍 중...", for: .normal)
-        cell.joopjoopButton.isEnabled = false
-        
-        APIService.shared.markPostAsPickedUp(postingId: postingItem.postingId) { [weak self] result in
-            DispatchQueue.main.async {
-                // 버튼 상태 복원
-                cell.joopjoopButton.setTitle("줍줍", for: .normal)
-                cell.joopjoopButton.isEnabled = true
-                
-                switch result {
-                case .success(let response):
-                    print("✅ 줍줍 성공: \(response.message)")
-                    
-                    // 성공 알림
-                    let alert = UIAlertController(title: "줍줍 완료", message: "해당 게시글이 줍줍되었습니다.", preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "확인", style: .default))
-                    self?.present(alert, animated: true)
-                    
-                    // 게시글 목록 새로고침
-                    self?.currentPage = 0
-                    self?.loadLostPosts()
-                    
-                case .failure(let error):
-                    print("❌ 줍줍 실패: \(error.localizedDescription)")
-                    
-                    // 실패 알림
-                    let alert = UIAlertController(title: "줍줍 실패", message: error.localizedDescription, preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "확인", style: .default))
-                    self?.present(alert, animated: true)
-                }
-            }
-        }
-    }
-}
 
 // MARK: - LostPostCell
 class LostPostCell: UITableViewCell {
     
-    weak var delegate: LostPostCellDelegate?
     private var post: Post?
     
     private let containerView: UIView = {
@@ -507,16 +457,12 @@ class LostPostCell: UITableViewCell {
         return label
     }()
     
-    let joopjoopButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("줍줍", for: .normal)
-        button.setImage(UIImage(systemName: "sparkles"), for: .normal)
-        button.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
-        button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 12)
-        button.layer.cornerRadius = 16
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
+    private let pickedUpIconImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "StarIcon1")
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
     }()
     
     private let descriptionLabel: UILabel = {
@@ -557,12 +503,9 @@ class LostPostCell: UITableViewCell {
         containerView.addSubview(itemImageView)
         containerView.addSubview(titleLabel)
         containerView.addSubview(timeLabel)
-        containerView.addSubview(joopjoopButton)
+        containerView.addSubview(pickedUpIconImageView)
         containerView.addSubview(descriptionLabel)
         containerView.addSubview(commentButton)
-        
-        // 줍줍버튼 액션 추가
-        joopjoopButton.addTarget(self, action: #selector(joopjoopButtonTapped), for: .touchUpInside)
         
         NSLayoutConstraint.activate([
             containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
@@ -585,15 +528,15 @@ class LostPostCell: UITableViewCell {
             
             titleLabel.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 12),
             titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            titleLabel.trailingAnchor.constraint(equalTo: joopjoopButton.leadingAnchor, constant: -8),
+            titleLabel.trailingAnchor.constraint(equalTo: pickedUpIconImageView.leadingAnchor, constant: -8),
             
             timeLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
             timeLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             
-            joopjoopButton.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 12),
-            joopjoopButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            joopjoopButton.widthAnchor.constraint(equalToConstant: 60),
-            joopjoopButton.heightAnchor.constraint(equalToConstant: 32),
+            pickedUpIconImageView.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 12),
+            pickedUpIconImageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            pickedUpIconImageView.widthAnchor.constraint(equalToConstant: 24),
+            pickedUpIconImageView.heightAnchor.constraint(equalToConstant: 24),
             
             descriptionLabel.topAnchor.constraint(equalTo: timeLabel.bottomAnchor, constant: 8),
             descriptionLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
@@ -618,6 +561,17 @@ class LostPostCell: UITableViewCell {
         } else {
             itemImageView.image = UIImage(systemName: "airpods")
             itemImageView.tintColor = .gray
+        }
+        
+        // isPickedUp 상태에 따라 아이콘 표시
+        if post.isPickedUp {
+            // FillStarIcon1 사용
+            pickedUpIconImageView.image = UIImage(named: "FillStarIcon1")
+            pickedUpIconImageView.tintColor = nil
+        } else {
+            // 빈 아이콘 (채우지 않음)
+            pickedUpIconImageView.image = UIImage(named: "StarIcon1")
+            pickedUpIconImageView.tintColor = nil
         }
         
         print("📅 Lost 포스팅 시간 정보:")
@@ -662,8 +616,4 @@ class LostPostCell: UITableViewCell {
         }
     }
     
-    @objc private func joopjoopButtonTapped() {
-        guard let post = post else { return }
-        delegate?.lostPostCellDidTapJoopjoop(self, post: post)
-    }
 }
