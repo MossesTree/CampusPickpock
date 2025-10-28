@@ -254,6 +254,8 @@ class PostCreateViewController: UIViewController {
     private var isEditMode = false
     private var editingPost: Post?
     private var editingPostDetail: PostDetailItem?
+    private var postType: PostType = .found
+    private var uploadButtonTopConstraint: NSLayoutConstraint?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -417,12 +419,15 @@ class PostCreateViewController: UIViewController {
             birthDateTextField.heightAnchor.constraint(equalToConstant: 48),
             
             // Upload Button
-            uploadButton.topAnchor.constraint(equalTo: birthDateTextField.bottomAnchor, constant: 32),
             uploadButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             uploadButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             uploadButton.heightAnchor.constraint(equalToConstant: 56),
             uploadButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -32)
         ])
+        
+        // uploadButton의 top 제약조건 저장 (기본값: birthDateTextField 아래)
+        uploadButtonTopConstraint = uploadButton.topAnchor.constraint(equalTo: birthDateTextField.bottomAnchor, constant: 32)
+        uploadButtonTopConstraint?.isActive = true
     }
     
     private func setupCategoryButtons() {
@@ -859,15 +864,54 @@ class PostCreateViewController: UIViewController {
         isEditMode = true
         editingPost = post
         editingPostDetail = postDetail
+        postType = post.type
         
-        // 제목 변경
-        title = "게시글 수정"
+        // 게시글 타입에 따라 제목 변경
+        switch post.type {
+        case .found:
+            navTitleLabel.text = "주인을 찾아요"
+        case .lost:
+            navTitleLabel.text = "잃어버렸어요"
+        }
         
         // 기존 데이터로 폼 채우기
         if let postDetail = postDetail {
+            print("📝 수정 모드 데이터 채우기 시작")
+            print("📍 itemPlace: \(postDetail.itemPlace ?? "nil")")
+            print("📦 isPlacedInStorage: \(postDetail.isPlacedInStorage?.description ?? "nil")")
+            print("🏷️ postingCategory: \(postDetail.postingCategory ?? "nil")")
+            
             titleTextField.text = postDetail.postingTitle
             descriptionTextView.text = postDetail.postingContent
             descriptionTextView.textColor = .primaryTextColor
+            
+            // 위치 설정
+            if let itemPlace = postDetail.itemPlace {
+                selectedLocation = itemPlace
+                locationButton.setTitle(itemPlace, for: .normal)
+                print("✅ 위치 설정 완료: \(itemPlace)")
+            } else {
+                print("⚠️ 위치 정보 없음")
+            }
+            
+            // 카테고리 설정
+            if let category = postDetail.postingCategory {
+                selectedCategory = category
+                selectCategory(category)
+                print("✅ 카테고리 설정 완료: \(category)")
+            } else {
+                print("⚠️ 카테고리 정보 없음")
+            }
+            
+            // 분실물 보관함 체크박스 설정
+            if let isPlacedInStorage = postDetail.isPlacedInStorage, isPlacedInStorage {
+                isStorageChecked = true
+                storageCheckbox.setImage(UIImage(systemName: "checkmark.square.fill"), for: .normal)
+                storageCheckbox.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+                print("✅ 분실물 보관함 체크박스 설정 완료")
+            } else {
+                print("⚠️ 분실물 보관함 정보 없음 또는 false")
+            }
             
             // 이미지 URL이 있다면 로드
             if let imageUrls = postDetail.postingImageUrls, !imageUrls.isEmpty {
@@ -878,12 +922,63 @@ class PostCreateViewController: UIViewController {
         // 업로드 버튼 텍스트 변경
         uploadButton.setTitle("수정하기", for: .normal)
         
-        // 개인정보 섹션은 수정 시 숨김 (제약조건 변경 없이)
-        personalInfoLabel.alpha = 0
-        personalInfoDescriptionLabel.alpha = 0
-        nameTextField.alpha = 0
-        studentIdTextField.alpha = 0
-        birthDateTextField.alpha = 0
+        // 개인정보 섹션은 found 타입일 때만 표시
+        if postType == .found {
+            // found 타입: 개인정보 섹션 표시
+            personalInfoLabel.isHidden = false
+            personalInfoDescriptionLabel.isHidden = false
+            nameTextField.isHidden = false
+            studentIdTextField.isHidden = false
+            birthDateTextField.isHidden = false
+        } else {
+            // lost 타입: 개인정보 섹션 숨김 및 제약조건 조정
+            personalInfoLabel.alpha = 0
+            personalInfoDescriptionLabel.alpha = 0
+            nameTextField.alpha = 0
+            studentIdTextField.alpha = 0
+            birthDateTextField.alpha = 0
+            
+            personalInfoLabel.isHidden = true
+            personalInfoDescriptionLabel.isHidden = true
+            nameTextField.isHidden = true
+            studentIdTextField.isHidden = true
+            birthDateTextField.isHidden = true
+        }
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        // 수정 모드이고 lost 타입일 때만 제약조건 조정
+        if isEditMode && postType == .lost {
+            adjustConstraintsForEditMode()
+        }
+    }
+    
+    private func adjustConstraintsForEditMode() {
+        // 기존 제약조건 비활성화
+        if let constraint = uploadButtonTopConstraint {
+            constraint.isActive = false
+        }
+        
+        // descriptionTextView에서 uploadButton까지의 거리로 변경하여 여백 줄이기
+        let newConstraint = uploadButton.topAnchor.constraint(equalTo: descriptionTextView.bottomAnchor, constant: 32)
+        uploadButtonTopConstraint = newConstraint
+        newConstraint.isActive = true
+    }
+    
+    private func selectCategory(_ category: String) {
+        for subview in categoryStackView.arrangedSubviews {
+            if let stackView = subview as? UIStackView {
+                for arrangedSubview in stackView.arrangedSubviews {
+                    if let button = arrangedSubview as? UIButton, button.title(for: .normal) == category {
+                        button.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+                        button.setTitleColor(.white, for: .normal)
+                        return
+                    }
+                }
+            }
+        }
     }
     
     private func loadImagesFromUrls(_ imageUrls: [String]) {

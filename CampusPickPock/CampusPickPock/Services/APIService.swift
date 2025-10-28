@@ -2196,6 +2196,8 @@ struct PostDetailItem: Codable {
     let postingContent: String
     let postingCreatedAt: String?
     let postingCategory: String?
+    let itemPlace: String?
+    let isPlacedInStorage: Bool?
     
     // 커스텀 디코딩으로 null 값 처리
     init(from decoder: Decoder) throws {
@@ -2210,6 +2212,8 @@ struct PostDetailItem: Codable {
         postingContent = try container.decode(String.self, forKey: .postingContent)
         postingCreatedAt = try container.decodeIfPresent(String.self, forKey: .postingCreatedAt)
         postingCategory = try container.decodeIfPresent(String.self, forKey: .postingCategory)
+        itemPlace = try container.decodeIfPresent(String.self, forKey: .itemPlace)
+        isPlacedInStorage = try container.decodeIfPresent(Bool.self, forKey: .isPlacedInStorage)
     }
     
     private enum CodingKeys: String, CodingKey {
@@ -2222,6 +2226,8 @@ struct PostDetailItem: Codable {
         case postingContent
         case postingCreatedAt
         case postingCategory
+        case itemPlace
+        case isPlacedInStorage
     }
 }
 

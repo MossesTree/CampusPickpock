@@ -454,12 +454,17 @@ class FoundPostCell: UITableViewCell {
         return label
     }()
     
-    private let pickedUpIconImageView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.image = UIImage(named: "StarIcon1")
-        imageView.contentMode = .scaleAspectFit
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        return imageView
+    private let pickedUpButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.backgroundColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0)
+        button.clipsToBounds = true
+        button.titleLabel?.font = UIFont(name: "Pretendard Variable", size: 13) ?? UIFont.systemFont(ofSize: 13, weight: .medium)
+        button.setTitleColor(UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0), for: .normal)
+        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: 4)
+        button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 4, bottom: 0, right: 8)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.isUserInteractionEnabled = false
+        return button
     }()
     
     private let descriptionLabel: UILabel = {
@@ -500,7 +505,7 @@ class FoundPostCell: UITableViewCell {
         containerView.addSubview(itemImageView)
         containerView.addSubview(titleLabel)
         containerView.addSubview(locationTimeLabel)
-        containerView.addSubview(pickedUpIconImageView)
+        containerView.addSubview(pickedUpButton)
         containerView.addSubview(descriptionLabel)
         containerView.addSubview(commentButton)
         
@@ -525,12 +530,12 @@ class FoundPostCell: UITableViewCell {
             
             titleLabel.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 12),
             titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            titleLabel.trailingAnchor.constraint(equalTo: pickedUpIconImageView.leadingAnchor, constant: -8),
+            titleLabel.trailingAnchor.constraint(equalTo: pickedUpButton.leadingAnchor, constant: -8),
             
-            pickedUpIconImageView.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 12),
-            pickedUpIconImageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            pickedUpIconImageView.widthAnchor.constraint(equalToConstant: 24),
-            pickedUpIconImageView.heightAnchor.constraint(equalToConstant: 24),
+            pickedUpButton.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 12),
+            pickedUpButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            pickedUpButton.widthAnchor.constraint(equalToConstant: 75),
+            pickedUpButton.heightAnchor.constraint(equalToConstant: 24),
             
             locationTimeLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
             locationTimeLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
@@ -559,16 +564,8 @@ class FoundPostCell: UITableViewCell {
             itemImageView.tintColor = .gray
         }
         
-        // isPickedUp 상태에 따라 아이콘 표시
-        if post.isPickedUp {
-            // FillStarIcon1 사용
-            pickedUpIconImageView.image = UIImage(named: "FillStarIcon1")
-            pickedUpIconImageView.tintColor = nil
-        } else {
-            // 빈 아이콘 (채우지 않음)
-            pickedUpIconImageView.image = UIImage(named: "StarIcon1")
-            pickedUpIconImageView.tintColor = nil
-        }
+        // isPickedUp 상태에 따라 버튼 표시
+        configureJoopjoopButton(isPickedUp: post.isPickedUp)
         
         print("📅 Found 포스팅 시간 정보:")
         print("   작성 시간: \(post.createdAt)")
@@ -590,6 +587,28 @@ class FoundPostCell: UITableViewCell {
                 }
             }
         }.resume()
+    }
+    
+    private func configureJoopjoopButton(isPickedUp: Bool) {
+        let iconName = isPickedUp ? "FillStarIcon1" : "StarIcon1"
+        
+        // 뱃지 모양 설정 (높이 24의 절반인 12로 설정하면 둥근 사각형)
+        pickedUpButton.layer.cornerRadius = 12
+        
+        if let originalImage = UIImage(named: iconName) {
+            // 아이콘 크기를 21x21로 리사이즈
+            let size = CGSize(width: 21, height: 21)
+            UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+            originalImage.draw(in: CGRect(origin: .zero, size: size))
+            let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            
+            pickedUpButton.setImage(resizedImage, for: .normal)
+        }
+        
+        pickedUpButton.setTitle(" 줍줍", for: .normal)
+        pickedUpButton.tintColor = UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0)
+        pickedUpButton.isHidden = false
     }
     
     private func formatRelativeTime(_ date: Date) -> String {
