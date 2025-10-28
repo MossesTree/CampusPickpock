@@ -51,16 +51,15 @@ class PostCreateViewController: UIViewController {
     // MARK: - Image Upload Section
     private let imageUploadView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
-        view.layer.cornerRadius = 12
+        view.backgroundColor = UIColor(red: 0xCD/255.0, green: 0xD7/255.0, blue: 0xE0/255.0, alpha: 1.0)
+        view.layer.cornerRadius = 24
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
     
     private let cameraIconImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "camera.fill")
-        imageView.tintColor = .gray
+        imageView.image = UIImage(named: "CameraIcon")
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
@@ -261,6 +260,7 @@ class PostCreateViewController: UIViewController {
         setupUI()
         setupCollectionView()
         setupActions()
+        updateImageCount()
     }
     
     private func setupUI() {
@@ -269,19 +269,19 @@ class PostCreateViewController: UIViewController {
         // Hide default navigation bar
         navigationController?.setNavigationBarHidden(true, animated: false)
         
-        // Add custom header
+        // Add custom header first to ensure it's on top
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        
         view.addSubview(customNavHeader)
         customNavHeader.addSubview(backButton)
         customNavHeader.addSubview(navTitleLabel)
-        
-        view.addSubview(scrollView)
-        scrollView.addSubview(contentView)
         
         // Add all subviews
         contentView.addSubview(imageUploadView)
         imageUploadView.addSubview(cameraIconImageView)
         imageUploadView.addSubview(imageCountLabel)
-        imageUploadView.addSubview(imageCollectionView)
+        contentView.addSubview(imageCollectionView)
         
         contentView.addSubview(locationButton)
         contentView.addSubview(storageCheckbox)
@@ -318,6 +318,11 @@ class PostCreateViewController: UIViewController {
             customNavHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             customNavHeader.heightAnchor.constraint(equalToConstant: 44),
             
+            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
             backButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 16),
             backButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
             backButton.widthAnchor.constraint(equalToConstant: 24),
@@ -326,37 +331,33 @@ class PostCreateViewController: UIViewController {
             navTitleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
             navTitleLabel.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
             
-            scrollView.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            
-            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 100),
             contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             
-            // Image Upload Section
-            imageUploadView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
-            imageUploadView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            imageUploadView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            imageUploadView.heightAnchor.constraint(equalToConstant: 200),
+            // Image Upload Section - positioned at (96, 60) from top
+            imageUploadView.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 60),
+            imageUploadView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 96),
+            imageUploadView.widthAnchor.constraint(equalToConstant: 185),
+            imageUploadView.heightAnchor.constraint(equalToConstant: 185),
             
             cameraIconImageView.centerXAnchor.constraint(equalTo: imageUploadView.centerXAnchor),
-            cameraIconImageView.centerYAnchor.constraint(equalTo: imageUploadView.centerYAnchor, constant: -20),
-            cameraIconImageView.widthAnchor.constraint(equalToConstant: 40),
-            cameraIconImageView.heightAnchor.constraint(equalToConstant: 40),
+            cameraIconImageView.centerYAnchor.constraint(equalTo: imageUploadView.centerYAnchor, constant: -10),
+            cameraIconImageView.widthAnchor.constraint(equalToConstant: 65),
+            cameraIconImageView.heightAnchor.constraint(equalToConstant: 60),
             
             imageCountLabel.centerXAnchor.constraint(equalTo: imageUploadView.centerXAnchor),
             imageCountLabel.topAnchor.constraint(equalTo: cameraIconImageView.bottomAnchor, constant: 8),
             
-            imageCollectionView.topAnchor.constraint(equalTo: imageCountLabel.bottomAnchor, constant: 16),
-            imageCollectionView.leadingAnchor.constraint(equalTo: imageUploadView.leadingAnchor, constant: 16),
-            imageCollectionView.trailingAnchor.constraint(equalTo: imageUploadView.trailingAnchor, constant: -16),
-            imageCollectionView.heightAnchor.constraint(equalToConstant: 80),
+            // Image Collection View - starts at the same position as imageUploadView
+            imageCollectionView.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 60),
+            imageCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 96),
+            imageCollectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            imageCollectionView.heightAnchor.constraint(equalToConstant: 185),
             
-            // Location Section
+            // Location Section - constraint to whichever view is visible
             locationButton.topAnchor.constraint(equalTo: imageUploadView.bottomAnchor, constant: 20),
             locationButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             
@@ -483,6 +484,10 @@ class PostCreateViewController: UIViewController {
         // Add tap gesture to image upload view
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageUploadTapped))
         imageUploadView.addGestureRecognizer(tapGesture)
+        
+        // Also add tap gesture to collection view to add more images
+        let collectionTapGesture = UITapGestureRecognizer(target: self, action: #selector(imageUploadTapped))
+        imageCollectionView.addGestureRecognizer(collectionTapGesture)
     }
     
     private func setupActions() {
@@ -491,6 +496,34 @@ class PostCreateViewController: UIViewController {
         uploadButton.addTarget(self, action: #selector(uploadTapped), for: .touchUpInside)
         
         descriptionTextView.delegate = self
+        birthDateTextField.delegate = self
+        
+        // 생년월일 포맷터 추가
+        birthDateTextField.addTarget(self, action: #selector(birthDateTextFieldChanged), for: .editingChanged)
+    }
+    
+    @objc private func birthDateTextFieldChanged() {
+        guard let text = birthDateTextField.text else { return }
+        
+        // 숫자만 추출
+        let numbers = text.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+        
+        // 8자리로 제한
+        let limited = String(numbers.prefix(8))
+        
+        // 자동으로 하이픈 추가
+        var formatted = ""
+        for (index, char) in limited.enumerated() {
+            if index == 4 || index == 6 {
+                formatted += "-"
+            }
+            formatted += String(char)
+        }
+        
+        // 값이 변경된 경우에만 업데이트
+        if formatted != birthDateTextField.text {
+            birthDateTextField.text = formatted
+        }
     }
     
     @objc private func locationButtonTapped() {
@@ -604,14 +637,23 @@ class PostCreateViewController: UIViewController {
     }
     
     private func handleCreateMode() {
+        // 필수 항목 검증: 제목, 설명, 위치
         guard let title = titleTextField.text, !title.isEmpty,
               let description = descriptionTextView.text, !description.isEmpty,
               description != "캠퍼스 줍줍에서 찾은 분실물에 대한 내용을 작성해 주세요.",
-              let name = nameTextField.text, !name.isEmpty,
-              let studentId = studentIdTextField.text, !studentId.isEmpty,
-              let birthDate = birthDateTextField.text, !birthDate.isEmpty else {
-            showAlert(message: "모든 필수 항목을 입력해주세요.")
+              let location = selectedLocation, !location.isEmpty else {
+            showAlert(message: "제목, 설명, 위치는 필수 항목입니다.")
             return
+        }
+        
+        // 개인정보는 선택 항목
+        let name = nameTextField.text ?? ""
+        let studentId = studentIdTextField.text ?? ""
+        var birthDate = birthDateTextField.text ?? ""
+        
+        // 생년월일에 하이픈이 없으면 추가
+        if !birthDate.isEmpty && !birthDate.contains("-") {
+            birthDate = formatBirthDate(birthDate)
         }
         
         // 로딩 상태 표시
@@ -755,12 +797,15 @@ class PostCreateViewController: UIViewController {
         if selectedImages.isEmpty {
             cameraIconImageView.isHidden = false
             imageCountLabel.isHidden = false
+            imageUploadView.isHidden = false
             imageCollectionView.isHidden = true
         } else {
             cameraIconImageView.isHidden = true
             imageCountLabel.isHidden = true
+            imageUploadView.isHidden = true
             imageCollectionView.isHidden = false
         }
+        imageCollectionView.reloadData()
     }
     
     @objc private func categoryButtonTapped(_ sender: UIButton) {
@@ -788,6 +833,25 @@ class PostCreateViewController: UIViewController {
         let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "확인", style: .default))
         present(alert, animated: true)
+    }
+    
+    private func formatBirthDate(_ text: String) -> String {
+        // 숫자만 추출
+        let numbers = text.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+        
+        // 8자리로 제한
+        let limited = String(numbers.prefix(8))
+        
+        // 자동으로 하이픈 추가
+        var formatted = ""
+        for (index, char) in limited.enumerated() {
+            if index == 4 || index == 6 {
+                formatted += "-"
+            }
+            formatted += String(char)
+        }
+        
+        return formatted
     }
     
     // MARK: - Edit Mode Configuration
@@ -873,15 +937,22 @@ extension PostCreateViewController: PHPickerViewControllerDelegate {
 }
 
 // MARK: - UICollectionViewDelegate, UICollectionViewDataSource
-extension PostCreateViewController: UICollectionViewDelegate, UICollectionViewDataSource {
+extension PostCreateViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return selectedImages.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCell", for: indexPath) as! ImageCell
-        cell.configure(with: selectedImages[indexPath.item])
+        cell.configure(with: selectedImages[indexPath.item]) { [weak self] in
+            self?.selectedImages.remove(at: indexPath.item)
+            self?.updateImageCount()
+        }
         return cell
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return CGSize(width: 80, height: 80)
     }
 }
 
@@ -902,8 +973,21 @@ extension PostCreateViewController: UITextViewDelegate {
     }
 }
 
+// MARK: - UITextFieldDelegate
+extension PostCreateViewController: UITextFieldDelegate {
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        // 생년월일 필드일 때만 자동 포맷팅
+        if textField == birthDateTextField {
+            return true // birthDateTextFieldChanged에서 처리하므로 true 반환
+        }
+        return true
+    }
+}
+
 // MARK: - ImageCell
 class ImageCell: UICollectionViewCell {
+    var onDelete: (() -> Void)?
+    
     private let imageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
@@ -939,14 +1023,21 @@ class ImageCell: UICollectionViewCell {
             deleteButton.widthAnchor.constraint(equalToConstant: 20),
             deleteButton.heightAnchor.constraint(equalToConstant: 20)
         ])
+        
+        deleteButton.addTarget(self, action: #selector(deleteButtonTapped), for: .touchUpInside)
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(with image: UIImage) {
+    func configure(with image: UIImage, onDelete: @escaping () -> Void) {
         imageView.image = image
+        self.onDelete = onDelete
+    }
+    
+    @objc private func deleteButtonTapped() {
+        onDelete?()
     }
 }
 

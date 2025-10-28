@@ -33,26 +33,6 @@ class LostPostListViewController: UIViewController {
         return button
     }()
     
-    private let scrollView: UIScrollView = {
-        let scrollView = UIScrollView()
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        return scrollView
-    }()
-    
-    private let contentView: UIView = {
-        let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
-    
-    // MARK: - Header Section
-    private let headerView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .backgroundColor
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
-    
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "잃어버렸어요"
@@ -94,12 +74,14 @@ class LostPostListViewController: UIViewController {
         let tableView = UITableView()
         tableView.backgroundColor = .clear
         tableView.separatorStyle = .none
+        tableView.isScrollEnabled = true
         tableView.translatesAutoresizingMaskIntoConstraints = false
         return tableView
     }()
     
     private var posts: [Post] = []
     private var selectedCategory = "전체"
+    private var filteredPostingItems: [PostingItem] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -124,7 +106,7 @@ class LostPostListViewController: UIViewController {
                     } else {
                         self?.postingItems.append(contentsOf: postingItems)
                     }
-                    self?.postsTableView.reloadData()
+                    self?.filterPosts()
                 }
                 
             case .failure(let error):
@@ -151,18 +133,13 @@ class LostPostListViewController: UIViewController {
         // Add custom header
         view.addSubview(customNavHeader)
         customNavHeader.addSubview(backButton)
+        customNavHeader.addSubview(titleLabel)
+        customNavHeader.addSubview(subtitleLabel)
         
-        view.addSubview(scrollView)
-        scrollView.addSubview(contentView)
-        
-        contentView.addSubview(headerView)
-        headerView.addSubview(titleLabel)
-        headerView.addSubview(subtitleLabel)
-        
-        contentView.addSubview(categoryScrollView)
+        view.addSubview(categoryScrollView)
         categoryScrollView.addSubview(categoryStackView)
         
-        contentView.addSubview(postsTableView)
+        view.addSubview(postsTableView)
         
         backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
         
@@ -172,43 +149,26 @@ class LostPostListViewController: UIViewController {
     private func setupConstraints() {
         NSLayoutConstraint.activate([
             // Custom navigation header
-            customNavHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            customNavHeader.topAnchor.constraint(equalTo: view.topAnchor),
             customNavHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             customNavHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            customNavHeader.heightAnchor.constraint(equalToConstant: 44),
+            customNavHeader.heightAnchor.constraint(equalToConstant: 100),
             
-            backButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 16),
-            backButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
+            backButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 10),
+            backButton.topAnchor.constraint(equalTo: customNavHeader.topAnchor, constant: 70),
             backButton.widthAnchor.constraint(equalToConstant: 24),
             backButton.heightAnchor.constraint(equalToConstant: 24),
             
-            scrollView.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            titleLabel.centerYAnchor.constraint(equalTo: backButton.centerYAnchor),
+            titleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
             
-            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
-            
-            // Header Section
-            headerView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            headerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            headerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            headerView.heightAnchor.constraint(equalToConstant: 100),
-            
-            titleLabel.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
-            titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 20),
-            
-            subtitleLabel.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 3),
+            subtitleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
             
             // Category Section
-            categoryScrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 16),
-            categoryScrollView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            categoryScrollView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            categoryScrollView.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor, constant: 16),
+            categoryScrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            categoryScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             categoryScrollView.heightAnchor.constraint(equalToConstant: 40),
             
             categoryStackView.topAnchor.constraint(equalTo: categoryScrollView.topAnchor),
@@ -219,10 +179,9 @@ class LostPostListViewController: UIViewController {
             
             // Posts Table View
             postsTableView.topAnchor.constraint(equalTo: categoryScrollView.bottomAnchor, constant: 16),
-            postsTableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            postsTableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            postsTableView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            postsTableView.heightAnchor.constraint(equalToConstant: 600)
+            postsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            postsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            postsTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
     
@@ -239,16 +198,16 @@ class LostPostListViewController: UIViewController {
             let button = UIButton(type: .system)
             button.setTitle(category, for: .normal)
             button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
-            button.layer.cornerRadius = 20
+            button.layer.cornerRadius = 10
             button.translatesAutoresizingMaskIntoConstraints = false
             
             if index == 0 {
                 // 첫 번째 버튼은 선택된 상태로 설정
-                button.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+                button.backgroundColor = UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0)
                 button.setTitleColor(.white, for: .normal)
             } else {
-                button.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
-                button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
+                button.backgroundColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0)
+                button.setTitleColor(UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0), for: .normal)
             }
             
             button.addTarget(self, action: #selector(categoryTapped(_:)), for: .touchUpInside)
@@ -271,30 +230,51 @@ class LostPostListViewController: UIViewController {
         // 모든 버튼을 기본 상태로 변경
         for subview in categoryStackView.arrangedSubviews {
             if let button = subview as? UIButton {
-                button.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
-                button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
+                button.backgroundColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0)
+                button.setTitleColor(UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0), for: .normal)
             }
         }
         
         // 선택된 버튼을 활성 상태로 변경
-        sender.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+        sender.backgroundColor = UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0)
         sender.setTitleColor(.white, for: .normal)
         
         // 카테고리 업데이트
         let categories = ["전체", "전자제품", "지갑·카드", "의류·잡화", "학용품", "생활용품", "기타"]
         selectedCategory = categories[sender.tag]
         
-        loadPosts()
+        filterPosts()
     }
     
-    private func loadPosts() {
-        // 샘플 데이터 로드
-        posts = DataManager.shared.posts.filter { post in
-            if selectedCategory == "전체" {
-                return true
+    private func filterPosts() {
+        if selectedCategory == "전체" {
+            filteredPostingItems = postingItems
+        } else {
+            // 카테고리 매핑
+            let categoryMap: [String: [String]] = [
+                "전자제품": ["전자제품"],
+                "지갑·카드": ["지갑·카드", "지갑 및 카드"],
+                "의류·잡화": ["의류·잡화", "의류 및 잡화"],
+                "학용품": ["학용품"],
+                "생활용품": ["생활용품"],
+                "기타": []
+            ]
+            
+            let mappedCategories = categoryMap[selectedCategory] ?? []
+            
+            if mappedCategories.isEmpty {
+                // "기타" 카테고리인 경우, 매핑된 카테고리가 아닌 모든 항목을 표시
+                let allMappedCategories = categoryMap.flatMap { $0.value }
+                filteredPostingItems = postingItems.filter { item in
+                    guard let category = item.postingCategory else { return true }
+                    return !allMappedCategories.contains(category)
+                }
+            } else {
+                filteredPostingItems = postingItems.filter { item in
+                    guard let category = item.postingCategory else { return false }
+                    return mappedCategories.contains(category)
+                }
             }
-            // 실제로는 post에 category 필드가 있어야 함
-            return true
         }
         
         postsTableView.reloadData()
@@ -304,12 +284,12 @@ class LostPostListViewController: UIViewController {
 // MARK: - UITableViewDelegate, UITableViewDataSource
 extension LostPostListViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return postingItems.count
+        return filteredPostingItems.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "LostPostCell", for: indexPath) as! LostPostCell
-        let postingItem = postingItems[indexPath.row]
+        let postingItem = filteredPostingItems[indexPath.row]
         
         // PostingItem을 Post로 변환
         let post = Post(
@@ -317,6 +297,7 @@ extension LostPostListViewController: UITableViewDelegate, UITableViewDataSource
             postingId: postingItem.postingId,
             title: postingItem.postingTitle,
             content: postingItem.postingContent,
+            imageUrl: postingItem.postingImageUrl,
             images: [],
             authorId: postingItem.postingWriterNickName ?? "익명",
             authorName: postingItem.postingWriterNickName ?? "익명",
@@ -337,7 +318,7 @@ extension LostPostListViewController: UITableViewDelegate, UITableViewDataSource
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let postingItem = postingItems[indexPath.row]
+        let postingItem = filteredPostingItems[indexPath.row]
         
         // PostingItem을 Post로 변환
         let post = Post(
@@ -345,6 +326,7 @@ extension LostPostListViewController: UITableViewDelegate, UITableViewDataSource
             postingId: postingItem.postingId,
             title: postingItem.postingTitle,
             content: postingItem.postingContent,
+            imageUrl: postingItem.postingImageUrl,
             images: [],
             authorId: postingItem.postingWriterNickName ?? "익명",
             authorName: postingItem.postingWriterNickName ?? "익명",
@@ -476,12 +458,7 @@ class LostPostCell: UITableViewCell {
     
     private let containerView: UIView = {
         let view = UIView()
-        view.backgroundColor = .white
-        view.layer.cornerRadius = 12
-        view.layer.shadowColor = UIColor.black.cgColor
-        view.layer.shadowOffset = CGSize(width: 0, height: 2)
-        view.layer.shadowOpacity = 0.1
-        view.layer.shadowRadius = 4
+        view.backgroundColor = .clear
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -635,14 +612,34 @@ class LostPostCell: UITableViewCell {
         timeLabel.text = formatRelativeTime(post.createdAt)
         descriptionLabel.text = post.content
         
-        // 샘플 이미지 설정 (실제로는 post.images 사용)
-        itemImageView.image = UIImage(systemName: "airpods")
-        itemImageView.tintColor = .gray
+        // 이미지 URL이 있으면 로드, 없으면 기본 이미지
+        if let imageUrlString = post.imageUrl, let imageUrl = URL(string: imageUrlString) {
+            loadImage(from: imageUrl)
+        } else {
+            itemImageView.image = UIImage(systemName: "airpods")
+            itemImageView.tintColor = .gray
+        }
         
         print("📅 Lost 포스팅 시간 정보:")
         print("   작성 시간: \(post.createdAt)")
         print("   현재 시간: \(Date())")
         print("   표시 시간: \(timeLabel.text ?? "")")
+    }
+    
+    private func loadImage(from url: URL) {
+        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            if let data = data, let image = UIImage(data: data) {
+                DispatchQueue.main.async {
+                    self?.itemImageView.image = image
+                    self?.itemImageView.tintColor = nil
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self?.itemImageView.image = UIImage(systemName: "airpods")
+                    self?.itemImageView.tintColor = .gray
+                }
+            }
+        }.resume()
     }
     
     private func formatRelativeTime(_ date: Date) -> String {

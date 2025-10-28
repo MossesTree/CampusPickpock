@@ -684,7 +684,13 @@ class HomeViewController: UIViewController {
     }
     
     @objc private func writeTapped() {
-        showWritePopover()
+        if writePopover != nil {
+            // 이미 팝오버가 열려있으면 닫기
+            hideAllPopovers()
+        } else {
+            // 팝오버가 없으면 열기
+            showWritePopover()
+        }
     }
     
     @objc private func searchTapped() {
@@ -876,6 +882,12 @@ class HomeViewController: UIViewController {
         print("✍️ showWritePopover 호출됨")
         hideAllPopovers()
         
+        // 배경 터치 가능하게 만들기
+        backgroundTapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
+        if let tapGesture = backgroundTapGesture {
+            view.addGestureRecognizer(tapGesture)
+        }
+        
         let menuItems = [
             MenuItem(title: "주인을 찾아요", iconName: "magnifyingglass"),
             MenuItem(title: "잃어버렸어요", iconName: "lightbulb")
@@ -1024,45 +1036,61 @@ class HomeViewController: UIViewController {
         }
         
         print("🔔 게시글 상세 화면으로 이동: postingId=\(notification.postingId)")
+        print("🔔 알림 업데이트 시작: notificationId=\(notification.notificationId)")
         
         // 팝업 숨김
         hideJupJupNotificationPopup()
         
+        // 알림 업데이트 API 호출 (PATCH /notification/update/{notificationId})
+        APIService.shared.updateNotification(notificationId: notification.notificationId) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success():
+                    print("✅ 알림 업데이트 성공")
+                case .failure(let error):
+                    print("❌ 알림 업데이트 실패: \(error.localizedDescription)")
+                    // 에러가 발생해도 사용자에게 알리지 않음 (백그라운드 작업)
+                }
+            }
+        }
+        
         // 게시글 상세 정보를 가져와서 PostDetailViewController로 이동
         APIService.shared.getPostDetail(postingId: notification.postingId) { [weak self] result in
-            switch result {
-            case .success(let postDetail):
-                print("✅ 게시글 상세 정보 로드 성공")
-                
-                // PostDetailItem을 Post로 변환
-                let post = Post(
-                    id: UUID().uuidString,
-                    postingId: notification.postingId,
-                    title: postDetail.postingTitle,
-                    content: postDetail.postingContent,
-                    images: [], // 이미지 URL을 UIImage로 변환하는 로직은 복잡하므로 빈 배열로 설정
-                    authorId: String(postDetail.postingWriterId),
-                    authorName: postDetail.postingWriterNickname ?? "익명",
-                    isHidden: !postDetail.isPostingAccessible,
-                    createdAt: self?.parseDate(from: postDetail.postingCreatedAt ?? "") ?? Date(),
-                    commentCount: 0,
-                    type: .found // Found 타입 알림이므로
-                )
-                
-                let detailVC = PostDetailViewController(post: post)
-                self?.navigationController?.pushViewController(detailVC, animated: true)
-                
-            case .failure(let error):
-                print("❌ 게시글 상세 정보 로드 실패: \(error.localizedDescription)")
-                
-                // 에러 알림 표시
-                let alert = UIAlertController(
-                    title: "오류",
-                    message: "게시글을 불러올 수 없습니다: \(error.localizedDescription)",
-                    preferredStyle: .alert
-                )
-                alert.addAction(UIAlertAction(title: "확인", style: .default))
-                self?.present(alert, animated: true)
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let postDetail):
+                    print("✅ 게시글 상세 정보 로드 성공")
+                    
+                    // PostDetailItem을 Post로 변환
+                    let post = Post(
+                        id: UUID().uuidString,
+                        postingId: notification.postingId,
+                        title: postDetail.postingTitle,
+                        content: postDetail.postingContent,
+                        images: [], // 이미지 URL을 UIImage로 변환하는 로직은 복잡하므로 빈 배열로 설정
+                        authorId: String(postDetail.postingWriterId),
+                        authorName: postDetail.postingWriterNickname ?? "익명",
+                        isHidden: !postDetail.isPostingAccessible,
+                        createdAt: self?.parseDate(from: postDetail.postingCreatedAt ?? "") ?? Date(),
+                        commentCount: 0,
+                        type: .found // Found 타입 알림이므로
+                    )
+                    
+                    let detailVC = PostDetailViewController(post: post)
+                    self?.navigationController?.pushViewController(detailVC, animated: true)
+                    
+                case .failure(let error):
+                    print("❌ 게시글 상세 정보 로드 실패: \(error.localizedDescription)")
+                    
+                    // 에러 알림 표시
+                    let alert = UIAlertController(
+                        title: "오류",
+                        message: "게시글을 불러올 수 없습니다: \(error.localizedDescription)",
+                        preferredStyle: .alert
+                    )
+                    alert.addAction(UIAlertAction(title: "확인", style: .default))
+                    self?.present(alert, animated: true)
+                }
             }
         }
     }

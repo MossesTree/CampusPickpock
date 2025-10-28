@@ -112,7 +112,9 @@ class LostAndFoundViewController: UIViewController {
     }()
     
     private var items: [LostAndFoundItem] = []
+    private var filteredItems: [LostAndFoundItem] = []
     private var storageItems: [StorageItem] = []
+    private var filteredStorageItems: [StorageItem] = []
     private var selectedCategory = "전체"
     private var currentPage = 0
     private let pageSize = 20
@@ -270,22 +272,65 @@ class LostAndFoundViewController: UIViewController {
         // 모든 버튼을 기본 상태로 변경
         for subview in categoryStackView.arrangedSubviews {
             if let button = subview as? UIButton {
-                button.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
-                button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
+                button.backgroundColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0)
+                button.setTitleColor(UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0), for: .normal)
             }
         }
         
         // 선택된 버튼을 활성 상태로 변경
-        sender.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+        sender.backgroundColor = UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0)
         sender.setTitleColor(.white, for: .normal)
         
         // 카테고리 업데이트
         let categories = ["전체", "전자제품", "지갑·카드", "의류·잡화", "학용품", "생활용품", "기타"]
         selectedCategory = categories[sender.tag]
         
-        // 페이지 초기화 후 데이터 로드
-        currentPage = 0
-        loadItems()
+        filterItems()
+    }
+    
+    private func filterItems() {
+        if selectedCategory == "전체" {
+            filteredItems = items
+            filteredStorageItems = storageItems
+        } else {
+            // 카테고리 매핑
+            let categoryMap: [String: [String]] = [
+                "전자제품": ["전자제품"],
+                "지갑·카드": ["지갑·카드", "지갑 및 카드"],
+                "의류·잡화": ["의류·잡화", "의류 및 잡화"],
+                "학용품": ["학용품"],
+                "생활용품": ["생활용품"],
+                "기타": []
+            ]
+            
+            let mappedCategories = categoryMap[selectedCategory] ?? []
+            
+            if mappedCategories.isEmpty {
+                // "기타" 카테고리인 경우, 매핑된 카테고리가 아닌 모든 항목을 표시
+                let allMappedCategories = categoryMap.flatMap { $0.value }
+                filteredStorageItems = storageItems.filter { item in
+                    guard let category = item.postingCategory else { return true }
+                    return !allMappedCategories.contains(category)
+                }
+            } else {
+                filteredStorageItems = storageItems.filter { item in
+                    guard let category = item.postingCategory else { return false }
+                    return mappedCategories.contains(category)
+                }
+            }
+            
+            // storageItems를 기반으로 filteredItems 생성
+            filteredItems = filteredStorageItems.map { storageItem in
+                LostAndFoundItem(
+                    id: String(storageItem.postingId),
+                    name: storageItem.postingCategory ?? "분실물",
+                    imageUrl: storageItem.postingImageUrl,
+                    registrationDate: formatDate(storageItem.postingCreatedAt)
+                )
+            }
+        }
+        
+        itemsCollectionView.reloadData()
     }
     
     @objc private func addButtonTapped() {
@@ -339,7 +384,7 @@ class LostAndFoundViewController: UIViewController {
                         self?.items.append(contentsOf: newItems)
                     }
                     
-                    self?.itemsCollectionView.reloadData()
+                    self?.filterItems()
                     
                 case .failure(let error):
                     print("❌ 분실물 보관함 데이터 로드 실패: \(error.localizedDescription)")
@@ -397,19 +442,19 @@ class LostAndFoundViewController: UIViewController {
 // MARK: - UICollectionViewDelegate, UICollectionViewDataSource
 extension LostAndFoundViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return items.count
+        return filteredItems.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "LostAndFoundItemCell", for: indexPath) as! LostAndFoundItemCell
-        cell.configure(with: items[indexPath.item])
+        cell.configure(with: filteredItems[indexPath.item])
         return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
         
-        let storageItem = storageItems[indexPath.item]
+        let storageItem = filteredStorageItems[indexPath.item]
         print("분실물 아이템 선택됨: ID \(storageItem.postingId)")
         
         // PostDetailViewController로 이동
@@ -443,7 +488,7 @@ extension LostAndFoundViewController: UICollectionViewDelegate, UICollectionView
 extension LostAndFoundViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let width = (collectionView.frame.width - 44) / 2 // 2열 그리드
-        return CGSize(width: width, height: width + 60) // 이미지 + 텍스트 공간
+        return CGSize(width: width, height: width + 80) // 이미지 + 텍스트 공간
     }
 }
 
@@ -478,16 +523,6 @@ class LostAndFoundItemCell: UICollectionViewCell {
         imageView.clipsToBounds = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
-    }()
-    
-    private let removeButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "xmark"), for: .normal)
-        button.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
-        button.tintColor = .white
-        button.layer.cornerRadius = 12
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
     }()
     
     private let dateOverlayView: UIView = {
@@ -532,7 +567,6 @@ class LostAndFoundItemCell: UICollectionViewCell {
     private func setupUI() {
         contentView.addSubview(containerView)
         containerView.addSubview(itemImageView)
-        containerView.addSubview(removeButton)
         containerView.addSubview(dateOverlayView)
         
         dateOverlayView.addSubview(clockIconImageView)
@@ -548,11 +582,6 @@ class LostAndFoundItemCell: UICollectionViewCell {
             itemImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 8),
             itemImageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -8),
             itemImageView.heightAnchor.constraint(equalTo: itemImageView.widthAnchor),
-            
-            removeButton.topAnchor.constraint(equalTo: itemImageView.topAnchor, constant: 8),
-            removeButton.trailingAnchor.constraint(equalTo: itemImageView.trailingAnchor, constant: -8),
-            removeButton.widthAnchor.constraint(equalToConstant: 24),
-            removeButton.heightAnchor.constraint(equalToConstant: 24),
             
             dateOverlayView.leadingAnchor.constraint(equalTo: itemImageView.leadingAnchor),
             dateOverlayView.trailingAnchor.constraint(equalTo: itemImageView.trailingAnchor),
@@ -593,6 +622,60 @@ class LostAndFoundItemCell: UICollectionViewCell {
             itemImageView.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
         }
         
-        dateLabel.text = "등록일 : \(item.registrationDate)"
+        // UTC 시간을 한국 시간으로 변환
+        let koreanDateString = convertToKoreanTime(item.registrationDate)
+        dateLabel.text = "등록일 : \(koreanDateString)"
+    }
+    
+    private func convertToKoreanTime(_ dateString: String) -> String {
+        var date: Date?
+        
+        // ISO8601DateFormatter 시도 (fractional seconds 포함)
+        let iso8601Formatter = ISO8601DateFormatter()
+        iso8601Formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let parsedDate = iso8601Formatter.date(from: dateString) {
+            date = parsedDate
+        } else {
+            // DateFormatter들로 시도
+            let dateFormatters: [DateFormatter] = [
+                {
+                    let f = DateFormatter()
+                    f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
+                    f.timeZone = TimeZone(abbreviation: "UTC")
+                    return f
+                }(),
+                {
+                    let f = DateFormatter()
+                    f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+                    f.timeZone = TimeZone(abbreviation: "UTC")
+                    return f
+                }(),
+                {
+                    let f = DateFormatter()
+                    f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
+                    f.timeZone = TimeZone(abbreviation: "UTC")
+                    return f
+                }()
+            ]
+            
+            for formatter in dateFormatters {
+                if let parsedDate = formatter.date(from: dateString) {
+                    date = parsedDate
+                    break
+                }
+            }
+        }
+        
+        guard let date = date else {
+            return dateString // 파싱 실패 시 원본 반환
+        }
+        
+        // 한국 시간으로 변환
+        let koreanTimeZone = TimeZone(identifier: "Asia/Seoul") ?? TimeZone.current
+        let formatter = DateFormatter()
+        formatter.timeZone = koreanTimeZone
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        
+        return formatter.string(from: date)
     }
 }

@@ -168,6 +168,34 @@ class SignUpViewController: UIViewController {
     // MARK: - Actions
     private func setupActions() {
         signUpButton.addTarget(self, action: #selector(signUpTapped), for: .touchUpInside)
+        
+        // 생년월일 포맷터 추가
+        birthDateTextField.addTarget(self, action: #selector(birthDateTextFieldChanged), for: .editingChanged)
+        birthDateTextField.delegate = self
+    }
+    
+    @objc private func birthDateTextFieldChanged() {
+        guard let text = birthDateTextField.text else { return }
+        
+        // 숫자만 추출
+        let numbers = text.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+        
+        // 8자리로 제한
+        let limited = String(numbers.prefix(8))
+        
+        // 자동으로 하이픈 추가
+        var formatted = ""
+        for (index, char) in limited.enumerated() {
+            if index == 4 || index == 6 {
+                formatted += "-"
+            }
+            formatted += String(char)
+        }
+        
+        // 값이 변경된 경우에만 업데이트
+        if formatted != birthDateTextField.text {
+            birthDateTextField.text = formatted
+        }
     }
     
     @objc private func signUpTapped() {
@@ -247,6 +275,17 @@ class SignUpViewController: UIViewController {
             completion?()
         })
         present(alert, animated: true)
+    }
+}
+
+// MARK: - UITextFieldDelegate
+extension SignUpViewController: UITextFieldDelegate {
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        // 생년월일 필드일 때만 자동 포맷팅
+        if textField == birthDateTextField {
+            return true // birthDateTextFieldChanged에서 처리하므로 true 반환
+        }
+        return true
     }
 }
 

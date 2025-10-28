@@ -221,15 +221,8 @@ extension NotificationListViewController: UITableViewDelegate, UITableViewDataSo
         print("🔔 알림 선택됨: postingId=\(notification.postingId)")
         
         // 게시글 상세 화면으로 이동
-        // TODO: postingId를 사용하여 게시글 상세 정보를 가져와서 PostDetailViewController로 이동
-        // 현재는 간단한 알림만 표시
-        let alert = UIAlertController(
-            title: "알림",
-            message: "게시글 ID: \(notification.postingId)\n알림 타입: \(notification.notificationType)\n내용: \(notification.notificationContent)",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
-        present(alert, animated: true)
+        let detailVC = PostDetailViewController(postingId: notification.postingId)
+        navigationController?.pushViewController(detailVC, animated: true)
     }
     
     private func formatDate(_ dateString: String) -> String {

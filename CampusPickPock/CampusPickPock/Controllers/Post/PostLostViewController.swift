@@ -51,16 +51,15 @@ class PostLostViewController: UIViewController {
     // MARK: - Image Upload Section
     private let imageUploadView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
-        view.layer.cornerRadius = 12
+        view.backgroundColor = UIColor(red: 0xCD/255.0, green: 0xD7/255.0, blue: 0xE0/255.0, alpha: 1.0)
+        view.layer.cornerRadius = 24
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
     
     private let cameraIconImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "camera.fill")
-        imageView.tintColor = .gray
+        imageView.image = UIImage(named: "CameraIcon")
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
@@ -239,6 +238,7 @@ class PostLostViewController: UIViewController {
         setupUI()
         setupCollectionView()
         setupActions()
+        updateImageCount()
     }
     
     private func setupUI() {
@@ -247,19 +247,20 @@ class PostLostViewController: UIViewController {
         // Hide default navigation bar
         navigationController?.setNavigationBarHidden(true, animated: false)
         
-        // Add custom header
+        // Add subviews in proper order
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        
+        // Add custom header after scrollView to ensure it's on top
         view.addSubview(customNavHeader)
         customNavHeader.addSubview(backButton)
         customNavHeader.addSubview(navTitleLabel)
-        
-        view.addSubview(scrollView)
-        scrollView.addSubview(contentView)
         
         // Add all subviews
         contentView.addSubview(imageUploadView)
         imageUploadView.addSubview(cameraIconImageView)
         imageUploadView.addSubview(imageCountLabel)
-        imageUploadView.addSubview(imageCollectionView)
+        contentView.addSubview(imageCollectionView)
         
         contentView.addSubview(categoryLabel)
         contentView.addSubview(categoryStackView)
@@ -281,6 +282,14 @@ class PostLostViewController: UIViewController {
         
         backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
         
+        // Hide personal info section
+        personalInfoLabel.isHidden = true
+        personalInfoDescriptionLabel.isHidden = true
+        nameTextField.isHidden = true
+        studentIdTextField.isHidden = true
+        birthDateTextField.isHidden = true
+        helperLabel.isHidden = true
+        
         setupConstraints()
         setupCategoryButtons()
     }
@@ -301,37 +310,38 @@ class PostLostViewController: UIViewController {
             navTitleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
             navTitleLabel.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
             
-            scrollView.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
+            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
-            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 100),
             contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             
-            // Image Upload Section
-            imageUploadView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
-            imageUploadView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            imageUploadView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            imageUploadView.heightAnchor.constraint(equalToConstant: 200),
+            // Image Upload Section - positioned at (96, 60) from top
+            imageUploadView.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 60),
+            imageUploadView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 96),
+            imageUploadView.widthAnchor.constraint(equalToConstant: 185),
+            imageUploadView.heightAnchor.constraint(equalToConstant: 185),
             
             cameraIconImageView.centerXAnchor.constraint(equalTo: imageUploadView.centerXAnchor),
-            cameraIconImageView.centerYAnchor.constraint(equalTo: imageUploadView.centerYAnchor, constant: -20),
-            cameraIconImageView.widthAnchor.constraint(equalToConstant: 40),
-            cameraIconImageView.heightAnchor.constraint(equalToConstant: 40),
+            cameraIconImageView.centerYAnchor.constraint(equalTo: imageUploadView.centerYAnchor, constant: -10),
+            cameraIconImageView.widthAnchor.constraint(equalToConstant: 65),
+            cameraIconImageView.heightAnchor.constraint(equalToConstant: 60),
             
             imageCountLabel.centerXAnchor.constraint(equalTo: imageUploadView.centerXAnchor),
             imageCountLabel.topAnchor.constraint(equalTo: cameraIconImageView.bottomAnchor, constant: 8),
             
-            imageCollectionView.topAnchor.constraint(equalTo: imageCountLabel.bottomAnchor, constant: 16),
-            imageCollectionView.leadingAnchor.constraint(equalTo: imageUploadView.leadingAnchor, constant: 16),
-            imageCollectionView.trailingAnchor.constraint(equalTo: imageUploadView.trailingAnchor, constant: -16),
-            imageCollectionView.heightAnchor.constraint(equalToConstant: 80),
+            // Image Collection View - starts at the same position as imageUploadView
+            imageCollectionView.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 60),
+            imageCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 96),
+            imageCollectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            imageCollectionView.heightAnchor.constraint(equalToConstant: 185),
             
-            // Category Section
+            // Category Section - constraint to whichever view is visible
             categoryLabel.topAnchor.constraint(equalTo: imageUploadView.bottomAnchor, constant: 24),
             categoryLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             
@@ -357,7 +367,10 @@ class PostLostViewController: UIViewController {
             descriptionTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             descriptionTextView.heightAnchor.constraint(equalToConstant: 120),
             
-            // Personal Info Section
+            // Upload Button - connected to descriptionTextView since personal info is hidden
+            uploadButton.topAnchor.constraint(equalTo: descriptionTextView.bottomAnchor, constant: 24),
+            
+            // Personal Info Section (hidden but constraints kept for structure)
             personalInfoLabel.topAnchor.constraint(equalTo: descriptionTextView.bottomAnchor, constant: 24),
             personalInfoLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             
@@ -380,8 +393,7 @@ class PostLostViewController: UIViewController {
             birthDateTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             birthDateTextField.heightAnchor.constraint(equalToConstant: 48),
             
-            // Upload Button
-            uploadButton.topAnchor.constraint(equalTo: birthDateTextField.bottomAnchor, constant: 32),
+            // Upload Button - constraints
             uploadButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             uploadButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             uploadButton.heightAnchor.constraint(equalToConstant: 56),
@@ -453,6 +465,10 @@ class PostLostViewController: UIViewController {
         // Add tap gesture to image upload view
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageUploadTapped))
         imageUploadView.addGestureRecognizer(tapGesture)
+        
+        // Also add tap gesture to collection view to add more images
+        let collectionTapGesture = UITapGestureRecognizer(target: self, action: #selector(imageUploadTapped))
+        imageCollectionView.addGestureRecognizer(collectionTapGesture)
     }
     
     private func setupActions() {
@@ -479,11 +495,8 @@ class PostLostViewController: UIViewController {
     @objc private func uploadTapped() {
         guard let title = titleTextField.text, !title.isEmpty,
               let description = descriptionTextView.text, !description.isEmpty,
-              description != "캠퍼스 줍줍에서 잃어버린 분실물에 대한 내용을 작성해주세요.",
-              let name = nameTextField.text, !name.isEmpty,
-              let studentId = studentIdTextField.text, !studentId.isEmpty,
-              let birthDate = birthDateTextField.text, !birthDate.isEmpty else {
-            showAlert(message: "모든 필수 항목을 입력해주세요.")
+              description != "캠퍼스 줍줍에서 잃어버린 분실물에 대한 내용을 작성해주세요." else {
+            showAlert(message: "제목과 설명을 입력해주세요.")
             return
         }
         
@@ -495,19 +508,13 @@ class PostLostViewController: UIViewController {
         if !selectedImages.isEmpty {
             uploadImagesAndCreatePost(
                 title: title,
-                description: description,
-                name: name,
-                studentId: studentId,
-                birthDate: birthDate
+                description: description
             )
         } else {
             // 이미지가 없는 경우 바로 게시글 작성
             createPostWithImageUrls(
                 title: title,
                 description: description,
-                name: name,
-                studentId: studentId,
-                birthDate: birthDate,
                 imageUrls: []
             )
         }
@@ -519,12 +526,15 @@ class PostLostViewController: UIViewController {
         if selectedImages.isEmpty {
             cameraIconImageView.isHidden = false
             imageCountLabel.isHidden = false
+            imageUploadView.isHidden = false
             imageCollectionView.isHidden = true
         } else {
             cameraIconImageView.isHidden = true
             imageCountLabel.isHidden = true
+            imageUploadView.isHidden = true
             imageCollectionView.isHidden = false
         }
+        imageCollectionView.reloadData()
     }
     
     private func showAlert(message: String) {
@@ -533,7 +543,7 @@ class PostLostViewController: UIViewController {
         present(alert, animated: true)
     }
     
-    private func uploadImagesAndCreatePost(title: String, description: String, name: String, studentId: String, birthDate: String) {
+    private func uploadImagesAndCreatePost(title: String, description: String) {
         // 파일명 생성 (타임스탬프 + 인덱스)
         let timestamp = Int(Date().timeIntervalSince1970)
         let fileNames = selectedImages.enumerated().map { index, _ in
@@ -547,7 +557,7 @@ class PostLostViewController: UIViewController {
             switch result {
             case .success(let presignedUrls):
                 print("✅ Presigned URL 획득 성공")
-                self?.uploadImagesToS3(presignedUrls: presignedUrls, title: title, description: description, name: name, studentId: studentId, birthDate: birthDate)
+                self?.uploadImagesToS3(presignedUrls: presignedUrls, title: title, description: description)
                 
             case .failure(let error):
                 DispatchQueue.main.async {
@@ -560,7 +570,7 @@ class PostLostViewController: UIViewController {
         }
     }
     
-    private func uploadImagesToS3(presignedUrls: [String], title: String, description: String, name: String, studentId: String, birthDate: String) {
+    private func uploadImagesToS3(presignedUrls: [String], title: String, description: String) {
         let dispatchGroup = DispatchGroup()
         var uploadedImageUrls: [String] = []
         var uploadError: APIError?
@@ -601,15 +611,12 @@ class PostLostViewController: UIViewController {
             self?.createPostWithImageUrls(
                 title: title,
                 description: description,
-                name: name,
-                studentId: studentId,
-                birthDate: birthDate,
                 imageUrls: uploadedImageUrls
             )
         }
     }
     
-    private func createPostWithImageUrls(title: String, description: String, name: String, studentId: String, birthDate: String, imageUrls: [String]) {
+    private func createPostWithImageUrls(title: String, description: String, imageUrls: [String]) {
         print("📝 분실물 게시글 작성 시작")
         
         APIService.shared.createPost(
@@ -617,9 +624,9 @@ class PostLostViewController: UIViewController {
             postingContent: description,
             postingType: "LOST", // 분실물 게시글
             itemPlace: selectedLocation ?? "캠퍼스",
-            ownerStudentId: studentId,
-            ownerBirthDate: birthDate,
-            ownerName: name,
+            ownerStudentId: "",
+            ownerBirthDate: "",
+            ownerName: "",
             postingImageUrls: imageUrls,
             postingCategory: selectedCategory ?? "기타",
             isPlacedInStorage: false // 분실물은 보관함에 넣지 않음
@@ -692,15 +699,22 @@ extension PostLostViewController: PHPickerViewControllerDelegate {
 }
 
 // MARK: - UICollectionViewDelegate, UICollectionViewDataSource
-extension PostLostViewController: UICollectionViewDelegate, UICollectionViewDataSource {
+extension PostLostViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return selectedImages.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCell", for: indexPath) as! ImageCell
-        cell.configure(with: selectedImages[indexPath.item])
+        cell.configure(with: selectedImages[indexPath.item]) { [weak self] in
+            self?.selectedImages.remove(at: indexPath.item)
+            self?.updateImageCount()
+        }
         return cell
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return CGSize(width: 80, height: 80)
     }
 }
 

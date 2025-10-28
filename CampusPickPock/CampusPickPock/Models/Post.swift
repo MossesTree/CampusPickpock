@@ -18,6 +18,7 @@ struct Post {
     let title: String
     let content: String
     let location: String?
+    let imageUrl: String?
     let images: [UIImage]
     let authorId: String
     let authorName: String
@@ -31,6 +32,7 @@ struct Post {
          title: String, 
          content: String, 
          location: String? = nil,
+         imageUrl: String? = nil,
          images: [UIImage] = [], 
          authorId: String, 
          authorName: String, 
@@ -43,6 +45,7 @@ struct Post {
         self.title = title
         self.content = content
         self.location = location
+        self.imageUrl = imageUrl
         self.images = images
         self.authorId = authorId
         self.authorName = authorName

@@ -121,6 +121,54 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         return imageView
     }()
     
+    // 숨김 박스 UI (isPostingAccessible이 false일 때)
+    private let hiddenBoxView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0.93, green: 0.95, blue: 1.0, alpha: 1.0)
+        view.layer.cornerRadius = 12
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.isHidden = true
+        return view
+    }()
+    
+    private let lockIconView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "RockIcon")
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
+    private let hiddenLabel1: UILabel = {
+        let label = UILabel()
+        label.text = "개인 정보가 담긴 게시글이에요"
+        label.font = UIFont.boldSystemFont(ofSize: 16)
+        label.textColor = .primaryTextColor
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let hiddenLabel2: UILabel = {
+        let label = UILabel()
+        label.text = "앱 내 등록된 개인 정보와 일치하면"
+        label.font = UIFont.systemFont(ofSize: 14)
+        label.textColor = .primaryTextColor
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let hiddenLabel3: UILabel = {
+        let label = UILabel()
+        label.text = "게시글을 볼 수 있어요!"
+        label.font = UIFont.systemFont(ofSize: 14)
+        label.textColor = .primaryTextColor
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
     private lazy var imagesCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
@@ -284,6 +332,11 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         headerView.addSubview(categoryLabel)
         headerView.addSubview(itemImageView)
         headerView.addSubview(imagesCollectionView)
+        headerView.addSubview(hiddenBoxView)
+        hiddenBoxView.addSubview(lockIconView)
+        hiddenBoxView.addSubview(hiddenLabel1)
+        hiddenBoxView.addSubview(hiddenLabel2)
+        hiddenBoxView.addSubview(hiddenLabel3)
         headerView.addSubview(contentLabel)
         
         contentView.addSubview(commentsHeaderView)
@@ -395,6 +448,30 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             imagesCollectionView.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
             imagesCollectionView.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
             imagesCollectionView.heightAnchor.constraint(equalToConstant: 250),
+            
+            // Hidden Box View (같은 위치에 배치)
+            hiddenBoxView.topAnchor.constraint(equalTo: categoryLabel.bottomAnchor, constant: 8),
+            hiddenBoxView.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
+            hiddenBoxView.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
+            hiddenBoxView.heightAnchor.constraint(equalToConstant: 250),
+            
+            // Hidden Box View 내부 요소들
+            lockIconView.centerXAnchor.constraint(equalTo: hiddenBoxView.centerXAnchor),
+            lockIconView.topAnchor.constraint(equalTo: hiddenBoxView.topAnchor, constant: 40),
+            lockIconView.widthAnchor.constraint(equalToConstant: 80),
+            lockIconView.heightAnchor.constraint(equalToConstant: 80),
+            
+            hiddenLabel1.topAnchor.constraint(equalTo: lockIconView.bottomAnchor, constant: 20),
+            hiddenLabel1.leadingAnchor.constraint(equalTo: hiddenBoxView.leadingAnchor, constant: 20),
+            hiddenLabel1.trailingAnchor.constraint(equalTo: hiddenBoxView.trailingAnchor, constant: -20),
+            
+            hiddenLabel2.topAnchor.constraint(equalTo: hiddenLabel1.bottomAnchor, constant: 8),
+            hiddenLabel2.leadingAnchor.constraint(equalTo: hiddenBoxView.leadingAnchor, constant: 20),
+            hiddenLabel2.trailingAnchor.constraint(equalTo: hiddenBoxView.trailingAnchor, constant: -20),
+            
+            hiddenLabel3.topAnchor.constraint(equalTo: hiddenLabel2.bottomAnchor, constant: 4),
+            hiddenLabel3.leadingAnchor.constraint(equalTo: hiddenBoxView.leadingAnchor, constant: 20),
+            hiddenLabel3.trailingAnchor.constraint(equalTo: hiddenBoxView.trailingAnchor, constant: -20),
             
             contentLabel.topAnchor.constraint(equalTo: imagesCollectionView.bottomAnchor, constant: 16),
             contentLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
@@ -562,12 +639,21 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             print("🎯 댓글 작성 UI 활성화 완료")
         }
         
-        // 이미지 처리
-        if let imageUrls = postDetail.postingImageUrls, !imageUrls.isEmpty {
+        // 이미지 처리 - isPostingAccessible에 따라 다르게 처리
+        if !postDetail.isPostingAccessible {
+            // 접근 불가능한 경우 숨김 박스 표시
+            print("🔒 게시글 접근 불가능 - 숨김 박스 표시")
+            imagesCollectionView.isHidden = true
+            hiddenBoxView.isHidden = false
+        } else if let imageUrls = postDetail.postingImageUrls, !imageUrls.isEmpty {
             print("📸 게시글 이미지 로드 시작: \(imageUrls.count)개")
+            imagesCollectionView.isHidden = false
+            hiddenBoxView.isHidden = true
             loadAllImages(from: imageUrls)
         } else {
             print("📸 게시글 이미지 없음 - 기본 이미지 표시")
+            imagesCollectionView.isHidden = false
+            hiddenBoxView.isHidden = true
             // 기본 이미지 설정
             let defaultImage = UIImage(systemName: "airpods")
             postImages = [defaultImage].compactMap { $0 }
@@ -604,9 +690,11 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     private func updateCollectionViewLayout() {
         if let layout = imagesCollectionView.collectionViewLayout as? UICollectionViewFlowLayout {
             if postImages.count <= 1 {
-                // 이미지가 하나면 스크롤 비활성화
+                // 이미지가 하나면 스크롤 비활성화하고 원본 비율 유지
                 layout.scrollDirection = .vertical
                 imagesCollectionView.isScrollEnabled = false
+                // 이미지의 원본 비율을 유지하기 위해 컬렉션뷰 높이를 설정하지 않음
+                imagesCollectionView.heightAnchor.constraint(equalToConstant: 250).isActive = false
             } else {
                 // 여러 개면 가로 스크롤 활성화
                 layout.scrollDirection = .horizontal
@@ -768,12 +856,12 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     @objc private func menuTapped() {
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
-        // 수정 버튼 추가
+        // 수정 버튼 추가 (누구나 볼 수 있지만, 클릭 시 권한 체크)
         alert.addAction(UIAlertAction(title: "수정", style: .default) { _ in
             self.handleEditAction()
         })
         
-        // 삭제 버튼 추가
+        // 삭제 버튼 추가 (누구나 볼 수 있지만, 클릭 시 권한 체크)
         alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { _ in
             self.handleDeleteAction()
         })
@@ -785,10 +873,42 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             })
         }
         
+        // iPad에서 actionSheet가 크래시되지 않도록 설정
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = navMoreButton
+            popover.sourceRect = navMoreButton.bounds
+        }
+        
         present(alert, animated: true)
     }
     
     private func handleEditAction() {
+        // 권한 체크
+        guard let currentUser = DataManager.shared.currentUser else {
+            let alert = UIAlertController(title: "오류", message: "현재 사용자 정보를 가져올 수 없습니다.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
+        guard let currentPostDetail = self.postDetail else {
+            let alert = UIAlertController(title: "오류", message: "게시글 정보를 찾을 수 없습니다.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
+        let authorNickname = currentPostDetail.postingWriterNickname ?? ""
+        let currentUserNickname = currentUser.name
+        
+        // 본인 게시글인지 확인
+        if authorNickname != currentUserNickname {
+            let alert = UIAlertController(title: "접근 제한", message: "본인이 작성한 게시글만 수정할 수 있습니다.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
         guard let postingId = self.postingId else {
             print("❌ postingId가 없습니다.")
             let alert = UIAlertController(title: "오류", message: "게시글 정보를 찾을 수 없습니다.", preferredStyle: .alert)
@@ -804,8 +924,8 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         
         // post가 nil인 경우 Post 객체 생성
         if let post = post {
-            editViewController.configureForEdit(post: post, postDetail: postDetail)
-        } else if let postDetail = postDetail {
+            editViewController.configureForEdit(post: post, postDetail: currentPostDetail)
+        } else if let postDetail = self.postDetail {
             // postingId만 있는 경우 Post 객체 생성
             let tempPost = Post(
                 id: String(postingId),
@@ -821,11 +941,36 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             editViewController.configureForEdit(post: tempPost, postDetail: postDetail)
         }
         
-        let navigationController = UINavigationController(rootViewController: editViewController)
-        present(navigationController, animated: true)
+        navigationController?.pushViewController(editViewController, animated: true)
     }
     
     private func handleDeleteAction() {
+        // 권한 체크
+        guard let currentUser = DataManager.shared.currentUser else {
+            let alert = UIAlertController(title: "오류", message: "현재 사용자 정보를 가져올 수 없습니다.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
+        guard let currentPostDetail = self.postDetail else {
+            let alert = UIAlertController(title: "오류", message: "게시글 정보를 찾을 수 없습니다.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
+        let authorNickname = currentPostDetail.postingWriterNickname ?? ""
+        let currentUserNickname = currentUser.name
+        
+        // 본인 게시글인지 확인
+        if authorNickname != currentUserNickname {
+            let alert = UIAlertController(title: "접근 제한", message: "본인이 작성한 게시글만 삭제할 수 있습니다.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
         guard let postingId = self.postingId else {
             print("❌ postingId가 없습니다.")
             let alert = UIAlertController(title: "오류", message: "게시글 정보를 찾을 수 없습니다.", preferredStyle: .alert)
@@ -938,33 +1083,28 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     private func handleCommentMenuTapped(_ commentItem: CommentItem) {
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
-        // 대댓글 달기
-        alert.addAction(UIAlertAction(title: "대댓글 달기", style: .default) { _ in
-            self.handleReplyToComment(commentItem)
-        })
-        
-        // 수정 (본인 댓글인 경우만)
-        if commentItem.commentWriterId == getCurrentUserId() {
-            alert.addAction(UIAlertAction(title: "수정", style: .default) { _ in
-                self.handleEditComment(commentItem)
-            })
-            
-            // 삭제 (본인 댓글인 경우만)
-            alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { _ in
-                self.handleDeleteComment(commentItem)
+        // 대댓글이 아닌 경우에만 "대댓글 달기" 옵션 추가
+        if commentItem.parentCommentId == nil {
+            alert.addAction(UIAlertAction(title: "대댓글 달기", style: .default) { _ in
+                self.handleReplyToComment(commentItem)
             })
         }
         
-        // 테스트를 위해 모든 댓글에 수정/삭제 버튼 표시
+        // 수정 버튼은 누구나 볼 수 있지만, 클릭 시 권한 체크
         alert.addAction(UIAlertAction(title: "수정", style: .default) { _ in
             self.handleEditComment(commentItem)
         })
         
+        // 삭제 버튼은 누구나 볼 수 있지만, 클릭 시 권한 체크
         alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { _ in
             self.handleDeleteComment(commentItem)
         })
         
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        // iPad에서 actionSheet가 크래시되지 않도록 설정
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = view
+            popover.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 0, height: 0)
+        }
         
         present(alert, animated: true)
     }
@@ -1605,6 +1745,8 @@ class CommentCell: UITableViewCell {
     }()
     
     private var collectionViewHeightConstraint: NSLayoutConstraint?
+    private var imageCollectionViewBottomConstraint: NSLayoutConstraint?
+    private var contentLabelBottomConstraint: NSLayoutConstraint?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -1647,10 +1789,9 @@ class CommentCell: UITableViewCell {
         
         NSLayoutConstraint.activate([
             containerLeadingConstraint!,
-            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
             containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
-            containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 100),
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
             
             replyIndicatorView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             replyIndicatorView.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor),
@@ -1678,11 +1819,11 @@ class CommentCell: UITableViewCell {
             privateIconImageView.widthAnchor.constraint(equalToConstant: 12),
             privateIconImageView.heightAnchor.constraint(equalToConstant: 12),
             
-            contentLabel.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 12),
+            contentLabel.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 8),
             contentLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             contentLabel.trailingAnchor.constraint(equalTo: menuButton.leadingAnchor, constant: -8),
             
-            commentImagesCollectionView.topAnchor.constraint(equalTo: contentLabel.bottomAnchor, constant: 12),
+            commentImagesCollectionView.topAnchor.constraint(equalTo: contentLabel.bottomAnchor, constant: 8),
             commentImagesCollectionView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             commentImagesCollectionView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
             
@@ -1691,6 +1832,14 @@ class CommentCell: UITableViewCell {
             menuButton.widthAnchor.constraint(equalToConstant: 32),
             menuButton.heightAnchor.constraint(equalToConstant: 32)
         ])
+        
+        // 이미지 컬렉션뷰와 contentLabel의 bottom 제약조건 저장 (나중에 활성화/비활성화)
+        // 이미지가 있을 때는 하단에 여백을 추가
+        imageCollectionViewBottomConstraint = commentImagesCollectionView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12)
+        contentLabelBottomConstraint = contentLabel.bottomAnchor.constraint(lessThanOrEqualTo: containerView.bottomAnchor)
+        
+        // 기본적으로 contentLabel bottom 활성화 (이미지가 없을 때)
+        contentLabelBottomConstraint?.isActive = true
     }
     
     func configure(with comment: Comment) {
@@ -1731,7 +1880,20 @@ class CommentCell: UITableViewCell {
         
         usernameLabel.text = commentItem.commentWriterNickName ?? "익명"
         timeLabel.text = formatDate(commentItem.commentCreatedAt)
-        contentLabel.text = commentItem.commentContent
+        
+        // isCommentAccessible이 false면 "비밀댓글입니다." 표시
+        if !commentItem.isCommentAccessible {
+            contentLabel.text = "비밀댓글입니다."
+            commentImagesCollectionView.isHidden = true
+            collectionViewHeightConstraint?.constant = 0
+            imageCollectionViewBottomConstraint?.isActive = false
+            contentLabelBottomConstraint?.isActive = true
+        } else {
+            contentLabel.text = commentItem.commentContent
+            // 댓글 이미지 처리
+            loadCommentImages(from: commentItem.commentImageUrls ?? [])
+        }
+        
         privateIconImageView.isHidden = !commentItem.isCommentSecret
         
         // 대댓글인 경우
@@ -1740,9 +1902,6 @@ class CommentCell: UITableViewCell {
         } else {
             showAsMainComment()
         }
-        
-        // 댓글 이미지 처리
-        loadCommentImages(from: commentItem.commentImageUrls ?? [])
     }
     
     override func prepareForReuse() {
@@ -1782,12 +1941,20 @@ class CommentCell: UITableViewCell {
             print("🖼️ 이미지 URL이 없음 - 컬렉션뷰 숨김")
             commentImagesCollectionView.isHidden = true
             collectionViewHeightConstraint?.constant = 0
+            
+            // 이미지가 없을 때는 contentLabel이 bottom을 결정
+            imageCollectionViewBottomConstraint?.isActive = false
+            contentLabelBottomConstraint?.isActive = true
             return
         }
         
         print("🖼️ 이미지 URL 있음 - 컬렉션뷰 표시")
         commentImagesCollectionView.isHidden = false
         collectionViewHeightConstraint?.constant = 80
+        
+        // 이미지가 있을 때는 collectionView가 bottom을 결정
+        contentLabelBottomConstraint?.isActive = false
+        imageCollectionViewBottomConstraint?.isActive = true
         
         let group = DispatchGroup()
         
