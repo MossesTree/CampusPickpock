@@ -321,7 +321,7 @@ class PostCreateViewController: UIViewController {
             customNavHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             customNavHeader.heightAnchor.constraint(equalToConstant: 44),
             
-            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
+            scrollView.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
