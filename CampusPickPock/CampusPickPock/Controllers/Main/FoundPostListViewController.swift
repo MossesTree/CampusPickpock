@@ -602,8 +602,8 @@ class FoundPostCell: UITableViewCell {
             
             commentIcon.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 8),
             commentIcon.trailingAnchor.constraint(equalTo: commentCountLabel.leadingAnchor, constant: -2),
-            commentIcon.widthAnchor.constraint(equalToConstant: 20),
-            commentIcon.heightAnchor.constraint(equalToConstant: 20),
+            commentIcon.widthAnchor.constraint(equalToConstant: 28),
+            commentIcon.heightAnchor.constraint(equalToConstant: 24),
             commentIcon.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16),
             
             commentCountLabel.centerYAnchor.constraint(equalTo: commentIcon.centerYAnchor),
