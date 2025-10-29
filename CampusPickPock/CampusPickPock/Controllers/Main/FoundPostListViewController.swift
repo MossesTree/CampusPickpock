@@ -32,8 +32,12 @@ class FoundPostListViewController: UIViewController {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "주인을 찾아요"
-        label.font = UIFont.boldSystemFont(ofSize: 24)
-        label.textColor = .primaryTextColor
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 22) {
+            label.font = UIFont(descriptor: pretendardFont.fontDescriptor.withSymbolicTraits(.traitBold) ?? pretendardFont.fontDescriptor, size: 22)
+        } else {
+            label.font = .boldSystemFont(ofSize: 22)
+        }
+        label.textColor = UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0)
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -42,8 +46,8 @@ class FoundPostListViewController: UIViewController {
     private let subtitleLabel: UILabel = {
         let label = UILabel()
         label.text = "캠퍼스 줍줍과 함께 찾아보세요"
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .secondaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 13) ?? .systemFont(ofSize: 13, weight: .medium)
+        label.textColor = UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0)
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -170,7 +174,7 @@ class FoundPostListViewController: UIViewController {
             subtitleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
             
             // Category Section
-            categoryScrollView.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor, constant: 16),
+            categoryScrollView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 18),
             categoryScrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             categoryScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             categoryScrollView.heightAnchor.constraint(equalToConstant: 40),
@@ -317,7 +321,8 @@ extension FoundPostListViewController: UITableViewDelegate, UITableViewDataSourc
             isPickedUp: postingItem.isPickedUp
         )
         
-        cell.configure(with: post)
+        let isFirst = (indexPath.row == 0)
+        cell.configure(with: post, isFirst: isFirst)
         return cell
     }
     
@@ -425,8 +430,7 @@ class FoundPostCell: UITableViewCell {
     
     private let profileImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "person.circle.fill")
-        imageView.tintColor = .gray
+        imageView.image = UIImage(named: "ProfileIcon")
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
@@ -459,6 +463,14 @@ class FoundPostCell: UITableViewCell {
         return label
     }()
     
+    private let clockIcon: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "ClockIcon1")
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
     private let locationTimeLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 12)
@@ -489,15 +501,32 @@ class FoundPostCell: UITableViewCell {
         return label
     }()
     
-    private let commentButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "text.bubble"), for: .normal)
-        button.setTitle("6", for: .normal)
-        button.tintColor = .secondaryTextColor
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 12)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
+    private let commentIcon: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "CommentIcon1")
+        imageView.contentMode = .scaleAspectFit
+        imageView.tintColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0)
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
     }()
+    
+    private let commentCountLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont(name: "Pretendard Variable", size: 17) ?? .systemFont(ofSize: 17)
+        label.textColor = UIColor(red: 0x62/255.0, green: 0x5F/255.0, blue: 0x5F/255.0, alpha: 1.0)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let dividerLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private var isFirstCell = false
+    private var dividerLineTopConstraint: NSLayoutConstraint?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -513,20 +542,29 @@ class FoundPostCell: UITableViewCell {
         selectionStyle = .none
         
         contentView.addSubview(containerView)
+        containerView.addSubview(dividerLine)
         containerView.addSubview(profileImageView)
         containerView.addSubview(usernameLabel)
         containerView.addSubview(itemImageView)
         containerView.addSubview(titleLabel)
+        containerView.addSubview(clockIcon)
         containerView.addSubview(locationTimeLabel)
         containerView.addSubview(pickedUpButton)
         containerView.addSubview(descriptionLabel)
-        containerView.addSubview(commentButton)
+        containerView.addSubview(commentIcon)
+        containerView.addSubview(commentCountLabel)
         
-        NSLayoutConstraint.activate([
+        dividerLineTopConstraint = dividerLine.topAnchor.constraint(equalTo: containerView.topAnchor)
+        
+        var constraints = [
             containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
             containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
+            
+            dividerLine.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            dividerLine.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            dividerLine.heightAnchor.constraint(equalToConstant: 1),
             
             profileImageView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
             profileImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
@@ -550,24 +588,43 @@ class FoundPostCell: UITableViewCell {
             pickedUpButton.widthAnchor.constraint(equalToConstant: 75),
             pickedUpButton.heightAnchor.constraint(equalToConstant: 24),
             
+            clockIcon.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            clockIcon.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            clockIcon.widthAnchor.constraint(equalToConstant: 16),
+            clockIcon.heightAnchor.constraint(equalToConstant: 16),
+            
             locationTimeLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
-            locationTimeLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            locationTimeLabel.leadingAnchor.constraint(equalTo: clockIcon.trailingAnchor, constant: 5),
             
             descriptionLabel.topAnchor.constraint(equalTo: locationTimeLabel.bottomAnchor, constant: 8),
             descriptionLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             descriptionLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             
-            commentButton.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 8),
-            commentButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            commentButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16)
-        ])
+            commentIcon.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 8),
+            commentIcon.trailingAnchor.constraint(equalTo: commentCountLabel.leadingAnchor, constant: -2),
+            commentIcon.widthAnchor.constraint(equalToConstant: 20),
+            commentIcon.heightAnchor.constraint(equalToConstant: 20),
+            commentIcon.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16),
+            
+            commentCountLabel.centerYAnchor.constraint(equalTo: commentIcon.centerYAnchor),
+            commentCountLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16)
+        ]
+        
+        if let dividerLineTopConstraint = dividerLineTopConstraint {
+            constraints.append(dividerLineTopConstraint)
+        }
+        
+        NSLayoutConstraint.activate(constraints)
     }
     
-    func configure(with post: Post) {
+    func configure(with post: Post, isFirst: Bool = false) {
+        self.isFirstCell = isFirst
+        
         usernameLabel.text = post.authorName
         titleLabel.text = post.title
         locationTimeLabel.text = "\(post.location ?? "위치 없음") | \(formatRelativeTime(post.createdAt))"
         descriptionLabel.text = post.content
+        commentCountLabel.text = "\(post.commentCount)"
         
         // 이미지 URL이 있으면 로드, 없으면 기본 이미지
         if let imageUrlString = post.imageUrl, let imageUrl = URL(string: imageUrlString) {
@@ -581,6 +638,17 @@ class FoundPostCell: UITableViewCell {
         
         // isPickedUp 상태에 따라 버튼 표시
         configureJoopjoopButton(isPickedUp: post.isPickedUp)
+        
+        // 구분선 위치 설정
+        if !isFirstCell {
+            dividerLine.isHidden = false
+            // 프로필아이콘으로부터 20 위쪽에 선 위치 설정
+            dividerLineTopConstraint?.isActive = false
+            dividerLineTopConstraint = dividerLine.topAnchor.constraint(equalTo: profileImageView.topAnchor, constant: -20)
+            dividerLineTopConstraint?.isActive = true
+        } else {
+            dividerLine.isHidden = true
+        }
         
         print("📅 Found 포스팅 시간 정보:")
         print("   작성 시간: \(post.createdAt)")
