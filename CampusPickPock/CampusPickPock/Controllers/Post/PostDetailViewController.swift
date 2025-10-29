@@ -75,6 +75,13 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
+    
+    private let navDividerLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
 
     // MARK: - Header Section
     private let headerView: UIView = {
@@ -230,6 +237,13 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         return label
     }()
     
+    private let dividerLine2: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
     private let commentsTableView: UITableView = {
         let tableView = UITableView()
         tableView.backgroundColor = .clear
@@ -329,6 +343,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         customNavHeader.addSubview(navBackButton)
         customNavHeader.addSubview(navTitleLabel)
         customNavHeader.addSubview(navMoreButton)
+        customNavHeader.addSubview(navDividerLine)
         
         navBackButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
         navMoreButton.addTarget(self, action: #selector(menuTapped), for: .touchUpInside)
@@ -348,7 +363,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         headerView.addSubview(profileImageView)
         headerView.addSubview(usernameLabel)
         headerView.addSubview(titleLabel)
-        headerView.addSubview(categoryLabel)
+        // headerView.addSubview(categoryLabel) // 카테고리 숨김
         headerView.addSubview(pickedUpButton)
         headerView.addSubview(itemImageView)
         headerView.addSubview(imagesCollectionView)
@@ -361,6 +376,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         
         contentView.addSubview(commentsHeaderView)
         commentsHeaderView.addSubview(commentsCountLabel)
+        commentsHeaderView.addSubview(dividerLine2)
         
         contentView.addSubview(commentsTableView)
         
@@ -433,7 +449,12 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             navMoreButton.widthAnchor.constraint(equalToConstant: 44),
             navMoreButton.heightAnchor.constraint(equalToConstant: 44),
             
-            scrollView.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
+            navDividerLine.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
+            navDividerLine.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            navDividerLine.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            navDividerLine.heightAnchor.constraint(equalToConstant: 1),
+            
+            scrollView.topAnchor.constraint(equalTo: navDividerLine.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: commentInputView.topAnchor),
@@ -467,15 +488,15 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
             titleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
             
-            categoryLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
-            categoryLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
+            // categoryLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8), // 카테고리 숨김
+            // categoryLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20), // 카테고리 숨김
             
-            imagesCollectionView.topAnchor.constraint(equalTo: categoryLabel.bottomAnchor, constant: 8),
+            imagesCollectionView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 16),
             imagesCollectionView.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
             imagesCollectionView.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
             
             // Hidden Box View (중앙 배치)
-            hiddenBoxView.topAnchor.constraint(equalTo: categoryLabel.bottomAnchor, constant: 8),
+            hiddenBoxView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 16),
             hiddenBoxView.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
             hiddenBoxView.widthAnchor.constraint(equalToConstant: 346),
             hiddenBoxView.heightAnchor.constraint(equalToConstant: 366),
@@ -509,6 +530,11 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             commentsCountLabel.leadingAnchor.constraint(equalTo: commentsHeaderView.leadingAnchor, constant: 20),
             commentsCountLabel.centerYAnchor.constraint(equalTo: commentsHeaderView.centerYAnchor),
             
+            dividerLine2.topAnchor.constraint(equalTo: commentsCountLabel.bottomAnchor, constant: 8),
+            dividerLine2.leadingAnchor.constraint(equalTo: commentsHeaderView.leadingAnchor, constant: 20),
+            dividerLine2.trailingAnchor.constraint(equalTo: commentsHeaderView.trailingAnchor, constant: -20),
+            dividerLine2.heightAnchor.constraint(equalToConstant: 1),
+            
             // Comments Table View
             commentsTableView.topAnchor.constraint(equalTo: commentsHeaderView.bottomAnchor),
             commentsTableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -533,14 +559,14 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             
             privateButton.leadingAnchor.constraint(equalTo: commentTextField.trailingAnchor, constant: -40),
             privateButton.centerYAnchor.constraint(equalTo: commentInputView.centerYAnchor),
-            privateButton.widthAnchor.constraint(equalToConstant: 13),
-            privateButton.heightAnchor.constraint(equalToConstant: 17),
+            privateButton.widthAnchor.constraint(equalToConstant: 31),
+            privateButton.heightAnchor.constraint(equalToConstant: 31),
             
             sendButton.leadingAnchor.constraint(equalTo: commentTextField.trailingAnchor, constant: 8),
             sendButton.trailingAnchor.constraint(equalTo: commentInputView.trailingAnchor, constant: -16),
             sendButton.centerYAnchor.constraint(equalTo: commentInputView.centerYAnchor),
-            sendButton.widthAnchor.constraint(equalToConstant: 31),
-            sendButton.heightAnchor.constraint(equalToConstant: 31),
+            sendButton.widthAnchor.constraint(equalToConstant: 40),
+            sendButton.heightAnchor.constraint(equalToConstant: 40),
             
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
@@ -665,7 +691,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         }
     }
     
-    private func setContentLabelConstraints(inHiddenBox: Bool) {
+    private func setContentLabelConstraints(inHiddenBox: Bool, hasImages: Bool = true) {
         contentLabelTopConstraint?.isActive = false
         contentLabelLeadingConstraint?.isActive = false
         contentLabelTrailingConstraint?.isActive = false
@@ -681,9 +707,18 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             
             // headerView가 hiddenBoxView를 포함하도록
             headerViewBottomConstraint?.isActive = true
-        } else {
-            // 일반 게시글에 본문 배치
+        } else if hasImages {
+            // 이미지가 있는 경우
             contentLabelTopConstraint = contentLabel.topAnchor.constraint(equalTo: imagesCollectionView.bottomAnchor, constant: 10)
+            contentLabelLeadingConstraint = contentLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20)
+            contentLabelTrailingConstraint = contentLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20)
+            contentLabelBottomConstraint = contentLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -20)
+            
+            // headerViewBottomConstraint 비활성화
+            headerViewBottomConstraint?.isActive = false
+        } else {
+            // 이미지가 없는 경우 titleLabel 바로 아래
+            contentLabelTopConstraint = contentLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 16)
             contentLabelLeadingConstraint = contentLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20)
             contentLabelTrailingConstraint = contentLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20)
             contentLabelBottomConstraint = contentLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -20)
@@ -740,7 +775,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         // 작성자 정보 업데이트
         usernameLabel.text = postDetail.postingWriterNickname ?? "익명"
         titleLabel.text = postDetail.postingTitle
-        categoryLabel.text = postDetail.postingCategory ?? ""
+        // categoryLabel.text = postDetail.postingCategory ?? "" // 카테고리 숨김
         contentLabel.text = postDetail.postingContent
         
         // 줍줍 상태에 따라 버튼 표시
@@ -790,24 +825,18 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             hiddenBoxView.isHidden = true
             
             // 본문과 댓글 위치 설정
-            setContentLabelConstraints(inHiddenBox: false)
+            setContentLabelConstraints(inHiddenBox: false, hasImages: true)
             setCommentsHeaderConstraints(belowHiddenBox: false)
             
             loadAllImages(from: imageUrls)
         } else {
-            print("📸 게시글 이미지 없음 - 기본 이미지 표시")
-            imagesCollectionView.isHidden = false
+            print("📸 게시글 이미지 없음 - 이미지 영역 숨김")
+            imagesCollectionView.isHidden = true
             hiddenBoxView.isHidden = true
             
-            // 본문과 댓글 위치 설정
-            setContentLabelConstraints(inHiddenBox: false)
+            // 본문과 댓글 위치 설정 (이미지 없음)
+            setContentLabelConstraints(inHiddenBox: false, hasImages: false)
             setCommentsHeaderConstraints(belowHiddenBox: false)
-            
-            // 기본 이미지 설정
-            let defaultImage = UIImage(systemName: "airpods")
-            postImages = [defaultImage].compactMap { $0 }
-            updateCollectionViewLayout()
-            imagesCollectionView.reloadData()
         }
         
         // 댓글 수 업데이트 (실제 댓글 수는 별도 API로 가져와야 함)

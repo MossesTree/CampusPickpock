@@ -560,8 +560,10 @@ class FoundPostCell: UITableViewCell {
         if let imageUrlString = post.imageUrl, let imageUrl = URL(string: imageUrlString) {
             loadImage(from: imageUrl)
         } else {
-            itemImageView.image = UIImage(systemName: "airpods")
+            let config = UIImage.SymbolConfiguration(weight: .light)
+            itemImageView.image = UIImage(systemName: "photo", withConfiguration: config)
             itemImageView.tintColor = .gray
+            itemImageView.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
         }
         
         // isPickedUp 상태에 따라 버튼 표시
@@ -579,11 +581,14 @@ class FoundPostCell: UITableViewCell {
                 DispatchQueue.main.async {
                     self?.itemImageView.image = image
                     self?.itemImageView.tintColor = nil
+                    self?.itemImageView.backgroundColor = .clear
                 }
             } else {
                 DispatchQueue.main.async {
-                    self?.itemImageView.image = UIImage(systemName: "airpods")
+                    let config = UIImage.SymbolConfiguration(weight: .light)
+                    self?.itemImageView.image = UIImage(systemName: "photo", withConfiguration: config)
                     self?.itemImageView.tintColor = .gray
+                    self?.itemImageView.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
                 }
             }
         }.resume()

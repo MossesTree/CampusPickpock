@@ -165,7 +165,13 @@ class PostCell: UITableViewCell {
             thumbnailImageView.image = firstImage
             thumbnailImageView.isHidden = false
         } else {
-            thumbnailImageView.isHidden = true
+            // 이미지가 없는 경우 기본 이미지 표시
+            let config = UIImage.SymbolConfiguration(weight: .light)
+            thumbnailImageView.image = UIImage(systemName: "photo", withConfiguration: config)
+            thumbnailImageView.tintColor = .gray
+            thumbnailImageView.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
+            thumbnailImageView.contentMode = .scaleAspectFit
+            thumbnailImageView.isHidden = false
         }
     }
     

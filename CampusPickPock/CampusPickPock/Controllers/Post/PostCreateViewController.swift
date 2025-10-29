@@ -256,6 +256,7 @@ class PostCreateViewController: UIViewController {
     private var editingPostDetail: PostDetailItem?
     private var postType: PostType = .found
     private var uploadButtonTopConstraint: NSLayoutConstraint?
+    private var categoryToSelect: String? // 수정 모드에서 선택할 카테고리 저장
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -885,6 +886,10 @@ class PostCreateViewController: UIViewController {
             descriptionTextView.text = postDetail.postingContent
             descriptionTextView.textColor = .primaryTextColor
             
+            // 키보드 타임아웃 에러 방지: 텍스트 필드들을 편집 종료 상태로 만들기
+            titleTextField.resignFirstResponder()
+            descriptionTextView.resignFirstResponder()
+            
             // 위치 설정
             if let itemPlace = postDetail.itemPlace {
                 selectedLocation = itemPlace
@@ -897,20 +902,46 @@ class PostCreateViewController: UIViewController {
             // 카테고리 설정
             if let category = postDetail.postingCategory {
                 selectedCategory = category
-                selectCategory(category)
+                categoryToSelect = category
                 print("✅ 카테고리 설정 완료: \(category)")
             } else {
                 print("⚠️ 카테고리 정보 없음")
             }
             
-            // 분실물 보관함 체크박스 설정
-            if let isPlacedInStorage = postDetail.isPlacedInStorage, isPlacedInStorage {
-                isStorageChecked = true
-                storageCheckbox.setImage(UIImage(systemName: "checkmark.square.fill"), for: .normal)
-                storageCheckbox.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
-                print("✅ 분실물 보관함 체크박스 설정 완료")
-            } else {
-                print("⚠️ 분실물 보관함 정보 없음 또는 false")
+            // 분실물 보관함 체크박스 설정 (found 타입일 때만)
+            if postType == .found {
+                if let isPlacedInStorage = postDetail.isPlacedInStorage, isPlacedInStorage {
+                    isStorageChecked = true
+                    storageCheckbox.setImage(UIImage(systemName: "checkmark.square.fill"), for: .normal)
+                    storageCheckbox.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+                    print("✅ 분실물 보관함 체크박스 설정 완료")
+                } else {
+                    isStorageChecked = false
+                    storageCheckbox.setImage(UIImage(systemName: "square"), for: .normal)
+                    storageCheckbox.tintColor = .gray
+                    print("⚠️ 분실물 보관함 정보 없음 또는 false")
+                }
+            }
+            
+            // 개인정보 입력란 채우기 (found 타입일 때만)
+            if postType == .found {
+                if let ownerName = postDetail.ownerName {
+                    nameTextField.text = ownerName
+                    print("✅ 이름 설정: \(ownerName)")
+                }
+                if let ownerStudentId = postDetail.ownerStudentId {
+                    studentIdTextField.text = ownerStudentId
+                    print("✅ 학번 설정: \(ownerStudentId)")
+                }
+                if let ownerBirthDate = postDetail.ownerBirthDate {
+                    birthDateTextField.text = formatBirthDate(ownerBirthDate)
+                    print("✅ 생년월일 설정: \(ownerBirthDate)")
+                }
+                
+                // 키보드 타임아웃 에러 방지
+                nameTextField.resignFirstResponder()
+                studentIdTextField.resignFirstResponder()
+                birthDateTextField.resignFirstResponder()
             }
             
             // 이미지 URL이 있다면 로드
@@ -923,6 +954,7 @@ class PostCreateViewController: UIViewController {
         uploadButton.setTitle("수정하기", for: .normal)
         
         // 개인정보 섹션은 found 타입일 때만 표시
+        // 분실물 보관함 체크박스는 found 타입일 때만 표시
         if postType == .found {
             // found 타입: 개인정보 섹션 표시
             personalInfoLabel.isHidden = false
@@ -930,6 +962,10 @@ class PostCreateViewController: UIViewController {
             nameTextField.isHidden = false
             studentIdTextField.isHidden = false
             birthDateTextField.isHidden = false
+            
+            // 분실물 보관함 체크박스 표시
+            storageCheckbox.isHidden = false
+            storageLabel.isHidden = false
         } else {
             // lost 타입: 개인정보 섹션 숨김 및 제약조건 조정
             personalInfoLabel.alpha = 0
@@ -943,6 +979,10 @@ class PostCreateViewController: UIViewController {
             nameTextField.isHidden = true
             studentIdTextField.isHidden = true
             birthDateTextField.isHidden = true
+            
+            // lost 타입: 분실물 보관함 체크박스 숨김
+            storageCheckbox.isHidden = true
+            storageLabel.isHidden = true
         }
     }
     
@@ -952,6 +992,11 @@ class PostCreateViewController: UIViewController {
         // 수정 모드이고 lost 타입일 때만 제약조건 조정
         if isEditMode && postType == .lost {
             adjustConstraintsForEditMode()
+        }
+        
+        // 수정 모드일 때 카테고리 선택
+        if isEditMode, let category = categoryToSelect {
+            selectCategory(category)
         }
     }
     

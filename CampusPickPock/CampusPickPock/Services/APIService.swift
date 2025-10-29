@@ -2194,10 +2194,13 @@ struct PostDetailItem: Codable {
     let isPostingAccessible: Bool
     let postingImageUrls: [String]?
     let postingContent: String
-    let postingCreatedAt: String?
     let postingCategory: String?
     let itemPlace: String?
+    let ownerStudentId: String?
+    let ownerBirthDate: String?
+    let ownerName: String?
     let isPlacedInStorage: Bool?
+    let postingCreatedAt: String? // 하위 호환성을 위해 유지
     
     // 커스텀 디코딩으로 null 값 처리
     init(from decoder: Decoder) throws {
@@ -2210,10 +2213,13 @@ struct PostDetailItem: Codable {
         isPostingAccessible = try container.decode(Bool.self, forKey: .isPostingAccessible)
         postingImageUrls = try container.decodeIfPresent([String].self, forKey: .postingImageUrls)
         postingContent = try container.decode(String.self, forKey: .postingContent)
-        postingCreatedAt = try container.decodeIfPresent(String.self, forKey: .postingCreatedAt)
         postingCategory = try container.decodeIfPresent(String.self, forKey: .postingCategory)
         itemPlace = try container.decodeIfPresent(String.self, forKey: .itemPlace)
+        ownerStudentId = try container.decodeIfPresent(String.self, forKey: .ownerStudentId)
+        ownerBirthDate = try container.decodeIfPresent(String.self, forKey: .ownerBirthDate)
+        ownerName = try container.decodeIfPresent(String.self, forKey: .ownerName)
         isPlacedInStorage = try container.decodeIfPresent(Bool.self, forKey: .isPlacedInStorage)
+        postingCreatedAt = try container.decodeIfPresent(String.self, forKey: .postingCreatedAt)
     }
     
     private enum CodingKeys: String, CodingKey {
@@ -2224,10 +2230,13 @@ struct PostDetailItem: Codable {
         case isPostingAccessible
         case postingImageUrls
         case postingContent
-        case postingCreatedAt
         case postingCategory
         case itemPlace
+        case ownerStudentId
+        case ownerBirthDate
+        case ownerName
         case isPlacedInStorage
+        case postingCreatedAt
     }
 }
 
