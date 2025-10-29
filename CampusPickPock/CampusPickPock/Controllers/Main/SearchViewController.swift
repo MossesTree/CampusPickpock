@@ -61,8 +61,39 @@ class SearchViewController: UIViewController {
     private let segmentedControl: UISegmentedControl = {
         let control = UISegmentedControl(items: ["FOUND", "LOST"])
         control.selectedSegmentIndex = 0
+        
+        // 배경색 완전히 제거
+        control.backgroundColor = .clear
+        control.selectedSegmentTintColor = .clear
+        
+        // Divider 이미지 제거 (세그먼트 사이 구분선 제거)
+        control.setDividerImage(UIImage(), forLeftSegmentState: .normal, rightSegmentState: .normal, barMetrics: .default)
+        
+        // 선택된 상태: 4A80F0
+        control.setTitleTextAttributes([
+            .foregroundColor: UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0),
+            .font: UIFont.systemFont(ofSize: 14, weight: .medium)
+        ], for: .selected)
+        
+        // 선택되지 않은 상태: 7A7A7A
+        control.setTitleTextAttributes([
+            .foregroundColor: UIColor(red: 0x7A/255.0, green: 0x7A/255.0, blue: 0x7A/255.0, alpha: 1.0),
+            .font: UIFont.systemFont(ofSize: 14)
+        ], for: .normal)
+        
+        // 배경 이미지 완전히 제거
+        control.setBackgroundImage(UIImage(), for: .normal, barMetrics: .default)
+        control.setBackgroundImage(UIImage(), for: .selected, barMetrics: .default)
+        
         control.translatesAutoresizingMaskIntoConstraints = false
         return control
+    }()
+    
+    private let headerDividerLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
     }()
     
     private let tableView: UITableView = {
@@ -106,13 +137,14 @@ class SearchViewController: UIViewController {
         // Hide default navigation bar
         navigationController?.setNavigationBarHidden(true, animated: false)
         
-        // Add custom header with back button and search text field
+        // Add custom header with back button, search text field and segmented control
         view.addSubview(customHeader)
         customHeader.addSubview(backButton)
         customHeader.addSubview(searchTextField)
+        customHeader.addSubview(segmentedControl)
+        customHeader.addSubview(headerDividerLine)
         
-        // Add segmented control, table view and other elements
-        view.addSubview(segmentedControl)
+        // Add table view and other elements
         view.addSubview(tableView)
         view.addSubview(emptyLabel)
         view.addSubview(loadingIndicator)
@@ -127,23 +159,29 @@ class SearchViewController: UIViewController {
             customHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             customHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             customHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            customHeader.heightAnchor.constraint(equalToConstant: 60),
+            customHeader.bottomAnchor.constraint(equalTo: headerDividerLine.bottomAnchor),
             
             backButton.leadingAnchor.constraint(equalTo: customHeader.leadingAnchor, constant: 16),
-            backButton.centerYAnchor.constraint(equalTo: customHeader.centerYAnchor),
+            backButton.topAnchor.constraint(equalTo: customHeader.topAnchor, constant: 10),
             backButton.widthAnchor.constraint(equalToConstant: 24),
             backButton.heightAnchor.constraint(equalToConstant: 24),
             
             searchTextField.leadingAnchor.constraint(equalTo: backButton.trailingAnchor, constant: 8),
             searchTextField.trailingAnchor.constraint(equalTo: customHeader.trailingAnchor, constant: -16),
-            searchTextField.centerYAnchor.constraint(equalTo: customHeader.centerYAnchor),
+            searchTextField.topAnchor.constraint(equalTo: customHeader.topAnchor, constant: 10),
             searchTextField.heightAnchor.constraint(equalToConstant: 40),
             
-            segmentedControl.topAnchor.constraint(equalTo: customHeader.bottomAnchor, constant: 16),
-            segmentedControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            segmentedControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            segmentedControl.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 40),
+            segmentedControl.leadingAnchor.constraint(equalTo: customHeader.leadingAnchor, constant: 16),
+            segmentedControl.trailingAnchor.constraint(equalTo: customHeader.trailingAnchor, constant: -16),
+            segmentedControl.heightAnchor.constraint(equalToConstant: 32),
             
-            tableView.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor, constant: 16),
+            headerDividerLine.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor, constant: 0),
+            headerDividerLine.leadingAnchor.constraint(equalTo: customHeader.leadingAnchor, constant: 0),
+            headerDividerLine.trailingAnchor.constraint(equalTo: customHeader.trailingAnchor, constant: 0),
+            headerDividerLine.heightAnchor.constraint(equalToConstant: 1),
+            
+            tableView.topAnchor.constraint(equalTo: customHeader.bottomAnchor, constant: 0),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),

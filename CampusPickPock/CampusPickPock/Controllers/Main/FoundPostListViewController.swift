@@ -503,7 +503,7 @@ class FoundPostCell: UITableViewCell {
     
     private let commentIcon: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(named: "CommentIcon1")
+        imageView.image = UIImage(named: "CommentIcon3")
         imageView.contentMode = .scaleAspectFit
         imageView.tintColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0)
         imageView.translatesAutoresizingMaskIntoConstraints = false
@@ -602,8 +602,8 @@ class FoundPostCell: UITableViewCell {
             
             commentIcon.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 8),
             commentIcon.trailingAnchor.constraint(equalTo: commentCountLabel.leadingAnchor, constant: -2),
-            commentIcon.widthAnchor.constraint(equalToConstant: 28),
-            commentIcon.heightAnchor.constraint(equalToConstant: 24),
+            commentIcon.widthAnchor.constraint(equalToConstant: 22),
+            commentIcon.heightAnchor.constraint(equalToConstant: 20),
             commentIcon.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16),
             
             commentCountLabel.centerYAnchor.constraint(equalTo: commentIcon.centerYAnchor),
