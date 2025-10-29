@@ -36,6 +36,13 @@ class PostLostViewController: UIViewController {
         return label
     }()
     
+    private let navDividerLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -78,12 +85,16 @@ class PostLostViewController: UIViewController {
     private let imageCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
-        layout.itemSize = CGSize(width: 80, height: 80)
+        layout.itemSize = CGSize(width: 180, height: 200)
         layout.minimumInteritemSpacing = 8
+        layout.minimumLineSpacing = 8
         
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .clear
         collectionView.showsHorizontalScrollIndicator = false
+        // 버튼 터치를 위해 스크롤 제스처 취소 설정
+        collectionView.canCancelContentTouches = true
+        collectionView.delaysContentTouches = false
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         return collectionView
     }()
@@ -255,6 +266,7 @@ class PostLostViewController: UIViewController {
         view.addSubview(customNavHeader)
         customNavHeader.addSubview(backButton)
         customNavHeader.addSubview(navTitleLabel)
+        view.addSubview(navDividerLine)
         
         // Add all subviews
         contentView.addSubview(imageUploadView)
@@ -310,12 +322,17 @@ class PostLostViewController: UIViewController {
             navTitleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
             navTitleLabel.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
             
-            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
+            navDividerLine.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
+            navDividerLine.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            navDividerLine.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            navDividerLine.heightAnchor.constraint(equalToConstant: 1),
+            
+            scrollView.topAnchor.constraint(equalTo: navDividerLine.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
-            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 100),
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 0),
             contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
@@ -335,11 +352,11 @@ class PostLostViewController: UIViewController {
             imageCountLabel.centerXAnchor.constraint(equalTo: imageUploadView.centerXAnchor),
             imageCountLabel.topAnchor.constraint(equalTo: cameraIconImageView.bottomAnchor, constant: 8),
             
-            // Image Collection View - starts at the same position as imageUploadView
+            // Image Collection View
             imageCollectionView.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 60),
-            imageCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 96),
+            imageCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             imageCollectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            imageCollectionView.heightAnchor.constraint(equalToConstant: 185),
+            imageCollectionView.heightAnchor.constraint(equalToConstant: 200),
             
             // Category Section - constraint to whichever view is visible
             categoryLabel.topAnchor.constraint(equalTo: imageUploadView.bottomAnchor, constant: 24),
@@ -461,14 +478,11 @@ class PostLostViewController: UIViewController {
         imageCollectionView.delegate = self
         imageCollectionView.dataSource = self
         imageCollectionView.register(ImageCell.self, forCellWithReuseIdentifier: "ImageCell")
+        imageCollectionView.register(AddImageCell.self, forCellWithReuseIdentifier: "AddImageCell")
         
         // Add tap gesture to image upload view
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageUploadTapped))
         imageUploadView.addGestureRecognizer(tapGesture)
-        
-        // Also add tap gesture to collection view to add more images
-        let collectionTapGesture = UITapGestureRecognizer(target: self, action: #selector(imageUploadTapped))
-        imageCollectionView.addGestureRecognizer(collectionTapGesture)
     }
     
     private func setupActions() {
@@ -701,20 +715,51 @@ extension PostLostViewController: PHPickerViewControllerDelegate {
 // MARK: - UICollectionViewDelegate, UICollectionViewDataSource
 extension PostLostViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return selectedImages.count
+        // 이미지 개수 + 플러스 버튼 (최대 5개까지 선택 가능하므로 5개 미만일 때만 플러스 버튼 표시)
+        let hasAddButton = selectedImages.count < 5
+        return selectedImages.count + (hasAddButton ? 1 : 0)
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        // 마지막 셀이고 선택된 이미지가 5개 미만이면 플러스 버튼 셀 표시
+        if indexPath.item == selectedImages.count && selectedImages.count < 5 {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AddImageCell", for: indexPath) as! AddImageCell
+            cell.onAddTapped = { [weak self] in
+                self?.imageUploadTapped()
+            }
+            return cell
+        }
+        
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCell", for: indexPath) as! ImageCell
-        cell.configure(with: selectedImages[indexPath.item]) { [weak self] in
-            self?.selectedImages.remove(at: indexPath.item)
-            self?.updateImageCount()
+        let imageIndex = indexPath.item
+        print("📸 Lost 셀 구성: index=\(imageIndex), 총 이미지=\(selectedImages.count)")
+        cell.configure(with: selectedImages[imageIndex]) { [weak self] in
+            print("🗑️ Lost 이미지 삭제 시작: index=\(imageIndex), 삭제 전 개수=\(self?.selectedImages.count ?? 0)")
+            guard let self = self, imageIndex < self.selectedImages.count else {
+                print("❌ Lost 인덱스 범위 초과")
+                return
+            }
+            self.selectedImages.remove(at: imageIndex)
+            print("✅ Lost 이미지 삭제 완료: 삭제 후 개수=\(self.selectedImages.count)")
+            self.updateImageCount()
+            self.imageCollectionView.reloadData()
         }
         return cell
     }
     
+    func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
+        // 셀 선택 비활성화 (버튼만 작동하도록)
+        // 하지만 터치 이벤트는 전달되어야 하므로 true로 변경
+        return true
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        // 셀 선택 시 아무 동작도 하지 않음 (버튼만 작동)
+        collectionView.deselectItem(at: indexPath, animated: false)
+    }
+    
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: 80, height: 80)
+        return CGSize(width: 180, height: 200)
     }
 }
 

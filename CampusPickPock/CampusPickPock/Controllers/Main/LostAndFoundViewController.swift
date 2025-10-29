@@ -558,12 +558,10 @@ class LostAndFoundItemCell: UICollectionViewCell {
     private let dateLabel: UILabel = {
         let label = UILabel()
         label.text = "등록일 : 0000/00/00"
-        label.font = UIFont.systemFont(ofSize: 11)
+        label.font = UIFont.systemFont(ofSize: 10)
         label.textColor = .white
-        label.numberOfLines = 0
-        label.lineBreakMode = .byWordWrapping
-        label.adjustsFontSizeToFitWidth = true
-        label.minimumScaleFactor = 0.8
+        label.numberOfLines = 1
+        label.lineBreakMode = .byTruncatingTail
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -687,11 +685,11 @@ class LostAndFoundItemCell: UICollectionViewCell {
             return dateString // 파싱 실패 시 원본 반환
         }
         
-        // 한국 시간으로 변환
+        // 한국 시간으로 변환 (날짜만, 시간 제거)
         let koreanTimeZone = TimeZone(identifier: "Asia/Seoul") ?? TimeZone.current
         let formatter = DateFormatter()
         formatter.timeZone = koreanTimeZone
-        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        formatter.dateFormat = "yyyy/MM/dd" // 2025/10/28 형식
         
         return formatter.string(from: date)
     }

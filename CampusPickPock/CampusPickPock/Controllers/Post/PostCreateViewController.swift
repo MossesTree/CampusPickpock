@@ -85,12 +85,16 @@ class PostCreateViewController: UIViewController {
     private let imageCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
-        layout.itemSize = CGSize(width: 80, height: 80)
+        layout.itemSize = CGSize(width: 180, height: 200)
         layout.minimumInteritemSpacing = 8
+        layout.minimumLineSpacing = 8
         
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .clear
         collectionView.showsHorizontalScrollIndicator = false
+        // 버튼 터치를 위해 스크롤 제스처 취소 설정
+        collectionView.canCancelContentTouches = true
+        collectionView.delaysContentTouches = false
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         return collectionView
     }()
@@ -301,6 +305,9 @@ class PostCreateViewController: UIViewController {
         contentView.addSubview(categoryLabel)
         contentView.addSubview(categoryStackView)
         
+        // imageCollectionView를 다른 뷰들 위로 올려서 터치가 가로채지지 않도록
+        contentView.bringSubviewToFront(imageCollectionView)
+        
         contentView.addSubview(titleLabel)
         contentView.addSubview(titleTextField)
         
@@ -367,11 +374,11 @@ class PostCreateViewController: UIViewController {
             imageCountLabel.centerXAnchor.constraint(equalTo: imageUploadView.centerXAnchor),
             imageCountLabel.topAnchor.constraint(equalTo: cameraIconImageView.bottomAnchor, constant: 8),
             
-            // Image Collection View - starts at the same position as imageUploadView
+            // Image Collection View - starts from the left edge, single row
             imageCollectionView.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 60),
-            imageCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 96),
+            imageCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             imageCollectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            imageCollectionView.heightAnchor.constraint(equalToConstant: 185),
+            imageCollectionView.heightAnchor.constraint(equalToConstant: 200),
             
             // Location Section - constraint to whichever view is visible
             locationButton.topAnchor.constraint(equalTo: imageUploadView.bottomAnchor, constant: 20),
@@ -444,6 +451,20 @@ class PostCreateViewController: UIViewController {
         uploadButtonTopConstraint?.isActive = true
     }
     
+    private func setupCollectionView() {
+        imageCollectionView.delegate = self
+        imageCollectionView.dataSource = self
+        imageCollectionView.register(ImageCell.self, forCellWithReuseIdentifier: "ImageCell")
+        imageCollectionView.register(AddImageCell.self, forCellWithReuseIdentifier: "AddImageCell")
+        
+        // imageCollectionView를 다른 뷰들 위로 올려서 터치가 가로채지지 않도록
+        contentView.bringSubviewToFront(imageCollectionView)
+        
+        // Add tap gesture to image upload view
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageUploadTapped))
+        imageUploadView.addGestureRecognizer(tapGesture)
+    }
+    
     private func setupCategoryButtons() {
         let categories = ["전자제품", "지갑·카드", "의류·잡화", "학용품", "생활용품", "기타"]
         
@@ -493,20 +514,6 @@ class PostCreateViewController: UIViewController {
         
         categoryStackView.addArrangedSubview(firstRowStack)
         categoryStackView.addArrangedSubview(secondRowStack)
-    }
-    
-    private func setupCollectionView() {
-        imageCollectionView.delegate = self
-        imageCollectionView.dataSource = self
-        imageCollectionView.register(ImageCell.self, forCellWithReuseIdentifier: "ImageCell")
-        
-        // Add tap gesture to image upload view
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageUploadTapped))
-        imageUploadView.addGestureRecognizer(tapGesture)
-        
-        // Also add tap gesture to collection view to add more images
-        let collectionTapGesture = UITapGestureRecognizer(target: self, action: #selector(imageUploadTapped))
-        imageCollectionView.addGestureRecognizer(collectionTapGesture)
     }
     
     private func setupActions() {
@@ -823,6 +830,8 @@ class PostCreateViewController: UIViewController {
             imageCountLabel.isHidden = true
             imageUploadView.isHidden = true
             imageCollectionView.isHidden = false
+            // 이미지가 표시될 때 컬렉션뷰를 다시 최상위로 올림
+            contentView.bringSubviewToFront(imageCollectionView)
         }
         imageCollectionView.reloadData()
     }
@@ -1092,20 +1101,51 @@ extension PostCreateViewController: PHPickerViewControllerDelegate {
 // MARK: - UICollectionViewDelegate, UICollectionViewDataSource
 extension PostCreateViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return selectedImages.count
+        // 이미지 개수 + 플러스 버튼 (최대 5개까지 선택 가능하므로 5개 미만일 때만 플러스 버튼 표시)
+        let hasAddButton = selectedImages.count < 5
+        return selectedImages.count + (hasAddButton ? 1 : 0)
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        // 마지막 셀이고 선택된 이미지가 5개 미만이면 플러스 버튼 셀 표시
+        if indexPath.item == selectedImages.count && selectedImages.count < 5 {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AddImageCell", for: indexPath) as! AddImageCell
+            cell.onAddTapped = { [weak self] in
+                self?.imageUploadTapped()
+            }
+            return cell
+        }
+        
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCell", for: indexPath) as! ImageCell
-        cell.configure(with: selectedImages[indexPath.item]) { [weak self] in
-            self?.selectedImages.remove(at: indexPath.item)
-            self?.updateImageCount()
+        let imageIndex = indexPath.item
+        print("📸 Lost 셀 구성: index=\(imageIndex), 총 이미지=\(selectedImages.count)")
+        cell.configure(with: selectedImages[imageIndex]) { [weak self] in
+            print("🗑️ Lost 이미지 삭제 시작: index=\(imageIndex), 삭제 전 개수=\(self?.selectedImages.count ?? 0)")
+            guard let self = self, imageIndex < self.selectedImages.count else {
+                print("❌ Lost 인덱스 범위 초과")
+                return
+            }
+            self.selectedImages.remove(at: imageIndex)
+            print("✅ Lost 이미지 삭제 완료: 삭제 후 개수=\(self.selectedImages.count)")
+            self.updateImageCount()
+            self.imageCollectionView.reloadData()
         }
         return cell
     }
     
+    func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
+        // 셀 선택 비활성화 (버튼만 작동하도록)
+        // 하지만 터치 이벤트는 전달되어야 하므로 true로 변경
+        return true
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        // 셀 선택 시 아무 동작도 하지 않음 (버튼만 작동)
+        collectionView.deselectItem(at: indexPath, animated: false)
+    }
+    
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: 80, height: 80)
+        return CGSize(width: 180, height: 200)
     }
 }
 
@@ -1137,6 +1177,77 @@ extension PostCreateViewController: UITextFieldDelegate {
     }
 }
 
+// MARK: - DeleteButton
+class DeleteButton: UIButton {
+    var onDelete: (() -> Void)?
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupButton()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupButton()
+    }
+    
+    private func setupButton() {
+        // 버튼 타입 명시적으로 설정
+        self.setTitle(nil, for: .normal)
+        self.setImage(nil, for: .normal)
+        
+        // 빨간색 원 배경의 흰색 X 아이콘 생성 (25x25)
+        let scale = UIScreen.main.scale
+        let circleSize = CGSize(width: 25 * scale, height: 25 * scale)
+        UIGraphicsBeginImageContextWithOptions(circleSize, false, scale)
+        defer { UIGraphicsEndImageContext() }
+        
+        if let context = UIGraphicsGetCurrentContext() {
+            // 빨간색 원 그리기
+            context.setFillColor(UIColor.red.cgColor)
+            context.fillEllipse(in: CGRect(origin: .zero, size: circleSize))
+            
+            // 흰색 X 그리기
+            context.setStrokeColor(UIColor.white.cgColor)
+            context.setLineWidth(2.5 * scale)
+            context.setLineCap(.round)
+            let padding: CGFloat = 7 * scale
+            context.move(to: CGPoint(x: padding, y: padding))
+            context.addLine(to: CGPoint(x: circleSize.width - padding, y: circleSize.height - padding))
+            context.move(to: CGPoint(x: circleSize.width - padding, y: padding))
+            context.addLine(to: CGPoint(x: padding, y: circleSize.height - padding))
+            context.strokePath()
+            
+            if let combinedImage = UIGraphicsGetImageFromCurrentImageContext() {
+                self.setImage(combinedImage, for: .normal)
+            }
+        }
+        
+        // 버튼 설정
+        self.backgroundColor = .clear
+        self.isUserInteractionEnabled = true
+        self.adjustsImageWhenHighlighted = false
+        self.adjustsImageWhenDisabled = false
+        self.imageView?.contentMode = .scaleAspectFit
+        
+        // 액션 추가
+        self.addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
+        
+        print("🔧 DeleteButton 초기화 완료: type=\(type(of: self))")
+    }
+    
+    @objc private func buttonTapped() {
+        print("🗑️ DeleteButton 터치됨!")
+        onDelete?()
+    }
+    
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        // 터치 영역을 확대 (45x45)
+        let expandedBounds = bounds.insetBy(dx: -10, dy: -10)
+        return expandedBounds.contains(point)
+    }
+}
+
 // MARK: - ImageCell
 class ImageCell: UICollectionViewCell {
     var onDelete: (() -> Void)?
@@ -1146,24 +1257,32 @@ class ImageCell: UICollectionViewCell {
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 8
+        imageView.isUserInteractionEnabled = false  // 이미지뷰가 터치를 가로채지 않도록
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()
     
-    private let deleteButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
-        button.tintColor = .red
-        button.backgroundColor = .white
-        button.layer.cornerRadius = 10
+    private let deleteButton: DeleteButton = {
+        let button = DeleteButton()
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        
+        // 셀 자체가 터치를 받을 수 있도록 설정
+        isUserInteractionEnabled = true
+        contentView.isUserInteractionEnabled = true
+        
         contentView.addSubview(imageView)
         contentView.addSubview(deleteButton)
+        
+        // 컨텐츠뷰의 clipsToBounds 확인
+        contentView.clipsToBounds = true
+        
+        // 이미지뷰가 버튼을 가리지 않도록 z-index 설정
+        contentView.bringSubviewToFront(deleteButton)
         
         NSLayoutConstraint.activate([
             imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
@@ -1171,13 +1290,20 @@ class ImageCell: UICollectionViewCell {
             imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             
-            deleteButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: -5),
-            deleteButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: 5),
-            deleteButton.widthAnchor.constraint(equalToConstant: 20),
-            deleteButton.heightAnchor.constraint(equalToConstant: 20)
+            deleteButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
+            deleteButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -4),
+            deleteButton.widthAnchor.constraint(equalToConstant: 25),
+            deleteButton.heightAnchor.constraint(equalToConstant: 25)
         ])
         
+        // 버튼에 직접 액션 추가
         deleteButton.addTarget(self, action: #selector(deleteButtonTapped), for: .touchUpInside)
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        // 레이아웃 완료 후 항상 버튼을 최상위로
+        contentView.bringSubviewToFront(deleteButton)
     }
     
     required init?(coder: NSCoder) {
@@ -1187,10 +1313,93 @@ class ImageCell: UICollectionViewCell {
     func configure(with image: UIImage, onDelete: @escaping () -> Void) {
         imageView.image = image
         self.onDelete = onDelete
+        
+        // 버튼이 항상 앞에 오도록
+        contentView.bringSubviewToFront(deleteButton)
+        
+        // 버튼 활성화 및 터치 가능하도록 설정
+        deleteButton.isEnabled = true
+        deleteButton.isUserInteractionEnabled = true
+        deleteButton.isHidden = false
+        deleteButton.alpha = 1.0
+        
+        // 셀과 컨텐츠뷰도 터치 가능하도록 재확인
+        isUserInteractionEnabled = true
+        contentView.isUserInteractionEnabled = true
+        
+        print("🔧 ImageCell configure 완료: DeleteButton=\(type(of: deleteButton)), onDelete=\(onDelete != nil ? "설정됨" : "nil")")
+    }
+    
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        // 레이아웃이 완료되지 않았다면 기본 처리
+        guard deleteButton.frame.width > 0, deleteButton.frame.height > 0 else {
+            return super.hitTest(point, with: event)
+        }
+        
+        // 버튼 영역을 크게 확대해서 터치 감지 개선 (45x45 터치 영역)
+        let expandedFrame = deleteButton.frame.insetBy(dx: -10, dy: -10)
+        if expandedFrame.contains(point) {
+            // 버튼의 좌표계로 변환
+            let buttonPoint = convert(point, to: deleteButton)
+            // 버튼의 hitTest 호출하여 버튼이 터치를 받을 수 있는지 확인
+            if let hitView = deleteButton.hitTest(buttonPoint, with: event) {
+                return hitView
+            }
+            // 버튼의 hitTest가 nil을 반환하면 버튼 자체 반환
+            return deleteButton
+        }
+        // 버튼 영역이 아니면 기본 처리 (컬렉션뷰 스크롤을 위해 nil 반환하지 않음)
+        // 하지만 이미지뷰는 터치를 받지 않도록 했으므로 nil 반환으로 스크롤 허용
+        let imagePoint = convert(point, to: imageView)
+        if imageView.bounds.contains(imagePoint) {
+            return nil  // 이미지 영역 터치 시 스크롤 허용
+        }
+        return super.hitTest(point, with: event)
     }
     
     @objc private func deleteButtonTapped() {
+        print("🗑️ ImageCell deleteButtonTapped 호출됨")
         onDelete?()
+    }
+    
+    // deleteButtonTapped 메서드 제거 - DeleteButton이 자체적으로 처리
+}
+
+
+// MARK: - AddImageCell
+class AddImageCell: UICollectionViewCell {
+    var onAddTapped: (() -> Void)?
+    
+    private let addButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "plus"), for: .normal)
+        button.tintColor = .gray
+        button.backgroundColor = UIColor(red: 0xF5/255.0, green: 0xF5/255.0, blue: 0xF5/255.0, alpha: 1.0)
+        button.layer.cornerRadius = 8
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        contentView.addSubview(addButton)
+        
+        NSLayoutConstraint.activate([
+            addButton.topAnchor.constraint(equalTo: contentView.topAnchor),
+            addButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            addButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            addButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+        ])
+        
+        addButton.addTarget(self, action: #selector(addButtonTapped), for: .touchUpInside)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    @objc private func addButtonTapped() {
+        onAddTapped?()
     }
 }
 
