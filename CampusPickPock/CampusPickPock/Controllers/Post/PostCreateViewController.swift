@@ -36,6 +36,13 @@ class PostCreateViewController: UIViewController {
         return label
     }()
     
+    private let navDividerLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -279,6 +286,7 @@ class PostCreateViewController: UIViewController {
         view.addSubview(customNavHeader)
         customNavHeader.addSubview(backButton)
         customNavHeader.addSubview(navTitleLabel)
+        view.addSubview(navDividerLine)
         
         // Add all subviews
         contentView.addSubview(imageUploadView)
@@ -321,7 +329,12 @@ class PostCreateViewController: UIViewController {
             customNavHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             customNavHeader.heightAnchor.constraint(equalToConstant: 44),
             
-            scrollView.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
+            navDividerLine.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
+            navDividerLine.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            navDividerLine.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            navDividerLine.heightAnchor.constraint(equalToConstant: 1),
+            
+            scrollView.topAnchor.constraint(equalTo: navDividerLine.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),

@@ -19,6 +19,13 @@ class SignUpViewController: UIViewController {
         return label
     }()
     
+    private let navDividerLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
     private let studentIdTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "학번"
@@ -105,9 +112,12 @@ class SignUpViewController: UIViewController {
     
     private func setupUI() {
         view.backgroundColor = .backgroundColor
-        title = "회원가입"
         
-        view.addSubview(titleLabel)
+        // Set up navigation bar
+        title = "회원가입"
+        navigationController?.navigationBar.prefersLargeTitles = false
+        
+        view.addSubview(navDividerLine)
         view.addSubview(studentIdTextField)
         view.addSubview(birthDateTextField)
         view.addSubview(realNameTextField)
@@ -119,10 +129,12 @@ class SignUpViewController: UIViewController {
         view.addSubview(signUpButton)
         
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 40),
-            titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            navDividerLine.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            navDividerLine.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            navDividerLine.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            navDividerLine.heightAnchor.constraint(equalToConstant: 1),
             
-            studentIdTextField.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 40),
+            studentIdTextField.topAnchor.constraint(equalTo: navDividerLine.bottomAnchor, constant: 24),
             studentIdTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
             studentIdTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
             studentIdTextField.heightAnchor.constraint(equalToConstant: 50),

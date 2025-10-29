@@ -36,6 +36,13 @@ class NotificationListViewController: UIViewController {
         return button
     }()
     
+    private let navDividerLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
     private let tableView: UITableView = {
         let table = UITableView()
         table.translatesAutoresizingMaskIntoConstraints = false
@@ -80,6 +87,7 @@ class NotificationListViewController: UIViewController {
         view.addSubview(customNavHeader)
         customNavHeader.addSubview(titleLabel)
         customNavHeader.addSubview(closeButton)
+        view.addSubview(navDividerLine)
         
         // Add table view and other elements
         view.addSubview(tableView)
@@ -103,8 +111,13 @@ class NotificationListViewController: UIViewController {
             closeButton.widthAnchor.constraint(equalToConstant: 44),
             closeButton.heightAnchor.constraint(equalToConstant: 44),
             
+            navDividerLine.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
+            navDividerLine.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            navDividerLine.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            navDividerLine.heightAnchor.constraint(equalToConstant: 1),
+            
             // Table view constraints - start below custom header
-            tableView.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
+            tableView.topAnchor.constraint(equalTo: navDividerLine.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),

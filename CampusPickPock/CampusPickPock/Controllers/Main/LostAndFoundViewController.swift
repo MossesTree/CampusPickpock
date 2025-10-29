@@ -80,6 +80,13 @@ class LostAndFoundViewController: UIViewController {
         return stackView
     }()
     
+    private let categoryDividerLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
     // MARK: - Items Grid Section
     private let itemsCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
@@ -147,6 +154,7 @@ class LostAndFoundViewController: UIViewController {
         
         contentView.addSubview(categoryScrollView)
         categoryScrollView.addSubview(categoryStackView)
+        contentView.addSubview(categoryDividerLine)
         
         contentView.addSubview(itemsCollectionView)
         
@@ -208,8 +216,13 @@ class LostAndFoundViewController: UIViewController {
             categoryStackView.bottomAnchor.constraint(equalTo: categoryScrollView.bottomAnchor),
             categoryStackView.heightAnchor.constraint(equalTo: categoryScrollView.heightAnchor),
             
+            categoryDividerLine.topAnchor.constraint(equalTo: categoryScrollView.bottomAnchor, constant: 19),
+            categoryDividerLine.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            categoryDividerLine.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            categoryDividerLine.heightAnchor.constraint(equalToConstant: 1),
+            
             // Items Collection View
-            itemsCollectionView.topAnchor.constraint(equalTo: categoryScrollView.bottomAnchor, constant: 16),
+            itemsCollectionView.topAnchor.constraint(equalTo: categoryDividerLine.bottomAnchor, constant: 16),
             itemsCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             itemsCollectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             itemsCollectionView.heightAnchor.constraint(equalToConstant: 600),

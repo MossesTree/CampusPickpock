@@ -65,6 +65,13 @@ class LostPostListViewController: UIViewController {
         return stackView
     }()
     
+    private let categoryDividerLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
     // MARK: - Posts Section
     private let postsTableView: UITableView = {
         let tableView = UITableView()
@@ -134,6 +141,7 @@ class LostPostListViewController: UIViewController {
         
         view.addSubview(categoryScrollView)
         categoryScrollView.addSubview(categoryStackView)
+        view.addSubview(categoryDividerLine)
         
         view.addSubview(postsTableView)
         
@@ -173,8 +181,13 @@ class LostPostListViewController: UIViewController {
             categoryStackView.bottomAnchor.constraint(equalTo: categoryScrollView.bottomAnchor),
             categoryStackView.heightAnchor.constraint(equalTo: categoryScrollView.heightAnchor),
             
+            categoryDividerLine.topAnchor.constraint(equalTo: categoryScrollView.bottomAnchor, constant: 19),
+            categoryDividerLine.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            categoryDividerLine.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            categoryDividerLine.heightAnchor.constraint(equalToConstant: 1),
+            
             // Posts Table View
-            postsTableView.topAnchor.constraint(equalTo: categoryScrollView.bottomAnchor, constant: 16),
+            postsTableView.topAnchor.constraint(equalTo: categoryDividerLine.bottomAnchor, constant: 16),
             postsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             postsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             postsTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
