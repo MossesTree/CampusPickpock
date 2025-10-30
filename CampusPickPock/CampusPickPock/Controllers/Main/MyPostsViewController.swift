@@ -9,6 +9,39 @@ import UIKit
 
 class MyPostsViewController: UIViewController {
     
+    // MARK: - Custom Navigation Header
+    private let customNavHeader: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let backButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "arrow.left"), for: .normal)
+        button.tintColor = UIColor(red: 0x51/255.0, green: 0x5B/255.0, blue: 0x70/255.0, alpha: 1.0)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private let navTitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "내가 쓴 글"
+        label.font = UIFont.boldSystemFont(ofSize: 18)
+        label.textColor = .primaryTextColor
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let navDividerLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -81,10 +114,16 @@ class MyPostsViewController: UIViewController {
     }
     
     private func setupUI() {
-        title = "내가 쓴 글"
-        view.backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.99, alpha: 1.0)
+        view.backgroundColor = .backgroundColor
         
-        setupCustomBackButton()
+        // Hide default navigation bar
+        navigationController?.setNavigationBarHidden(true, animated: false)
+        
+        // Add custom header
+        view.addSubview(customNavHeader)
+        customNavHeader.addSubview(backButton)
+        customNavHeader.addSubview(navTitleLabel)
+        view.addSubview(navDividerLine)
         
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
@@ -96,22 +135,33 @@ class MyPostsViewController: UIViewController {
         emptyStateView.addSubview(emptyIconImageView)
         emptyStateView.addSubview(emptyMessageLabel)
         
-        setupConstraints()
-    }
-    
-    private func setupCustomBackButton() {
-        let backButton = UIButton(type: .system)
-        backButton.setImage(UIImage(systemName: "arrow.left"), for: .normal)
-        backButton.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
         backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
         
-        let backBarButtonItem = UIBarButtonItem(customView: backButton)
-        navigationItem.leftBarButtonItem = backBarButtonItem
+        setupConstraints()
     }
     
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            // Custom navigation header
+            customNavHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            customNavHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            customNavHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            customNavHeader.heightAnchor.constraint(equalToConstant: 44),
+            
+            backButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 16),
+            backButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
+            backButton.widthAnchor.constraint(equalToConstant: 24),
+            backButton.heightAnchor.constraint(equalToConstant: 24),
+            
+            navTitleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
+            navTitleLabel.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
+            
+            navDividerLine.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
+            navDividerLine.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            navDividerLine.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            navDividerLine.heightAnchor.constraint(equalToConstant: 1),
+            
+            scrollView.topAnchor.constraint(equalTo: navDividerLine.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),

@@ -9,6 +9,40 @@ import UIKit
 
 class NotificationListViewController: UIViewController {
     
+    // MARK: - Custom Navigation Header
+    private let customNavHeader: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "알림"
+        label.font = UIFont.boldSystemFont(ofSize: 18)
+        label.textColor = .primaryTextColor
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let closeButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("×", for: .normal)
+        button.setTitleColor(.primaryTextColor, for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 28, weight: .light)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private let navDividerLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
     private let tableView: UITableView = {
         let table = UITableView()
         table.translatesAutoresizingMaskIntoConstraints = false
@@ -44,17 +78,46 @@ class NotificationListViewController: UIViewController {
     }
     
     private func setupUI() {
-        title = "알림"
         view.backgroundColor = .backgroundColor
         
-        setupCustomBackButton()
+        // Hide default navigation bar
+        navigationController?.setNavigationBarHidden(true, animated: false)
         
+        // Add custom header
+        view.addSubview(customNavHeader)
+        customNavHeader.addSubview(titleLabel)
+        customNavHeader.addSubview(closeButton)
+        view.addSubview(navDividerLine)
+        
+        // Add table view and other elements
         view.addSubview(tableView)
         view.addSubview(emptyLabel)
         view.addSubview(loadingIndicator)
         
+        closeButton.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
+        
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            // Custom header constraints
+            customNavHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            customNavHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            customNavHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            customNavHeader.heightAnchor.constraint(equalToConstant: 44),
+            
+            titleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
+            titleLabel.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
+            
+            closeButton.trailingAnchor.constraint(equalTo: customNavHeader.trailingAnchor, constant: -16),
+            closeButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
+            closeButton.widthAnchor.constraint(equalToConstant: 44),
+            closeButton.heightAnchor.constraint(equalToConstant: 44),
+            
+            navDividerLine.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
+            navDividerLine.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            navDividerLine.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            navDividerLine.heightAnchor.constraint(equalToConstant: 1),
+            
+            // Table view constraints - start below custom header
+            tableView.topAnchor.constraint(equalTo: navDividerLine.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -67,18 +130,8 @@ class NotificationListViewController: UIViewController {
         ])
     }
     
-    private func setupCustomBackButton() {
-        let backButton = UIButton(type: .system)
-        backButton.setImage(UIImage(systemName: "arrow.left"), for: .normal)
-        backButton.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
-        backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
-        
-        let backBarButtonItem = UIBarButtonItem(customView: backButton)
-        navigationItem.leftBarButtonItem = backBarButtonItem
-    }
-    
-    @objc private func backTapped() {
-        print("🔙 NotificationListViewController 뒤로가기 버튼 탭됨")
+    @objc private func closeTapped() {
+        print("❌ 알림창 닫기 버튼 탭됨")
         navigationController?.popViewController(animated: true)
         print("🔙 메인화면으로 복귀 완료")
     }
@@ -181,15 +234,8 @@ extension NotificationListViewController: UITableViewDelegate, UITableViewDataSo
         print("🔔 알림 선택됨: postingId=\(notification.postingId)")
         
         // 게시글 상세 화면으로 이동
-        // TODO: postingId를 사용하여 게시글 상세 정보를 가져와서 PostDetailViewController로 이동
-        // 현재는 간단한 알림만 표시
-        let alert = UIAlertController(
-            title: "알림",
-            message: "게시글 ID: \(notification.postingId)\n알림 타입: \(notification.notificationType)\n내용: \(notification.notificationContent)",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
-        present(alert, animated: true)
+        let detailVC = PostDetailViewController(postingId: notification.postingId)
+        navigationController?.pushViewController(detailVC, animated: true)
     }
     
     private func formatDate(_ dateString: String) -> String {

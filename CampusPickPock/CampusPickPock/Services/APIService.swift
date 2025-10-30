@@ -10,8 +10,8 @@ import Foundation
 class APIService {
     static let shared = APIService()
     
-    private let baseURL = "http://lostnfound-env.eba-2wmsjk7u.ap-northeast-2.elasticbeanstalk.com" 
-    private let session = URLSession.shared
+    let baseURL = "http://lostnfound-env.eba-2wmsjk7u.ap-northeast-2.elasticbeanstalk.com" 
+    let session = URLSession.shared
     
     private init() {}
     
@@ -215,14 +215,30 @@ class APIService {
                 switch httpResponse.statusCode {
                 case 200:
                     if let data = data {
+                        print("📥 회원가입 응답 데이터: \(String(data: data, encoding: .utf8) ?? "nil")")
+                        
+                        // 여러 형식의 응답을 시도
                         do {
                             let registerResponse = try JSONDecoder().decode(RegisterResponse.self, from: data)
+                            print("✅ RegisterResponse 디코딩 성공")
+                            print("   - success: \(registerResponse.success)")
+                            print("   - message: \(registerResponse.message ?? "nil")")
+                            print("   - userId: \(registerResponse.userId ?? "nil")")
                             completion(.success(registerResponse))
                         } catch {
-                            completion(.failure(.decodingError))
+                            print("❌ JSON 디코딩 오류: \(error)")
+                            print("❌ 디코딩 실패 데이터: \(String(data: data, encoding: .utf8) ?? "nil")")
+                            
+                            // 회원가입이 성공했다면 (200 응답) 빈 응답으로 처리
+                            print("⚠️ 디코딩 실패했지만 200 응답이므로 회원가입 성공으로 처리")
+                            let fallbackResponse = RegisterResponse(success: true, message: nil, userId: nil)
+                            completion(.success(fallbackResponse))
                         }
                     } else {
-                        completion(.failure(.noData))
+                        print("❌ 응답 데이터 없음")
+                        // 200 응답이고 데이터가 없으면 성공으로 처리
+                        let fallbackResponse = RegisterResponse(success: true, message: nil, userId: nil)
+                        completion(.success(fallbackResponse))
                     }
                 case 400:
                     completion(.failure(.badRequest))
@@ -308,7 +324,7 @@ class APIService {
                 
                 switch httpResponse.statusCode {
                 case 200:
-                    if let data = data {
+                    if let data = data, !data.isEmpty {
                         do {
                             let createPostResponse = try JSONDecoder().decode(CreatePostResponse.self, from: data)
                             print("✅ 게시글 작성 성공")
@@ -318,8 +334,14 @@ class APIService {
                             completion(.failure(.decodingError))
                         }
                     } else {
-                        print("❌ 응답 데이터 없음")
-                        completion(.failure(.noData))
+                        print("✅ 게시글 작성 성공 (빈 응답)")
+                        // 빈 응답인 경우 기본 성공 응답 생성
+                        let successResponse = CreatePostResponse(
+                            success: true,
+                            message: "게시글이 성공적으로 작성되었습니다.",
+                            postingId: nil
+                        )
+                        completion(.success(successResponse))
                     }
                 case 400:
                     print("❌ 잘못된 요청")
@@ -643,7 +665,7 @@ class APIService {
     }
     
     // MARK: - Get Storage List
-    func getStorageList(page: Int, pageSize: Int, completion: @escaping (Result<[PostingItem], APIError>) -> Void) {
+    func getStorageList(page: Int, pageSize: Int, completion: @escaping (Result<[StorageItem], APIError>) -> Void) {
         
         let storageListURL = "\(baseURL)/posting/storage/list?page=\(page)&pageSize=\(pageSize)"
         print("🌐 분실물 보관함 API 호출: \(storageListURL)")
@@ -693,7 +715,7 @@ class APIService {
                 case 200:
                     if let data = data {
                         do {
-                            let storageItems = try JSONDecoder().decode([PostingItem].self, from: data)
+                            let storageItems = try JSONDecoder().decode([StorageItem].self, from: data)
                             print("✅ 분실물 보관함 조회 성공: \(storageItems.count)개 항목")
                             completion(.success(storageItems))
                         } catch {
@@ -1587,6 +1609,87 @@ class APIService {
         }.resume()
     }
     
+    // MARK: - Update Notification
+    func updateNotification(notificationId: Int, completion: @escaping (Result<Void, APIError>) -> Void) {
+        print("🔔 알림 업데이트 API 시작")
+        print("🔔 알림 ID: \(notificationId)")
+        
+        // 토큰 유효성 검증
+        guard let token = DataManager.shared.getAccessToken(), !token.isEmpty else {
+            print("❌ 토큰이 없거나 비어있음")
+            print("❌ 알림 업데이트 API 권한 확인 실패 - 인증 토큰 없음")
+            completion(.failure(.unauthorized("로그인이 필요합니다.")))
+            return
+        }
+        
+        print("✅ 알림 업데이트 API 권한 확인 완료")
+        print("✅ 인증 토큰 유효: \(token.prefix(20))...")
+        
+        let updateNotificationURL = "\(baseURL)/notification/update/\(notificationId)"
+        print("🔔 알림 업데이트 API 호출: \(updateNotificationURL)")
+        
+        guard let url = URL(string: updateNotificationURL) else {
+            print("❌ 잘못된 URL: \(updateNotificationURL)")
+            completion(.failure(.invalidURL))
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        // 인증 토큰 추가
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        print("🔐 인증 토큰 추가됨")
+        
+        print("🚀 알림 업데이트 요청 시작")
+        session.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                print("📥 알림 업데이트 응답 수신")
+                
+                if let error = error {
+                    print("❌ 네트워크 오류: \(error.localizedDescription)")
+                    completion(.failure(.networkError(error.localizedDescription)))
+                    return
+                }
+                
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    print("❌ 잘못된 응답 타입")
+                    completion(.failure(.invalidResponse))
+                    return
+                }
+                
+                print("📊 HTTP 상태 코드: \(httpResponse.statusCode)")
+                
+                if let data = data {
+                    print("📦 응답 데이터: \(String(data: data, encoding: .utf8) ?? "nil")")
+                }
+                
+                switch httpResponse.statusCode {
+                case 200:
+                    print("✅ 알림 업데이트 성공")
+                    completion(.success(()))
+                case 400:
+                    print("❌ 잘못된 요청")
+                    completion(.failure(.badRequest))
+                case 401:
+                    print("❌ 인증 실패")
+                    completion(.failure(.unauthorized("인증이 만료되었습니다.")))
+                case 404:
+                    print("❌ 알림을 찾을 수 없음")
+                    completion(.failure(.notFound("알림을 찾을 수 없습니다.")))
+                case 500:
+                    print("❌ 서버 오류")
+                    completion(.failure(.serverError))
+                default:
+                    print("❌ 알 수 없는 오류: \(httpResponse.statusCode)")
+                    completion(.failure(.unknownError(httpResponse.statusCode)))
+                }
+            }
+        }.resume()
+    }
+    
     // MARK: - Home Postings
     func getHomePostings(type: String, completion: @escaping (Result<[HomePostingItem], APIError>) -> Void) {
         print("🏠 홈 게시글 API 권한 확인 시작")
@@ -1679,6 +1782,191 @@ class APIService {
                 case 404:
                     print("❌ 홈 게시글을 찾을 수 없음")
                     completion(.failure(.notFound("홈 게시글을 찾을 수 없습니다.")))
+                case 500:
+                    print("❌ 서버 오류")
+                    completion(.failure(.serverError))
+                default:
+                    print("❌ 알 수 없는 오류: \(httpResponse.statusCode)")
+                    completion(.failure(.unknownError(httpResponse.statusCode)))
+                }
+            }
+        }.resume()
+    }
+    
+    // MARK: - Update Post
+    func updatePost(postingId: Int, updateData: UpdatePostRequest, completion: @escaping (Result<UpdatePostResponse, APIError>) -> Void) {
+        
+        // 토큰 유효성 검증
+        guard let token = DataManager.shared.getAccessToken(), !token.isEmpty else {
+            print("❌ 토큰이 없거나 비어있음")
+            completion(.failure(.unauthorized("로그인이 필요합니다.")))
+            return
+        }
+        
+        // 토큰 형식 검증 (JWT 토큰은 보통 3개 부분으로 구성)
+        let tokenParts = token.components(separatedBy: ".")
+        if tokenParts.count != 3 {
+            print("❌ 잘못된 토큰 형식: \(tokenParts.count)개 부분")
+            completion(.failure(.unauthorized("유효하지 않은 토큰입니다.")))
+            return
+        }
+        
+        let updatePostURL = "\(baseURL)/posting/update/\(postingId)"
+        print("📝 게시글 수정 API 호출: \(updatePostURL)")
+        print("📝 토큰 검증 완료: \(token.prefix(20))...")
+        
+        guard let url = URL(string: updatePostURL) else {
+            print("❌ 잘못된 URL: \(updatePostURL)")
+            completion(.failure(.invalidURL))
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        // 인증 토큰 추가
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        print("🔐 인증 토큰 추가됨")
+        
+        do {
+            let jsonData = try JSONEncoder().encode(updateData)
+            request.httpBody = jsonData
+            print("📦 요청 데이터: \(String(data: jsonData, encoding: .utf8) ?? "nil")")
+        } catch {
+            print("❌ JSON 인코딩 오류: \(error)")
+            completion(.failure(.encodingError))
+            return
+        }
+        
+        print("🚀 게시글 수정 요청 시작")
+        session.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                print("📥 게시글 수정 응답 수신")
+                
+                if let error = error {
+                    print("❌ 네트워크 오류: \(error.localizedDescription)")
+                    completion(.failure(.networkError(error.localizedDescription)))
+                    return
+                }
+                
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    print("❌ 잘못된 응답 타입")
+                    completion(.failure(.invalidResponse))
+                    return
+                }
+                
+                print("📊 HTTP 상태 코드: \(httpResponse.statusCode)")
+                
+                if let data = data {
+                    print("📦 응답 데이터: \(String(data: data, encoding: .utf8) ?? "nil")")
+                }
+                
+                switch httpResponse.statusCode {
+                case 200:
+                    print("✅ 게시글 수정 성공")
+                    let updateResponse = UpdatePostResponse(success: true, message: "게시글이 성공적으로 수정되었습니다.")
+                    completion(.success(updateResponse))
+                case 400:
+                    print("❌ 잘못된 요청")
+                    completion(.failure(.badRequest))
+                case 401:
+                    print("❌ 인증 실패 - 토큰이 만료되었거나 유효하지 않음")
+                    completion(.failure(.unauthorized("인증이 만료되었습니다. 다시 로그인해주세요.")))
+                case 403:
+                    print("❌ 접근 권한 없음 - 토큰은 유효하지만 해당 리소스에 접근 권한이 없음")
+                    completion(.failure(.unauthorized("접근 권한이 없습니다. 관리자에게 문의하세요.")))
+                case 404:
+                    print("❌ 게시글을 찾을 수 없음")
+                    completion(.failure(.notFound("게시글을 찾을 수 없습니다.")))
+                case 500:
+                    print("❌ 서버 오류")
+                    completion(.failure(.serverError))
+                default:
+                    print("❌ 알 수 없는 오류: \(httpResponse.statusCode)")
+                    completion(.failure(.unknownError(httpResponse.statusCode)))
+                }
+            }
+        }.resume()
+    }
+    
+    // MARK: - Delete Post
+    func deletePost(postingId: Int, completion: @escaping (Result<DeletePostResponse, APIError>) -> Void) {
+        
+        // 토큰 유효성 검증
+        guard let token = DataManager.shared.getAccessToken(), !token.isEmpty else {
+            print("❌ 토큰이 없거나 비어있음")
+            completion(.failure(.unauthorized("로그인이 필요합니다.")))
+            return
+        }
+        
+        // 토큰 형식 검증 (JWT 토큰은 보통 3개 부분으로 구성)
+        let tokenParts = token.components(separatedBy: ".")
+        if tokenParts.count != 3 {
+            print("❌ 잘못된 토큰 형식: \(tokenParts.count)개 부분")
+            completion(.failure(.unauthorized("유효하지 않은 토큰입니다.")))
+            return
+        }
+        
+        let deletePostURL = "\(baseURL)/posting/delete/\(postingId)"
+        print("🗑️ 게시글 삭제 API 호출: \(deletePostURL)")
+        print("🗑️ 토큰 검증 완료: \(token.prefix(20))...")
+        
+        guard let url = URL(string: deletePostURL) else {
+            print("❌ 잘못된 URL: \(deletePostURL)")
+            completion(.failure(.invalidURL))
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        // 인증 토큰 추가
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        print("🔐 인증 토큰 추가됨")
+        
+        print("🚀 게시글 삭제 요청 시작")
+        session.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                print("📥 게시글 삭제 응답 수신")
+                
+                if let error = error {
+                    print("❌ 네트워크 오류: \(error.localizedDescription)")
+                    completion(.failure(.networkError(error.localizedDescription)))
+                    return
+                }
+                
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    print("❌ 잘못된 응답 타입")
+                    completion(.failure(.invalidResponse))
+                    return
+                }
+                
+                print("📊 HTTP 상태 코드: \(httpResponse.statusCode)")
+                
+                if let data = data {
+                    print("📦 응답 데이터: \(String(data: data, encoding: .utf8) ?? "nil")")
+                }
+                
+                switch httpResponse.statusCode {
+                case 200:
+                    print("✅ 게시글 삭제 성공")
+                    let deleteResponse = DeletePostResponse(success: true, message: "게시글이 성공적으로 삭제되었습니다.")
+                    completion(.success(deleteResponse))
+                case 400:
+                    print("❌ 잘못된 요청")
+                    completion(.failure(.badRequest))
+                case 401:
+                    print("❌ 인증 실패 - 토큰이 만료되었거나 유효하지 않음")
+                    completion(.failure(.unauthorized("인증이 만료되었습니다. 다시 로그인해주세요.")))
+                case 403:
+                    print("❌ 접근 권한 없음 - 토큰은 유효하지만 해당 리소스에 접근 권한이 없음")
+                    completion(.failure(.unauthorized("접근 권한이 없습니다. 관리자에게 문의하세요.")))
+                case 404:
+                    print("❌ 게시글을 찾을 수 없음")
+                    completion(.failure(.notFound("게시글을 찾을 수 없습니다.")))
                 case 500:
                     print("❌ 서버 오류")
                     completion(.failure(.serverError))
@@ -1826,6 +2114,30 @@ struct RegisterResponse: Codable {
     let success: Bool
     let message: String?
     let userId: String?
+    
+    // 커스텀 디코딩으로 null 값 처리
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // success는 필수 값
+        success = try container.decode(Bool.self, forKey: .success)
+        
+        // message와 userId는 선택적 값
+        message = try container.decodeIfPresent(String.self, forKey: .message)
+        userId = try container.decodeIfPresent(String.self, forKey: .userId)
+    }
+    
+    init(success: Bool, message: String?, userId: String?) {
+        self.success = success
+        self.message = message
+        self.userId = userId
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case success
+        case message
+        case userId
+    }
 }
 
 struct CreatePostRequest: Codable {
@@ -1852,6 +2164,28 @@ struct PickedUpResponse: Codable {
     let message: String
 }
 
+struct DeletePostResponse: Codable {
+    let success: Bool
+    let message: String
+}
+
+struct UpdatePostRequest: Codable {
+    let postingCategory: String
+    let postingTitle: String
+    let postingContent: String
+    let itemPlace: String
+    let isPlacedInStorage: Bool
+    let ownerStudentId: String
+    let ownerBirthDate: String
+    let ownerName: String
+    let postingImageUrls: [String]
+}
+
+struct UpdatePostResponse: Codable {
+    let success: Bool
+    let message: String
+}
+
 struct PostDetailItem: Codable {
     let postingWriterId: Int
     let postingWriterNickname: String?
@@ -1860,7 +2194,13 @@ struct PostDetailItem: Codable {
     let isPostingAccessible: Bool
     let postingImageUrls: [String]?
     let postingContent: String
-    let postingCreatedAt: String?
+    let postingCategory: String?
+    let itemPlace: String?
+    let ownerStudentId: String?
+    let ownerBirthDate: String?
+    let ownerName: String?
+    let isPlacedInStorage: Bool?
+    let postingCreatedAt: String? // 하위 호환성을 위해 유지
     
     // 커스텀 디코딩으로 null 값 처리
     init(from decoder: Decoder) throws {
@@ -1873,6 +2213,12 @@ struct PostDetailItem: Codable {
         isPostingAccessible = try container.decode(Bool.self, forKey: .isPostingAccessible)
         postingImageUrls = try container.decodeIfPresent([String].self, forKey: .postingImageUrls)
         postingContent = try container.decode(String.self, forKey: .postingContent)
+        postingCategory = try container.decodeIfPresent(String.self, forKey: .postingCategory)
+        itemPlace = try container.decodeIfPresent(String.self, forKey: .itemPlace)
+        ownerStudentId = try container.decodeIfPresent(String.self, forKey: .ownerStudentId)
+        ownerBirthDate = try container.decodeIfPresent(String.self, forKey: .ownerBirthDate)
+        ownerName = try container.decodeIfPresent(String.self, forKey: .ownerName)
+        isPlacedInStorage = try container.decodeIfPresent(Bool.self, forKey: .isPlacedInStorage)
         postingCreatedAt = try container.decodeIfPresent(String.self, forKey: .postingCreatedAt)
     }
     
@@ -1884,6 +2230,12 @@ struct PostDetailItem: Codable {
         case isPostingAccessible
         case postingImageUrls
         case postingContent
+        case postingCategory
+        case itemPlace
+        case ownerStudentId
+        case ownerBirthDate
+        case ownerName
+        case isPlacedInStorage
         case postingCreatedAt
     }
 }
@@ -2057,6 +2409,13 @@ struct CreateCommentResponse: Codable {
         case commentId
         case message
     }
+}
+
+struct StorageItem: Codable {
+    let postingId: Int
+    let postingImageUrl: String?
+    let postingCreatedAt: String
+    let postingCategory: String?
 }
 
 struct PostingItem: Codable {

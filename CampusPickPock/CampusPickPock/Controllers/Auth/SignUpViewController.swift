@@ -19,6 +19,13 @@ class SignUpViewController: UIViewController {
         return label
     }()
     
+    private let navDividerLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
     private let studentIdTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "학번"
@@ -105,9 +112,12 @@ class SignUpViewController: UIViewController {
     
     private func setupUI() {
         view.backgroundColor = .backgroundColor
-        title = "회원가입"
         
-        view.addSubview(titleLabel)
+        // Set up navigation bar
+        title = "회원가입"
+        navigationController?.navigationBar.prefersLargeTitles = false
+        
+        view.addSubview(navDividerLine)
         view.addSubview(studentIdTextField)
         view.addSubview(birthDateTextField)
         view.addSubview(realNameTextField)
@@ -119,10 +129,12 @@ class SignUpViewController: UIViewController {
         view.addSubview(signUpButton)
         
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 40),
-            titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            navDividerLine.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            navDividerLine.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            navDividerLine.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            navDividerLine.heightAnchor.constraint(equalToConstant: 1),
             
-            studentIdTextField.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 40),
+            studentIdTextField.topAnchor.constraint(equalTo: navDividerLine.bottomAnchor, constant: 24),
             studentIdTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
             studentIdTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
             studentIdTextField.heightAnchor.constraint(equalToConstant: 50),
@@ -168,6 +180,34 @@ class SignUpViewController: UIViewController {
     // MARK: - Actions
     private func setupActions() {
         signUpButton.addTarget(self, action: #selector(signUpTapped), for: .touchUpInside)
+        
+        // 생년월일 포맷터 추가
+        birthDateTextField.addTarget(self, action: #selector(birthDateTextFieldChanged), for: .editingChanged)
+        birthDateTextField.delegate = self
+    }
+    
+    @objc private func birthDateTextFieldChanged() {
+        guard let text = birthDateTextField.text else { return }
+        
+        // 숫자만 추출
+        let numbers = text.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+        
+        // 8자리로 제한
+        let limited = String(numbers.prefix(8))
+        
+        // 자동으로 하이픈 추가
+        var formatted = ""
+        for (index, char) in limited.enumerated() {
+            if index == 4 || index == 6 {
+                formatted += "-"
+            }
+            formatted += String(char)
+        }
+        
+        // 값이 변경된 경우에만 업데이트
+        if formatted != birthDateTextField.text {
+            birthDateTextField.text = formatted
+        }
     }
     
     @objc private func signUpTapped() {
@@ -247,6 +287,17 @@ class SignUpViewController: UIViewController {
             completion?()
         })
         present(alert, animated: true)
+    }
+}
+
+// MARK: - UITextFieldDelegate
+extension SignUpViewController: UITextFieldDelegate {
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        // 생년월일 필드일 때만 자동 포맷팅
+        if textField == birthDateTextField {
+            return true // birthDateTextFieldChanged에서 처리하므로 true 반환
+        }
+        return true
     }
 }
 

@@ -36,7 +36,7 @@ class SplashAnimationViewController: UIViewController {
     }
     
     private func setupUI() {
-        view.backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.99, alpha: 1.0)
+        view.backgroundColor = .backgroundColor
         
         view.addSubview(titleLabel)
         view.addSubview(cardContainerView)

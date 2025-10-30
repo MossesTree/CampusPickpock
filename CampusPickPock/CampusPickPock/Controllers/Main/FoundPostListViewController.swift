@@ -13,31 +13,31 @@ class FoundPostListViewController: UIViewController {
     private var currentPage = 0
     private let pageSize = 20
     
-    private let scrollView: UIScrollView = {
-        let scrollView = UIScrollView()
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        return scrollView
-    }()
-    
-    private let contentView: UIView = {
+    // MARK: - Custom Navigation Header
+    private let customNavHeader: UIView = {
         let view = UIView()
+        view.backgroundColor = .clear
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
     
-    // MARK: - Header Section
-    private let headerView: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.99, alpha: 1.0)
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
+    private let backButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "arrow.left"), for: .normal)
+        button.tintColor = UIColor(red: 0x51/255.0, green: 0x5B/255.0, blue: 0x70/255.0, alpha: 1.0)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
     }()
     
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "주인을 찾아요"
-        label.font = UIFont.boldSystemFont(ofSize: 24)
-        label.textColor = .primaryTextColor
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 22) {
+            label.font = UIFont(descriptor: pretendardFont.fontDescriptor.withSymbolicTraits(.traitBold) ?? pretendardFont.fontDescriptor, size: 22)
+        } else {
+            label.font = .boldSystemFont(ofSize: 22)
+        }
+        label.textColor = UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0)
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -46,8 +46,8 @@ class FoundPostListViewController: UIViewController {
     private let subtitleLabel: UILabel = {
         let label = UILabel()
         label.text = "캠퍼스 줍줍과 함께 찾아보세요"
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .secondaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 13) ?? .systemFont(ofSize: 13, weight: .medium)
+        label.textColor = UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0)
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -69,17 +69,26 @@ class FoundPostListViewController: UIViewController {
         return stackView
     }()
     
+    private let categoryDividerLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
     // MARK: - Posts Section
     private let postsTableView: UITableView = {
         let tableView = UITableView()
         tableView.backgroundColor = .clear
         tableView.separatorStyle = .none
+        tableView.isScrollEnabled = true
         tableView.translatesAutoresizingMaskIntoConstraints = false
         return tableView
     }()
     
     private var posts: [Post] = []
     private var selectedCategory = "전체"
+    private var filteredPostingItems: [PostingItem] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -104,7 +113,7 @@ class FoundPostListViewController: UIViewController {
                     } else {
                         self?.postingItems.append(contentsOf: postingItems)
                     }
-                    self?.postsTableView.reloadData()
+                    self?.filterPosts()
                 }
                 
             case .failure(let error):
@@ -123,54 +132,51 @@ class FoundPostListViewController: UIViewController {
     }
     
     private func setupUI() {
-        view.backgroundColor = UIColor(red: 0.98, green: 0.98, blue: 0.99, alpha: 1.0)
+        view.backgroundColor = .backgroundColor
         
-        setupCustomBackButton()
+        // Hide default navigation bar
+        navigationController?.setNavigationBarHidden(true, animated: false)
         
-        view.addSubview(scrollView)
-        scrollView.addSubview(contentView)
+        // Add custom header
+        view.addSubview(customNavHeader)
+        customNavHeader.addSubview(backButton)
+        customNavHeader.addSubview(titleLabel)
+        customNavHeader.addSubview(subtitleLabel)
         
-        contentView.addSubview(headerView)
-        headerView.addSubview(titleLabel)
-        headerView.addSubview(subtitleLabel)
-        
-        contentView.addSubview(categoryScrollView)
+        view.addSubview(categoryScrollView)
         categoryScrollView.addSubview(categoryStackView)
+        view.addSubview(categoryDividerLine)
         
-        contentView.addSubview(postsTableView)
+        view.addSubview(postsTableView)
+        
+        backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
         
         setupConstraints()
     }
     
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            // Custom navigation header
+            customNavHeader.topAnchor.constraint(equalTo: view.topAnchor),
+            customNavHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            customNavHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            customNavHeader.heightAnchor.constraint(equalToConstant: 100),
             
-            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
+            backButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 10),
+            backButton.topAnchor.constraint(equalTo: customNavHeader.topAnchor, constant: 70),
+            backButton.widthAnchor.constraint(equalToConstant: 24),
+            backButton.heightAnchor.constraint(equalToConstant: 24),
             
-            // Header Section
-            headerView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            headerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            headerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            headerView.heightAnchor.constraint(equalToConstant: 100),
+            titleLabel.centerYAnchor.constraint(equalTo: backButton.centerYAnchor),
+            titleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
             
-            titleLabel.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
-            titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 20),
-            
-            subtitleLabel.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 3),
+            subtitleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
             
             // Category Section
-            categoryScrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 16),
-            categoryScrollView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            categoryScrollView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            categoryScrollView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 18),
+            categoryScrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            categoryScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             categoryScrollView.heightAnchor.constraint(equalToConstant: 40),
             
             categoryStackView.topAnchor.constraint(equalTo: categoryScrollView.topAnchor),
@@ -179,23 +185,17 @@ class FoundPostListViewController: UIViewController {
             categoryStackView.bottomAnchor.constraint(equalTo: categoryScrollView.bottomAnchor),
             categoryStackView.heightAnchor.constraint(equalTo: categoryScrollView.heightAnchor),
             
+            categoryDividerLine.topAnchor.constraint(equalTo: categoryScrollView.bottomAnchor, constant: 19),
+            categoryDividerLine.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            categoryDividerLine.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            categoryDividerLine.heightAnchor.constraint(equalToConstant: 1),
+            
             // Posts Table View
-            postsTableView.topAnchor.constraint(equalTo: categoryScrollView.bottomAnchor, constant: 16),
-            postsTableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            postsTableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            postsTableView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            postsTableView.heightAnchor.constraint(equalToConstant: 600)
+            postsTableView.topAnchor.constraint(equalTo: categoryDividerLine.bottomAnchor, constant: 16),
+            postsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            postsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            postsTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-    }
-    
-    private func setupCustomBackButton() {
-        let backButton = UIButton(type: .system)
-        backButton.setImage(UIImage(systemName: "arrow.left"), for: .normal)
-        backButton.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
-        backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
-        
-        let backBarButtonItem = UIBarButtonItem(customView: backButton)
-        navigationItem.leftBarButtonItem = backBarButtonItem
     }
     
     private func setupTableView() {
@@ -205,22 +205,22 @@ class FoundPostListViewController: UIViewController {
     }
     
     private func setupCategoryButtons() {
-        let categories = ["전체", "전자 제품", "카드/지갑", "기타"]
+        let categories = ["전체", "전자제품", "지갑·카드", "의류·잡화", "학용품", "생활용품", "기타"]
         
         for (index, category) in categories.enumerated() {
             let button = UIButton(type: .system)
             button.setTitle(category, for: .normal)
             button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
-            button.layer.cornerRadius = 20
+            button.layer.cornerRadius = 10
             button.translatesAutoresizingMaskIntoConstraints = false
             
             if index == 0 {
                 // 첫 번째 버튼은 선택된 상태로 설정
-                button.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+                button.backgroundColor = UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0)
                 button.setTitleColor(.white, for: .normal)
             } else {
-                button.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
-                button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
+                button.backgroundColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0)
+                button.setTitleColor(UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0), for: .normal)
             }
             
             button.addTarget(self, action: #selector(categoryTapped(_:)), for: .touchUpInside)
@@ -243,30 +243,51 @@ class FoundPostListViewController: UIViewController {
         // 모든 버튼을 기본 상태로 변경
         for subview in categoryStackView.arrangedSubviews {
             if let button = subview as? UIButton {
-                button.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
-                button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
+                button.backgroundColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0)
+                button.setTitleColor(UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0), for: .normal)
             }
         }
         
         // 선택된 버튼을 활성 상태로 변경
-        sender.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+        sender.backgroundColor = UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0)
         sender.setTitleColor(.white, for: .normal)
         
         // 카테고리 업데이트
-        let categories = ["전체", "전자 제품", "카드/지갑", "기타"]
+        let categories = ["전체", "전자제품", "지갑·카드", "의류·잡화", "학용품", "생활용품", "기타"]
         selectedCategory = categories[sender.tag]
         
-        loadPosts()
+        filterPosts()
     }
     
-    private func loadPosts() {
-        // 샘플 데이터 로드
-        posts = DataManager.shared.posts.filter { post in
-            if selectedCategory == "전체" {
-                return true
+    private func filterPosts() {
+        if selectedCategory == "전체" {
+            filteredPostingItems = postingItems
+        } else {
+            // 카테고리 매핑
+            let categoryMap: [String: [String]] = [
+                "전자제품": ["전자제품"],
+                "지갑·카드": ["지갑·카드", "지갑 및 카드"],
+                "의류·잡화": ["의류·잡화", "의류 및 잡화"],
+                "학용품": ["학용품"],
+                "생활용품": ["생활용품"],
+                "기타": []
+            ]
+            
+            let mappedCategories = categoryMap[selectedCategory] ?? []
+            
+            if mappedCategories.isEmpty {
+                // "기타" 카테고리인 경우, 매핑된 카테고리가 아닌 모든 항목을 표시
+                let allMappedCategories = categoryMap.flatMap { $0.value }
+                filteredPostingItems = postingItems.filter { item in
+                    guard let category = item.postingCategory else { return true }
+                    return !allMappedCategories.contains(category)
+                }
+            } else {
+                filteredPostingItems = postingItems.filter { item in
+                    guard let category = item.postingCategory else { return false }
+                    return mappedCategories.contains(category)
+                }
             }
-            // 실제로는 post에 category 필드가 있어야 함
-            return true
         }
         
         postsTableView.reloadData()
@@ -276,12 +297,12 @@ class FoundPostListViewController: UIViewController {
 // MARK: - UITableViewDelegate, UITableViewDataSource
 extension FoundPostListViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return postingItems.count
+        return filteredPostingItems.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "FoundPostCell", for: indexPath) as! FoundPostCell
-        let postingItem = postingItems[indexPath.row]
+        let postingItem = filteredPostingItems[indexPath.row]
         
         // PostingItem을 Post로 변환
         let post = Post(
@@ -289,16 +310,19 @@ extension FoundPostListViewController: UITableViewDelegate, UITableViewDataSourc
             postingId: postingItem.postingId,
             title: postingItem.postingTitle,
             content: postingItem.postingContent,
+            imageUrl: postingItem.postingImageUrl,
             images: [],
             authorId: postingItem.postingWriterNickName ?? "익명",
             authorName: postingItem.postingWriterNickName ?? "익명",
             isHidden: false,
             createdAt: parseDate(postingItem.postingCreatedAt),
             commentCount: postingItem.commentCount,
-            type: .found
+            type: .found,
+            isPickedUp: postingItem.isPickedUp
         )
         
-        cell.configure(with: post)
+        let isFirst = (indexPath.row == 0)
+        cell.configure(with: post, isFirst: isFirst)
         return cell
     }
     
@@ -308,7 +332,7 @@ extension FoundPostListViewController: UITableViewDelegate, UITableViewDataSourc
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let postingItem = postingItems[indexPath.row]
+        let postingItem = filteredPostingItems[indexPath.row]
         
         // PostingItem을 Post로 변환
         let post = Post(
@@ -316,13 +340,15 @@ extension FoundPostListViewController: UITableViewDelegate, UITableViewDataSourc
             postingId: postingItem.postingId,
             title: postingItem.postingTitle,
             content: postingItem.postingContent,
+            imageUrl: postingItem.postingImageUrl,
             images: [],
             authorId: postingItem.postingWriterNickName ?? "익명",
             authorName: postingItem.postingWriterNickName ?? "익명",
             isHidden: false,
             createdAt: parseDate(postingItem.postingCreatedAt),
             commentCount: postingItem.commentCount,
-            type: .found
+            type: .found,
+            isPickedUp: postingItem.isPickedUp
         )
         
         let detailVC = PostDetailViewController(post: post)
@@ -330,8 +356,65 @@ extension FoundPostListViewController: UITableViewDelegate, UITableViewDataSourc
     }
     
     private func parseDate(_ dateString: String) -> Date {
-        let formatter = ISO8601DateFormatter()
-        return formatter.date(from: dateString) ?? Date()
+        var date: Date?
+        
+        // ISO8601DateFormatter 시도 (fractional seconds 포함)
+        let iso8601Formatter = ISO8601DateFormatter()
+        iso8601Formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let parsedDate = iso8601Formatter.date(from: dateString) {
+            date = parsedDate
+        } else {
+            // DateFormatter들로 시도
+            let dateFormatters: [DateFormatter] = [
+                {
+                    let f = DateFormatter()
+                    f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
+                    f.timeZone = TimeZone(abbreviation: "UTC")
+                    return f
+                }(),
+                {
+                    let f = DateFormatter()
+                    f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+                    f.timeZone = TimeZone(abbreviation: "UTC")
+                    return f
+                }(),
+                {
+                    let f = DateFormatter()
+                    f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
+                    f.timeZone = TimeZone(abbreviation: "UTC")
+                    return f
+                }()
+            ]
+            
+            for formatter in dateFormatters {
+                if let parsedDate = formatter.date(from: dateString) {
+                    date = parsedDate
+                    break
+                }
+            }
+        }
+        
+        guard let date = date else {
+            print("⚠️ 날짜 파싱 실패: \(dateString), 현재 시간 반환")
+            return Date()
+        }
+        
+        let now = Date()
+        let timeInterval = now.timeIntervalSince(date)
+        
+        print("📅 Found 포스팅 파싱:")
+        print("   원본: \(dateString)")
+        print("   파싱된 날짜(UTC): \(date)")
+        print("   현재 시간: \(now)")
+        print("   시간 차이(변환 전): \(timeInterval)초 (\(timeInterval/60)분, \(timeInterval/3600)시간)")
+        
+        // 서버가 UTC로 보내므로 한국 시간(KST)으로 변환 (UTC+9)
+        let koreanDate = date.addingTimeInterval(9 * 60 * 60)
+        let adjustedInterval = now.timeIntervalSince(koreanDate)
+        print("   한국 시간: \(koreanDate)")
+        print("   시간 차이(변환 후): \(adjustedInterval)초 (\(adjustedInterval/60)분, \(adjustedInterval/3600)시간)")
+        
+        return koreanDate
     }
 }
 
@@ -340,20 +423,14 @@ class FoundPostCell: UITableViewCell {
     
     private let containerView: UIView = {
         let view = UIView()
-        view.backgroundColor = .white
-        view.layer.cornerRadius = 12
-        view.layer.shadowColor = UIColor.black.cgColor
-        view.layer.shadowOffset = CGSize(width: 0, height: 2)
-        view.layer.shadowOpacity = 0.1
-        view.layer.shadowRadius = 4
+        view.backgroundColor = .clear
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
     
     private let profileImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "person.circle.fill")
-        imageView.tintColor = .gray
+        imageView.image = UIImage(named: "ProfileIcon")
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
@@ -386,6 +463,14 @@ class FoundPostCell: UITableViewCell {
         return label
     }()
     
+    private let clockIcon: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "ClockIcon1")
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
     private let locationTimeLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 12)
@@ -394,6 +479,18 @@ class FoundPostCell: UITableViewCell {
         return label
     }()
     
+    private let pickedUpButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.backgroundColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0)
+        button.clipsToBounds = true
+        button.titleLabel?.font = UIFont(name: "Pretendard Variable", size: 13) ?? UIFont.systemFont(ofSize: 13, weight: .medium)
+        button.setTitleColor(UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0), for: .normal)
+        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: 4)
+        button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 4, bottom: 0, right: 8)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.isUserInteractionEnabled = false
+        return button
+    }()
     
     private let descriptionLabel: UILabel = {
         let label = UILabel()
@@ -404,15 +501,32 @@ class FoundPostCell: UITableViewCell {
         return label
     }()
     
-    private let commentButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "text.bubble"), for: .normal)
-        button.setTitle("6", for: .normal)
-        button.tintColor = .secondaryTextColor
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 12)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
+    private let commentIcon: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "CommentIcon3")
+        imageView.contentMode = .scaleAspectFit
+        imageView.tintColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0)
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
     }()
+    
+    private let commentCountLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont(name: "Pretendard Variable", size: 17) ?? .systemFont(ofSize: 17)
+        label.textColor = UIColor(red: 0x62/255.0, green: 0x5F/255.0, blue: 0x5F/255.0, alpha: 1.0)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let dividerLine: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private var isFirstCell = false
+    private var dividerLineTopConstraint: NSLayoutConstraint?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -428,19 +542,29 @@ class FoundPostCell: UITableViewCell {
         selectionStyle = .none
         
         contentView.addSubview(containerView)
+        containerView.addSubview(dividerLine)
         containerView.addSubview(profileImageView)
         containerView.addSubview(usernameLabel)
         containerView.addSubview(itemImageView)
         containerView.addSubview(titleLabel)
+        containerView.addSubview(clockIcon)
         containerView.addSubview(locationTimeLabel)
+        containerView.addSubview(pickedUpButton)
         containerView.addSubview(descriptionLabel)
-        containerView.addSubview(commentButton)
+        containerView.addSubview(commentIcon)
+        containerView.addSubview(commentCountLabel)
         
-        NSLayoutConstraint.activate([
+        dividerLineTopConstraint = dividerLine.topAnchor.constraint(equalTo: containerView.topAnchor)
+        
+        var constraints = [
             containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
             containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
+            
+            dividerLine.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            dividerLine.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            dividerLine.heightAnchor.constraint(equalToConstant: 1),
             
             profileImageView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
             profileImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
@@ -457,29 +581,139 @@ class FoundPostCell: UITableViewCell {
             
             titleLabel.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 12),
             titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            titleLabel.trailingAnchor.constraint(equalTo: pickedUpButton.leadingAnchor, constant: -8),
+            
+            pickedUpButton.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 12),
+            pickedUpButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            pickedUpButton.widthAnchor.constraint(equalToConstant: 75),
+            pickedUpButton.heightAnchor.constraint(equalToConstant: 24),
+            
+            clockIcon.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            clockIcon.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            clockIcon.widthAnchor.constraint(equalToConstant: 16),
+            clockIcon.heightAnchor.constraint(equalToConstant: 16),
             
             locationTimeLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
-            locationTimeLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            locationTimeLabel.leadingAnchor.constraint(equalTo: clockIcon.trailingAnchor, constant: 5),
             
             descriptionLabel.topAnchor.constraint(equalTo: locationTimeLabel.bottomAnchor, constant: 8),
             descriptionLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             descriptionLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             
-            commentButton.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 8),
-            commentButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            commentButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16)
-        ])
+            commentIcon.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 8),
+            commentIcon.trailingAnchor.constraint(equalTo: commentCountLabel.leadingAnchor, constant: -2),
+            commentIcon.widthAnchor.constraint(equalToConstant: 22),
+            commentIcon.heightAnchor.constraint(equalToConstant: 20),
+            commentIcon.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16),
+            
+            commentCountLabel.centerYAnchor.constraint(equalTo: commentIcon.centerYAnchor),
+            commentCountLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16)
+        ]
+        
+        if let dividerLineTopConstraint = dividerLineTopConstraint {
+            constraints.append(dividerLineTopConstraint)
+        }
+        
+        NSLayoutConstraint.activate(constraints)
     }
     
-    func configure(with post: Post) {
+    func configure(with post: Post, isFirst: Bool = false) {
+        self.isFirstCell = isFirst
+        
         usernameLabel.text = post.authorName
         titleLabel.text = post.title
-        locationTimeLabel.text = "학관 앞 | 8시간 전"
+        locationTimeLabel.text = "\(post.location ?? "위치 없음") | \(formatRelativeTime(post.createdAt))"
         descriptionLabel.text = post.content
+        commentCountLabel.text = "\(post.commentCount)"
         
-        // 샘플 이미지 설정 (실제로는 post.images 사용)
-        itemImageView.image = UIImage(systemName: "airpods")
-        itemImageView.tintColor = .gray
+        // 이미지 URL이 있으면 로드, 없으면 기본 이미지
+        if let imageUrlString = post.imageUrl, let imageUrl = URL(string: imageUrlString) {
+            loadImage(from: imageUrl)
+        } else {
+            let config = UIImage.SymbolConfiguration(weight: .light)
+            itemImageView.image = UIImage(systemName: "photo", withConfiguration: config)
+            itemImageView.tintColor = .gray
+            itemImageView.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
+        }
+        
+        // isPickedUp 상태에 따라 버튼 표시
+        configureJoopjoopButton(isPickedUp: post.isPickedUp)
+        
+        // 구분선 위치 설정
+        if !isFirstCell {
+            dividerLine.isHidden = false
+            // 프로필아이콘으로부터 20 위쪽에 선 위치 설정
+            dividerLineTopConstraint?.isActive = false
+            dividerLineTopConstraint = dividerLine.topAnchor.constraint(equalTo: profileImageView.topAnchor, constant: -20)
+            dividerLineTopConstraint?.isActive = true
+        } else {
+            dividerLine.isHidden = true
+        }
+        
+        print("📅 Found 포스팅 시간 정보:")
+        print("   작성 시간: \(post.createdAt)")
+        print("   현재 시간: \(Date())")
+        print("   표시 시간: \(locationTimeLabel.text ?? "")")
+    }
+    
+    private func loadImage(from url: URL) {
+        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            if let data = data, let image = UIImage(data: data) {
+                DispatchQueue.main.async {
+                    self?.itemImageView.image = image
+                    self?.itemImageView.tintColor = nil
+                    self?.itemImageView.backgroundColor = .clear
+                }
+            } else {
+                DispatchQueue.main.async {
+                    let config = UIImage.SymbolConfiguration(weight: .light)
+                    self?.itemImageView.image = UIImage(systemName: "photo", withConfiguration: config)
+                    self?.itemImageView.tintColor = .gray
+                    self?.itemImageView.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
+                }
+            }
+        }.resume()
+    }
+    
+    private func configureJoopjoopButton(isPickedUp: Bool) {
+        let iconName = isPickedUp ? "FillStarIcon1" : "StarIcon1"
+        
+        // 뱃지 모양 설정 (높이 24의 절반인 12로 설정하면 둥근 사각형)
+        pickedUpButton.layer.cornerRadius = 12
+        
+        if let originalImage = UIImage(named: iconName) {
+            // 아이콘 크기를 21x21로 리사이즈
+            let size = CGSize(width: 21, height: 21)
+            UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+            originalImage.draw(in: CGRect(origin: .zero, size: size))
+            let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            
+            pickedUpButton.setImage(resizedImage, for: .normal)
+        }
+        
+        pickedUpButton.setTitle(" 줍줍", for: .normal)
+        pickedUpButton.tintColor = UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0)
+        pickedUpButton.isHidden = false
+    }
+    
+    private func formatRelativeTime(_ date: Date) -> String {
+        let now = Date()
+        let timeInterval = now.timeIntervalSince(date)
+        
+        print("   시간 차이: \(timeInterval)초 (\(timeInterval/60)분, \(timeInterval/3600)시간)")
+        
+        if timeInterval < 60 {
+            return "방금 전"
+        } else if timeInterval < 3600 {
+            let minutes = Int(timeInterval / 60)
+            return "\(minutes)분 전"
+        } else if timeInterval < 86400 {
+            let hours = Int(timeInterval / 3600)
+            return "\(hours)시간 전"
+        } else {
+            let days = Int(timeInterval / 86400)
+            return "\(days)일 전"
+        }
     }
 }

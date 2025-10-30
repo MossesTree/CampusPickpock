@@ -9,11 +9,11 @@ import UIKit
 
 extension UIColor {
     // 메인 색상
-    static let primaryColor = UIColor(red: 0.2, green: 0.6, blue: 0.86, alpha: 1.0) // 밝은 파랑
+    static let primaryColor = UIColor(red: 74/255, green: 128/255, blue: 240/255, alpha: 1.0) // 4A80F0
     static let secondaryColor = UIColor(red: 0.95, green: 0.95, blue: 0.97, alpha: 1.0) // 연한 회색
     
     // 배경 색상
-    static let backgroundColor = UIColor.systemBackground
+    static let backgroundColor = UIColor(red: 221/255, green: 227/255, blue: 235/255, alpha: 1.0) // DDE3EB
     static let secondaryBackgroundColor = UIColor.secondarySystemBackground
     
     // 텍스트 색상
@@ -24,5 +24,11 @@ extension UIColor {
     static let accentColor = UIColor(red: 1.0, green: 0.59, blue: 0.0, alpha: 1.0) // 주황색
     static let dangerColor = UIColor.systemRed
     static let successColor = UIColor.systemGreen
+    
+    // 줍줍 상태 색상
+    static let pickedUpColor = UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0) // 132D64
+    
+    // 네비게이션 색상
+    static let navigationColor = UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0) // 132D64
 }
 
