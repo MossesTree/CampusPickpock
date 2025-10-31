@@ -20,8 +20,8 @@ class NotificationListViewController: UIViewController {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "알림"
-        label.font = UIFont.boldSystemFont(ofSize: 18)
-        label.textColor = .primaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 20) ?? UIFont.systemFont(ofSize: 20, weight: .bold)
+        label.textColor = UIColor(red: 19/255.0, green: 45/255.0, blue: 100/255.0, alpha: 1.0)
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -50,12 +50,35 @@ class NotificationListViewController: UIViewController {
         return table
     }()
     
-    private let emptyLabel: UILabel = {
+    // MARK: - Empty State
+    private let emptyStateView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let emptyIconImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "UnhappyIcon")
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
+    private let emptyMessageLabel: UILabel = {
         let label = UILabel()
-        label.text = "알림이 없습니다"
-        label.textColor = .secondaryTextColor
+        label.text = "아직 받은 알림이 없어요"
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 20) {
+            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
+                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.semibold]
+            ])
+            label.font = UIFont(descriptor: fontDescriptor, size: 20)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 20, weight: .semibold)
+        }
+        label.textColor = UIColor(red: 172/255.0, green: 190/255.0, blue: 226/255.0, alpha: 1.0)
         label.textAlignment = .center
-        label.font = UIFont.systemFont(ofSize: 16)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -91,8 +114,11 @@ class NotificationListViewController: UIViewController {
         
         // Add table view and other elements
         view.addSubview(tableView)
-        view.addSubview(emptyLabel)
+        view.addSubview(emptyStateView)
         view.addSubview(loadingIndicator)
+        
+        emptyStateView.addSubview(emptyIconImageView)
+        emptyStateView.addSubview(emptyMessageLabel)
         
         closeButton.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
         
@@ -122,8 +148,19 @@ class NotificationListViewController: UIViewController {
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
-            emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            // Empty State View
+            emptyStateView.topAnchor.constraint(equalTo: navDividerLine.bottomAnchor),
+            emptyStateView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            emptyStateView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            emptyStateView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            emptyIconImageView.centerXAnchor.constraint(equalTo: emptyStateView.centerXAnchor),
+            emptyIconImageView.centerYAnchor.constraint(equalTo: emptyStateView.centerYAnchor, constant: -20),
+            emptyIconImageView.widthAnchor.constraint(equalToConstant: 38),
+            emptyIconImageView.heightAnchor.constraint(equalToConstant: 38),
+            
+            emptyMessageLabel.centerXAnchor.constraint(equalTo: emptyStateView.centerXAnchor),
+            emptyMessageLabel.topAnchor.constraint(equalTo: emptyIconImageView.bottomAnchor, constant: 16),
             
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
@@ -140,6 +177,7 @@ class NotificationListViewController: UIViewController {
         tableView.delegate = self
         tableView.dataSource = self
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "NotificationCell")
+        tableView.separatorStyle = .none // 셀 하단 라인 제거
     }
     
     private func loadNotifications() {
@@ -153,7 +191,7 @@ class NotificationListViewController: UIViewController {
         isLoading = true
         loadingIndicator.startAnimating()
         tableView.isHidden = true
-        emptyLabel.isHidden = true
+        emptyStateView.isHidden = true
         
         APIService.shared.getNotificationList { [weak self] result in
             DispatchQueue.main.async {
@@ -165,14 +203,15 @@ class NotificationListViewController: UIViewController {
                 case .success(let notifications):
                     print("✅ 알림 목록 로드 성공: \(notifications.count)개")
                     self?.notificationItems = notifications
-                    self?.emptyLabel.isHidden = !notifications.isEmpty
+                    self?.tableView.isHidden = !notifications.isEmpty
+                    self?.emptyStateView.isHidden = !notifications.isEmpty
                     self?.tableView.reloadData()
                     
                 case .failure(let error):
                     print("❌ 알림 목록 로드 실패: \(error.localizedDescription)")
                     self?.notificationItems = []
-                    self?.emptyLabel.isHidden = false
-                    self?.emptyLabel.text = "알림을 불러올 수 없습니다"
+                    self?.tableView.isHidden = true
+                    self?.emptyStateView.isHidden = false
                     self?.tableView.reloadData()
                     
                     // 에러 알림 표시
@@ -198,33 +237,157 @@ extension NotificationListViewController: UITableViewDelegate, UITableViewDataSo
         let cell = tableView.dequeueReusableCell(withIdentifier: "NotificationCell", for: indexPath)
         let notification = notificationItems[indexPath.row]
         
-        var config = cell.defaultContentConfiguration()
-        config.text = notification.notificationContent
-        config.secondaryText = formatDate(notification.notificationCreatedAt)
-        config.textProperties.font = UIFont.systemFont(ofSize: 14)
-        config.secondaryTextProperties.font = UIFont.systemFont(ofSize: 12)
-        config.secondaryTextProperties.color = .secondaryTextColor
+        // 셀 선택 스타일 제거
+        cell.selectionStyle = .none
+        
+        // 기존 서브뷰 제거
+        cell.contentView.subviews.forEach { $0.removeFromSuperview() }
+        cell.backgroundView = nil
+        cell.backgroundColor = .backgroundColor
+        
+        // 흰색 컨테이너 배경 설정
+        let containerView = UIView()
+        containerView.backgroundColor = .white
+        containerView.layer.cornerRadius = 15
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 아이콘 이미지뷰
+        let iconImageView = UIImageView()
+        iconImageView.contentMode = .scaleAspectFit
+        iconImageView.translatesAutoresizingMaskIntoConstraints = false
         
         // 알림 타입에 따른 아이콘 설정
         switch notification.notificationType {
         case "Comment":
-            config.image = UIImage(systemName: "message.fill")
-            config.imageProperties.tintColor = .systemBlue
-        case "PickedUp":
-            config.image = UIImage(systemName: "hand.raised.fill")
-            config.imageProperties.tintColor = .systemGreen
+            iconImageView.image = UIImage(named: "CommentIcon1")
         case "Found":
-            config.image = UIImage(systemName: "checkmark.circle.fill")
-            config.imageProperties.tintColor = .systemOrange
+            iconImageView.image = UIImage(named: "StarIcon2")
         default:
-            config.image = UIImage(systemName: "bell.fill")
-            config.imageProperties.tintColor = .systemGray
+            iconImageView.image = UIImage(systemName: "bell.fill")
+            iconImageView.tintColor = .systemGray
         }
         
-        cell.contentConfiguration = config
-        cell.backgroundColor = .backgroundColor
+        // 제목 레이블 - Pretendard Variable 15px semibold rgba(78, 78, 78, 1)
+        let titleLabel = UILabel()
+        titleLabel.font = UIFont.systemFont(ofSize: 15, weight: .semibold)
+        titleLabel.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 본문 레이블 - Pretendard Variable 13px medium rgba(123, 123, 123, 1)
+        let contentLabel = UILabel()
+        contentLabel.font = UIFont.systemFont(ofSize: 13, weight: .medium)
+        contentLabel.textColor = UIColor(red: 123/255.0, green: 123/255.0, blue: 123/255.0, alpha: 1.0)
+        contentLabel.numberOfLines = 0
+        contentLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 시간 레이블 (우측 상단) - Pretendard Variable 10px medium rgba(123, 123, 123, 1)
+        let timeLabel = UILabel()
+        timeLabel.font = UIFont.systemFont(ofSize: 10, weight: .medium)
+        timeLabel.textColor = UIColor(red: 123/255.0, green: 123/255.0, blue: 123/255.0, alpha: 1.0)
+        timeLabel.textAlignment = .right
+        timeLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 알림 타입에 따른 제목, 본문 설정
+        switch notification.notificationType {
+        case "Comment":
+            titleLabel.text = "내 게시물에 댓글이 달렸어요"
+            contentLabel.text = formatNotificationContent(notification.notificationContent)
+        case "Found":
+            titleLabel.text = "줍줍 알림 도착 !"
+            contentLabel.text = formatNotificationContent(notification.notificationContent)
+        default:
+            titleLabel.text = notification.notificationContent
+            contentLabel.text = ""
+        }
+        
+        // 시간 표시 (상대 시간)
+        timeLabel.text = formatRelativeTime(notification.notificationCreatedAt)
+        
+        // 서브뷰 추가
+        containerView.addSubview(iconImageView)
+        containerView.addSubview(titleLabel)
+        containerView.addSubview(contentLabel)
+        containerView.addSubview(timeLabel)
+        cell.contentView.addSubview(containerView)
+        
+        var constraints: [NSLayoutConstraint] = [
+            // 컨테이너 뷰
+            containerView.centerXAnchor.constraint(equalTo: cell.contentView.centerXAnchor),
+            containerView.widthAnchor.constraint(equalToConstant: 325),
+            containerView.heightAnchor.constraint(equalToConstant: 69),
+            
+            // 아이콘 (상, 하, 좌로 15씩 여백, 크기 40x40)
+            iconImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 15),
+            iconImageView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 15),
+            iconImageView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -15),
+            iconImageView.widthAnchor.constraint(equalToConstant: 40),
+            iconImageView.heightAnchor.constraint(equalToConstant: 40),
+            
+            // 제목 레이블 (아이콘 오른쪽, 시간 레이블 왼쪽)
+            titleLabel.leadingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: 15),
+            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 15),
+            titleLabel.trailingAnchor.constraint(equalTo: timeLabel.leadingAnchor, constant: -8),
+            
+            // 시간 레이블 (우측 상단)
+            timeLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 15),
+            timeLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -15),
+            
+            // 본문 레이블
+            contentLabel.leadingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: 15),
+            contentLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            contentLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -15),
+            contentLabel.bottomAnchor.constraint(lessThanOrEqualTo: containerView.bottomAnchor, constant: -15)
+        ]
+        
+        // 첫 번째 셀: 상단에서 31pt 아래
+        // 나머지 셀: 상단 정렬 (이전 셀과의 8pt 간격은 셀 높이에서 처리)
+        if indexPath.row == 0 {
+            constraints.append(containerView.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 31))
+            // 첫 번째 셀의 하단 여백 8pt
+            constraints.append(containerView.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -8))
+        } else {
+            constraints.append(containerView.topAnchor.constraint(equalTo: cell.contentView.topAnchor))
+            // 나머지 셀의 하단 여백 8pt (다음 셀과의 간격)
+            constraints.append(containerView.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -8))
+        }
+        
+        NSLayoutConstraint.activate(constraints)
         
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        // 각 셀의 높이는 컨테이너 높이(69) + 여백
+        // 첫 번째 셀: 상단 여백 31 + 컨테이너 높이 69 + 하단 여백 8 = 108
+        // 나머지 셀: 컨테이너 높이 69 + 하단 여백 8 = 77
+        if indexPath.row == 0 {
+            return 31 + 69 + 8
+        } else {
+            return 69 + 8
+        }
+    }
+    
+    private func formatNotificationContent(_ content: String) -> String {
+        // notificationContent에서 게시글 제목 부분 추출
+        // "게시글 제목: "으로 시작하는 경우 해당 부분만 사용
+        if content.contains("게시글 제목:") {
+            let components = content.components(separatedBy: "게시글 제목:")
+            if components.count > 1 {
+                let titlePart = components[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                // 일부분만 표시 (너무 길면 생략)
+                let maxLength = 30
+                if titlePart.count > maxLength {
+                    return "게시글 제목: \(String(titlePart.prefix(maxLength)))..."
+                }
+                return "게시글 제목: \(titlePart)"
+            }
+        }
+        // "게시글 제목:"이 없는 경우 전체 내용 사용 (일부분만)
+        let maxLength = 30
+        if content.count > maxLength {
+            return "게시글 제목: \(String(content.prefix(maxLength)))..."
+        }
+        return "게시글 제목: \(content)"
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -238,16 +401,62 @@ extension NotificationListViewController: UITableViewDelegate, UITableViewDataSo
         navigationController?.pushViewController(detailVC, animated: true)
     }
     
-    private func formatDate(_ dateString: String) -> String {
+    private func formatRelativeTime(_ dateString: String) -> String {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
+        dateFormatter.timeZone = TimeZone(abbreviation: "UTC") // UTC 시간으로 파싱
         
-        if let date = dateFormatter.date(from: dateString) {
-            let displayFormatter = DateFormatter()
-            displayFormatter.dateFormat = "MM/dd HH:mm"
-            return displayFormatter.string(from: date)
-        } else {
+        guard let notificationDate = dateFormatter.date(from: dateString) else {
+            print("⚠️ 날짜 파싱 실패: \(dateString)")
             return dateString
+        }
+        
+        // 현재 시간 가져오기 (절대 시간, UTC 기준)
+        let now = Date()
+        
+        // Date 객체는 절대 시간이므로, 두 Date의 차이를 직접 계산하면 정확한 시간 간격을 얻을 수 있음
+        // 하지만 사용자 요구사항대로 한국 시간 기준으로 계산하기 위해
+        // 한국 시간대의 현재 시간과 알림 시간을 비교
+        
+        let koreanTimeZone = TimeZone(identifier: "Asia/Seoul") ?? TimeZone(secondsFromGMT: 9 * 3600)!
+        
+        // 한국 시간대의 오프셋 계산 (UTC에서 한국 시간으로)
+        let utcOffset = koreanTimeZone.secondsFromGMT(for: now)
+        
+        // 한국 시간 기준으로 현재 시간과 알림 시간 계산
+        // Date는 절대 시간이므로 직접 비교 가능
+        // 하지만 로컬 시간대에 관계없이 한국 시간 기준으로 계산하려면:
+        // 현재 기기의 시간대 오프셋과 한국 시간대 오프셋의 차이를 고려
+        
+        // 기기의 현재 시간대 오프셋
+        let localOffset = TimeZone.current.secondsFromGMT(for: now)
+        
+        // 한국 시간 기준으로 조정된 시간 차이
+        // 실제로는 Date 객체가 절대 시간이므로 직접 계산이 가장 정확
+        let timeInterval = now.timeIntervalSince(notificationDate)
+        
+        print("🔍 시간 계산: UTC 원본=\(dateString), 알림 시간=\(notificationDate), 현재 시간=\(now), 간격=\(timeInterval)초 (\(timeInterval/60)분)")
+        
+        return formatTimeInterval(timeInterval)
+    }
+    
+    private func formatTimeInterval(_ timeInterval: TimeInterval) -> String {
+        // 미래 시간인 경우 (음수)
+        if timeInterval < 0 {
+            return "방금 전"
+        }
+        
+        if timeInterval < 60 {
+            return "방금 전"
+        } else if timeInterval < 3600 {
+            let minutes = Int(timeInterval / 60)
+            return "\(minutes)분 전"
+        } else if timeInterval < 86400 {
+            let hours = Int(timeInterval / 3600)
+            return "\(hours)시간 전"
+        } else {
+            let days = Int(timeInterval / 86400)
+            return "\(days)일 전"
         }
     }
 }

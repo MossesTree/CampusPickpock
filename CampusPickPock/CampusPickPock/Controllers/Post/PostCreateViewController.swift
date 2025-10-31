@@ -29,8 +29,8 @@ class PostCreateViewController: UIViewController {
     private let navTitleLabel: UILabel = {
         let label = UILabel()
         label.text = "주인을 찾아요"
-        label.font = UIFont.boldSystemFont(ofSize: 18)
-        label.textColor = .primaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 20) ?? UIFont.systemFont(ofSize: 20, weight: .bold)
+        label.textColor = UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0)
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -960,6 +960,16 @@ class PostCreateViewController: UIViewController {
                     print("✅ 생년월일 설정: \(ownerBirthDate)")
                 }
                 
+                // 수정 모드에서는 개인정보 입력란 비활성화
+                nameTextField.isEnabled = false
+                studentIdTextField.isEnabled = false
+                birthDateTextField.isEnabled = false
+                
+                // 비활성화된 텍스트 필드의 배경색 변경
+                nameTextField.backgroundColor = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)
+                studentIdTextField.backgroundColor = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)
+                birthDateTextField.backgroundColor = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)
+                
                 // 키보드 타임아웃 에러 방지
                 nameTextField.resignFirstResponder()
                 studentIdTextField.resignFirstResponder()
@@ -1174,77 +1184,6 @@ extension PostCreateViewController: UITextFieldDelegate {
             return true // birthDateTextFieldChanged에서 처리하므로 true 반환
         }
         return true
-    }
-}
-
-// MARK: - DeleteButton
-class DeleteButton: UIButton {
-    var onDelete: (() -> Void)?
-    
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        setupButton()
-    }
-    
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        setupButton()
-    }
-    
-    private func setupButton() {
-        // 버튼 타입 명시적으로 설정
-        self.setTitle(nil, for: .normal)
-        self.setImage(nil, for: .normal)
-        
-        // 빨간색 원 배경의 흰색 X 아이콘 생성 (25x25)
-        let scale = UIScreen.main.scale
-        let circleSize = CGSize(width: 25 * scale, height: 25 * scale)
-        UIGraphicsBeginImageContextWithOptions(circleSize, false, scale)
-        defer { UIGraphicsEndImageContext() }
-        
-        if let context = UIGraphicsGetCurrentContext() {
-            // 빨간색 원 그리기
-            context.setFillColor(UIColor.red.cgColor)
-            context.fillEllipse(in: CGRect(origin: .zero, size: circleSize))
-            
-            // 흰색 X 그리기
-            context.setStrokeColor(UIColor.white.cgColor)
-            context.setLineWidth(2.5 * scale)
-            context.setLineCap(.round)
-            let padding: CGFloat = 7 * scale
-            context.move(to: CGPoint(x: padding, y: padding))
-            context.addLine(to: CGPoint(x: circleSize.width - padding, y: circleSize.height - padding))
-            context.move(to: CGPoint(x: circleSize.width - padding, y: padding))
-            context.addLine(to: CGPoint(x: padding, y: circleSize.height - padding))
-            context.strokePath()
-            
-            if let combinedImage = UIGraphicsGetImageFromCurrentImageContext() {
-                self.setImage(combinedImage, for: .normal)
-            }
-        }
-        
-        // 버튼 설정
-        self.backgroundColor = .clear
-        self.isUserInteractionEnabled = true
-        self.adjustsImageWhenHighlighted = false
-        self.adjustsImageWhenDisabled = false
-        self.imageView?.contentMode = .scaleAspectFit
-        
-        // 액션 추가
-        self.addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
-        
-        print("🔧 DeleteButton 초기화 완료: type=\(type(of: self))")
-    }
-    
-    @objc private func buttonTapped() {
-        print("🗑️ DeleteButton 터치됨!")
-        onDelete?()
-    }
-    
-    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-        // 터치 영역을 확대 (45x45)
-        let expandedBounds = bounds.insetBy(dx: -10, dy: -10)
-        return expandedBounds.contains(point)
     }
 }
 

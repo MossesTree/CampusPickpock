@@ -100,6 +100,7 @@ class SearchViewController: UIViewController {
         let table = UITableView()
         table.translatesAutoresizingMaskIntoConstraints = false
         table.backgroundColor = .backgroundColor
+        table.separatorStyle = .none
         return table
     }()
     
@@ -206,9 +207,9 @@ class SearchViewController: UIViewController {
     private func setupTableView() {
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.register(PostCell.self, forCellReuseIdentifier: "PostCell")
+        tableView.register(PostListCell.self, forCellReuseIdentifier: "PostListCell")
         tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = 120
+        tableView.estimatedRowHeight = 400
     }
     
     @objc private func segmentChanged() {
@@ -264,19 +265,27 @@ class SearchViewController: UIViewController {
                     self?.postingItems = searchResults
                     
                     // PostingItem을 Post로 변환
+                    // 현재 선택된 검색 타입에 따라 post.type 설정
+                    let currentSearchType = self?.currentSearchType ?? "FOUND"
                     self?.searchResults = searchResults.map { postingItem in
-                        Post(
+                        // 검색 타입을 기준으로 type 설정 (검색한 타입과 일치)
+                        let postType: PostType = currentSearchType == "LOST" ? .lost : .found
+                        
+                        return Post(
                             id: String(postingItem.postingId),
                             postingId: postingItem.postingId,
                             title: postingItem.postingTitle,
                             content: postingItem.postingContent,
+                            location: postingItem.itemPlace,
+                            imageUrl: postingItem.postingImageUrl,
                             images: [],
                             authorId: postingItem.postingWriterNickName ?? "익명",
                             authorName: postingItem.postingWriterNickName ?? "익명",
                             isHidden: false,
                             createdAt: self?.parseDate(postingItem.postingCreatedAt) ?? Date(),
                             commentCount: postingItem.commentCount,
-                            type: postingItem.postingCategory == "LOST" ? .lost : .found
+                            type: postType,
+                            isPickedUp: postingItem.isPickedUp
                         )
                     }
                     
@@ -321,9 +330,15 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "PostCell", for: indexPath) as! PostCell
-        cell.configure(with: searchResults[indexPath.row])
+        let cell = tableView.dequeueReusableCell(withIdentifier: "PostListCell", for: indexPath) as! PostListCell
+        let post = searchResults[indexPath.row]
+        let isFirst = indexPath.row == 0
+        cell.configure(with: post, isFirst: isFirst)
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 400
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

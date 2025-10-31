@@ -61,8 +61,8 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
 
     private let navTitleLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.boldSystemFont(ofSize: 18)
-        label.textColor = .primaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 20) ?? UIFont.systemFont(ofSize: 20, weight: .bold)
+        label.textColor = UIColor(red: 19/255.0, green: 45/255.0, blue: 100/255.0, alpha: 1.0)
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -332,6 +332,15 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         // 댓글 로드는 게시글 상세 로드 성공 후에 호출되도록 수정
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // 화면이 다시 나타날 때 (수정 완료 후 돌아왔을 때) 데이터 새로고침
+        if postingId != nil {
+            loadPostDetail()
+        }
+    }
+    
     private func setupUI() {
         view.backgroundColor = .backgroundColor
         
@@ -390,6 +399,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         sendButton.addTarget(self, action: #selector(sendButtonTapped), for: .touchUpInside)
         privateButton.addTarget(self, action: #selector(privateButtonTapped), for: .touchUpInside)
         attachButton.addTarget(self, action: #selector(attachButtonTapped), for: .touchUpInside)
+        pickedUpButton.addTarget(self, action: #selector(pickedUpButtonTapped), for: .touchUpInside)
         
         // 초기 상태: 댓글 작성 버튼 비활성화 (게시글 상세 로드 완료 후 활성화)
         sendButton.isEnabled = false
@@ -747,7 +757,23 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     }
     
     private func configureJoopjoopButton(isPickedUp: Bool) {
-        let iconName = isPickedUp ? "FillStarIcon1" : "StarIcon1"
+        // 게시글 타입 확인: lost 타입일 때만 줍줍 버튼 활성화
+        let isLostType: Bool
+        if let post = post {
+            isLostType = post.type == .lost
+        } else {
+            // navTitleLabel에서 타입 추론 ("잃어버렸어요" = lost, "주인을 찾아요" = found)
+            isLostType = navTitleLabel.text == "잃어버렸어요"
+        }
+        
+        if !isLostType {
+            // found 타입이면 버튼 숨기기
+            pickedUpButton.isHidden = true
+            return
+        }
+        
+        // 줍줍 완료 여부와 관계없이 StarIcon1 사용 (색상으로 구분)
+        let iconName = "StarIcon1"
         
         // 뱃지 모양 설정 (높이 24의 절반인 12로 설정하면 둥근 사각형)
         pickedUpButton.layer.cornerRadius = 12
@@ -764,8 +790,35 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         }
         
         pickedUpButton.setTitle(" 줍줍", for: .normal)
-        pickedUpButton.tintColor = UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0)
+        
+        // 줍줍 완료된 경우 rgba(146, 168, 221, 1) 색상으로 설정
+        if isPickedUp {
+            pickedUpButton.tintColor = UIColor(red: 146/255.0, green: 168/255.0, blue: 221/255.0, alpha: 1.0)
+            pickedUpButton.setTitleColor(UIColor(red: 146/255.0, green: 168/255.0, blue: 221/255.0, alpha: 1.0), for: .normal)
+        } else {
+            // 줍줍 완료 전에는 네이비 색상 (FillStarIcon1은 이미 채워진 별, StarIcon1은 비어있는 별)
+            pickedUpButton.tintColor = UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0)
+            pickedUpButton.setTitleColor(UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0), for: .normal)
+        }
+        
+        pickedUpButton.isEnabled = !isPickedUp // 이미 줍줍된 경우 비활성화
         pickedUpButton.isHidden = false
+    }
+    
+    @objc private func pickedUpButtonTapped() {
+        // lost 타입일 때만 처리
+        let isLostType: Bool
+        if let post = post {
+            isLostType = post.type == .lost
+        } else {
+            isLostType = navTitleLabel.text == "잃어버렸어요"
+        }
+        
+        guard isLostType else {
+            return
+        }
+        
+        handleJoopjoopAction()
     }
     
     private func updateContent(with postDetail: PostDetailItem) {
@@ -1048,10 +1101,19 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             self.handleDeleteAction()
         })
         
-        // 줍줍 완료 버튼 추가
-        alert.addAction(UIAlertAction(title: "줍줍 완료", style: .default) { _ in
-            self.handleJoopjoopAction()
-        })
+        // lost 타입일 때만 줍줍 완료 버튼 추가
+        let isLostType: Bool
+        if let post = post {
+            isLostType = post.type == .lost
+        } else {
+            isLostType = navTitleLabel.text == "잃어버렸어요"
+        }
+        
+        if isLostType {
+            alert.addAction(UIAlertAction(title: "줍줍 완료", style: .default) { _ in
+                self.handleJoopjoopAction()
+            })
+        }
         
         // iPad에서 actionSheet가 크래시되지 않도록 설정
         if let popover = alert.popoverPresentationController {
@@ -1213,6 +1275,40 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     }
     
     private func handleJoopjoopAction() {
+        // 권한 체크
+        guard let currentUser = DataManager.shared.currentUser else {
+            let alert = UIAlertController(title: "오류", message: "현재 사용자 정보를 가져올 수 없습니다.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
+        guard let currentPostDetail = self.postDetail else {
+            let alert = UIAlertController(title: "오류", message: "게시글 정보를 찾을 수 없습니다.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
+        let authorNickname = currentPostDetail.postingWriterNickname ?? ""
+        let currentUserNickname = currentUser.name
+        
+        // 본인 게시글인지 확인
+        if authorNickname != currentUserNickname {
+            let alert = UIAlertController(title: "접근 제한", message: "본인 게시글만 줍줍 상태를 변경할 수 있습니다.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
+        // 이미 줍줍 완료된 글인지 확인
+        if currentPostDetail.isPickedUp {
+            let alert = UIAlertController(title: "알림", message: "이미 줍줍완료 된 글입니다!", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
         guard let postingId = self.postingId else {
             print("❌ postingId가 없습니다.")
             let alert = UIAlertController(title: "오류", message: "게시글 정보를 찾을 수 없습니다.", preferredStyle: .alert)

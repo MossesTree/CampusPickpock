@@ -1507,9 +1507,8 @@ class APIService {
     }
     
     // MARK: - JupJup Notifications
-    func getJupJupNotifications(type: String, completion: @escaping (Result<[JupJupNotificationItem], APIError>) -> Void) {
+    func getJupJupNotifications(completion: @escaping (Result<[JupJupNotificationItem], APIError>) -> Void) {
         print("🔔 줍줍 알림 확인 API 시작")
-        print("🔔 알림 타입: \(type)")
         
         // 토큰 유효성 검증
         guard let token = DataManager.shared.getAccessToken(), !token.isEmpty else {
@@ -1531,7 +1530,7 @@ class APIService {
         print("✅ 줍줍 알림 확인 API 권한 확인 완료")
         print("✅ 인증 토큰 유효: \(token.prefix(20))...")
         
-        let jupJupNotificationURL = "\(baseURL)/notification/jupJup?type=\(type)"
+        let jupJupNotificationURL = "\(baseURL)/notification/jupJup"
         print("🔔 줍줍 알림 확인 API 호출: \(jupJupNotificationURL)")
         
         guard let url = URL(string: jupJupNotificationURL) else {
