@@ -268,6 +268,8 @@ class PostCreateViewController: UIViewController {
     private var postType: PostType = .found
     private var uploadButtonTopConstraint: NSLayoutConstraint?
     private var categoryToSelect: String? // 수정 모드에서 선택할 카테고리 저장
+    private var initialImageCount = 0 // 수정 모드에서 초기에 로드된 이미지 개수
+    private var initialImageUrls: [String] = [] // 초기 이미지 URL들 (순서 보장용)
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -619,14 +621,101 @@ class PostCreateViewController: UIViewController {
         
         // 로딩 상태 표시
         uploadButton.isEnabled = false
-        uploadButton.setTitle("수정 중...", for: .normal)
+        uploadButton.setTitle(selectedImages.isEmpty ? "수정 중..." : "이미지 업로드 중...", for: .normal)
         
-        // 기존 이미지 URL들 가져오기
-        var imageUrls: [String] = []
-        if let postDetail = editingPostDetail {
-            imageUrls = postDetail.postingImageUrls ?? []
+        // 현재 남아있는 이미지들 분석
+        // initialImageCount만큼이 기존 이미지, 그 이후가 새로 추가된 이미지
+        let remainingExistingImages = Array(selectedImages.prefix(initialImageCount))
+        let newImages = Array(selectedImages.dropFirst(initialImageCount))
+        
+        print("📊 이미지 상태: 기존 \(remainingExistingImages.count)개, 새로 추가 \(newImages.count)개")
+        
+        // 새로 추가된 이미지가 있으면 먼저 업로드
+        if !newImages.isEmpty {
+            uploadNewImagesForEdit(newImages: newImages, remainingExistingCount: remainingExistingImages.count, postingId: postingId, title: title, description: description)
+        } else {
+            // 새 이미지가 없으면 기존 URL 중 남아있는 것들만 전송
+            let finalImageUrls = Array(initialImageUrls.prefix(remainingExistingImages.count))
+            print("📤 최종 이미지 URL 개수: \(finalImageUrls.count)")
+            updatePostWithImageUrls(postingId: postingId, title: title, description: description, imageUrls: finalImageUrls)
+        }
+    }
+    
+    private func uploadNewImagesForEdit(newImages: [UIImage], remainingExistingCount: Int, postingId: Int, title: String, description: String) {
+        // 파일명 생성 (타임스탬프 + 인덱스)
+        let timestamp = Int(Date().timeIntervalSince1970)
+        let fileNames = newImages.enumerated().map { index, _ in
+            "post_\(timestamp)_\(index).jpg"
         }
         
+        print("📸 새로 추가된 이미지 업로드 시작: \(fileNames.count)개")
+        
+        // 1단계: Presigned URL 요청
+        APIService.shared.getPresignedUrls(fileNames: fileNames) { [weak self] result in
+            switch result {
+            case .success(let presignedUrls):
+                print("✅ Presigned URL 획득 성공")
+                self?.uploadNewImagesToS3ForEdit(newImages: newImages, presignedUrls: presignedUrls, remainingExistingCount: remainingExistingCount, postingId: postingId, title: title, description: description)
+                
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    self?.uploadButton.isEnabled = true
+                    self?.uploadButton.setTitle("수정하기", for: .normal)
+                    print("❌ Presigned URL 획득 실패: \(error.localizedDescription)")
+                    self?.showAlert(message: "이미지 업로드 준비에 실패했습니다: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    private func uploadNewImagesToS3ForEdit(newImages: [UIImage], presignedUrls: [String], remainingExistingCount: Int, postingId: Int, title: String, description: String) {
+        let dispatchGroup = DispatchGroup()
+        var uploadedImageUrls: [String] = []
+        var uploadError: APIError?
+        let totalImages = presignedUrls.count
+        
+        for (index, presignedUrl) in presignedUrls.enumerated() {
+            dispatchGroup.enter()
+            
+            APIService.shared.uploadImageToS3(image: newImages[index], presignedUrl: presignedUrl) { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let imageUrl):
+                        uploadedImageUrls.append(imageUrl)
+                        print("✅ 새 이미지 \(index + 1)/\(totalImages) 업로드 성공")
+                        
+                        // 진행 상황 업데이트
+                        self.uploadButton.setTitle("이미지 업로드 중... \(index + 1)/\(totalImages)", for: .normal)
+                        
+                    case .failure(let error):
+                        uploadError = error
+                        print("❌ 새 이미지 \(index + 1)/\(totalImages) 업로드 실패: \(error.localizedDescription)")
+                    }
+                }
+                dispatchGroup.leave()
+            }
+        }
+        
+        dispatchGroup.notify(queue: .main) { [weak self] in
+            if let error = uploadError {
+                self?.uploadButton.isEnabled = true
+                self?.uploadButton.setTitle("수정하기", for: .normal)
+                self?.showAlert(message: "이미지 업로드에 실패했습니다: \(error.localizedDescription)")
+                return
+            }
+            
+            // 기존 URL 중 남아있는 것만 + 새로 업로드한 URL 합치기
+            let existingImageUrls = Array((self?.initialImageUrls ?? []).prefix(remainingExistingCount))
+            let allImageUrls = existingImageUrls + uploadedImageUrls
+            print("📸 총 이미지 URL: \(allImageUrls.count)개 (기존 남은 것: \(existingImageUrls.count)개 + 새로 추가: \(uploadedImageUrls.count)개)")
+            
+            // 모든 이미지 업로드 성공 시 게시글 수정
+            self?.uploadButton.setTitle("게시글 수정 중...", for: .normal)
+            self?.updatePostWithImageUrls(postingId: postingId, title: title, description: description, imageUrls: allImageUrls)
+        }
+    }
+    
+    private func updatePostWithImageUrls(postingId: Int, title: String, description: String, imageUrls: [String]) {
         // 수정 요청 데이터 생성
         let updateData = UpdatePostRequest(
             postingCategory: selectedCategory ?? "기타",
@@ -1060,21 +1149,36 @@ class PostCreateViewController: UIViewController {
     
     private func loadImagesFromUrls(_ imageUrls: [String]) {
         print("📸 기존 이미지 로드 시작: \(imageUrls.count)개")
+        initialImageCount = 0
+        initialImageUrls = imageUrls // 초기 URL 저장
         
-        for imageUrl in imageUrls {
+        let group = DispatchGroup()
+        var loadedImages: [(index: Int, image: UIImage)] = []
+        
+        for (index, imageUrl) in imageUrls.enumerated() {
             guard let url = URL(string: imageUrl) else { continue }
             
-            DispatchQueue.global().async { [weak self] in
+            group.enter()
+            DispatchQueue.global().async {
                 if let data = try? Data(contentsOf: url),
                    let image = UIImage(data: data) {
-                    DispatchQueue.main.async {
-                        self?.selectedImages.append(image)
-                        self?.updateImageCount()
-                        self?.imageCollectionView.reloadData()
-                        print("✅ 이미지 로드 완료: \(imageUrl)")
-                    }
+                    loadedImages.append((index: index, image: image))
+                    print("✅ 이미지 로드 완료 [\(index)]: \(imageUrl)")
                 }
+                group.leave()
             }
+        }
+        
+        group.notify(queue: .main) { [weak self] in
+            // 인덱스 순서대로 정렬하여 selectedImages에 추가
+            loadedImages.sort { $0.index < $1.index }
+            for (_, image) in loadedImages {
+                self?.selectedImages.append(image)
+                self?.initialImageCount += 1
+            }
+            self?.updateImageCount()
+            self?.imageCollectionView.reloadData()
+            print("📸 기존 이미지 로드 완료: \(loadedImages.count)개")
         }
     }
     
@@ -1136,7 +1240,13 @@ extension PostCreateViewController: UICollectionViewDelegate, UICollectionViewDa
                 return
             }
             self.selectedImages.remove(at: imageIndex)
-            print("✅ Lost 이미지 삭제 완료: 삭제 후 개수=\(self.selectedImages.count)")
+            
+            // 수정 모드에서 초기 이미지 이전을 삭제한 경우 initialImageCount 감소
+            if self.isEditMode && imageIndex < self.initialImageCount {
+                self.initialImageCount -= 1
+            }
+            
+            print("✅ Lost 이미지 삭제 완료: 삭제 후 개수=\(self.selectedImages.count), initialImageCount=\(self.initialImageCount)")
             self.updateImageCount()
             self.imageCollectionView.reloadData()
         }

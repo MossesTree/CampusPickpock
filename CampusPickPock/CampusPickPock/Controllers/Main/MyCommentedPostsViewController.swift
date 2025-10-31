@@ -42,18 +42,6 @@ class MyCommentedPostsViewController: UIViewController {
         return view
     }()
     
-    private let scrollView: UIScrollView = {
-        let scrollView = UIScrollView()
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        return scrollView
-    }()
-    
-    private let contentView: UIView = {
-        let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
-    
     // MARK: - Posts Section
     private let postsTableView: UITableView = {
         let tableView = UITableView()
@@ -141,12 +129,9 @@ class MyCommentedPostsViewController: UIViewController {
         customNavHeader.addSubview(navTitleLabel)
         view.addSubview(navDividerLine)
         
-        view.addSubview(scrollView)
-        scrollView.addSubview(contentView)
-        
-        contentView.addSubview(postsTableView)
-        contentView.addSubview(emptyStateView)
-        contentView.addSubview(loadingIndicator)
+        view.addSubview(postsTableView)
+        view.addSubview(emptyStateView)
+        view.addSubview(loadingIndicator)
         
         emptyStateView.addSubview(emptyIconImageView)
         emptyStateView.addSubview(emptyMessageLabel)
@@ -177,29 +162,17 @@ class MyCommentedPostsViewController: UIViewController {
             navDividerLine.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             navDividerLine.heightAnchor.constraint(equalToConstant: 1),
             
-            scrollView.topAnchor.constraint(equalTo: navDividerLine.bottomAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            
-            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
-            
             // Posts Table View
-            postsTableView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            postsTableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            postsTableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            postsTableView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            postsTableView.heightAnchor.constraint(equalToConstant: 600),
+            postsTableView.topAnchor.constraint(equalTo: navDividerLine.bottomAnchor),
+            postsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            postsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            postsTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
             // Empty State View
-            emptyStateView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            emptyStateView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            emptyStateView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            emptyStateView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            emptyStateView.topAnchor.constraint(equalTo: navDividerLine.bottomAnchor),
+            emptyStateView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            emptyStateView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            emptyStateView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
             emptyIconImageView.centerXAnchor.constraint(equalTo: emptyStateView.centerXAnchor),
             emptyIconImageView.centerYAnchor.constraint(equalTo: emptyStateView.centerYAnchor, constant: -20),
@@ -209,8 +182,8 @@ class MyCommentedPostsViewController: UIViewController {
             emptyMessageLabel.centerXAnchor.constraint(equalTo: emptyStateView.centerXAnchor),
             emptyMessageLabel.topAnchor.constraint(equalTo: emptyIconImageView.bottomAnchor, constant: 16),
             
-            loadingIndicator.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            loadingIndicator.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
+            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
     }
     

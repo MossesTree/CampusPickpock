@@ -336,7 +336,12 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         super.viewWillAppear(animated)
         
         // 화면이 다시 나타날 때 (수정 완료 후 돌아왔을 때) 데이터 새로고침
-        if postingId != nil {
+        // 하지만 이미 데이터가 있으면 백그라운드에서만 업데이트
+        if postingId != nil && postDetail != nil {
+            // 백그라운드에서 조용히 업데이트 (UI 깜빡임 없음)
+            loadPostDetailInBackground()
+        } else if postingId != nil {
+            // 처음 로드할 때만 로딩 인디케이터 표시
             loadPostDetail()
         }
     }
@@ -646,6 +651,18 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         scrollView.isHidden = true
         print("⏳ 게시글 상세 정보 로딩 중...")
         
+        loadPostDetailData()
+    }
+    
+    private func loadPostDetailInBackground() {
+        guard let postingId = self.postingId else { return }
+        print("🔄 백그라운드에서 게시글 상세 정보 업데이트: postingId=\(postingId)")
+        loadPostDetailData()
+    }
+    
+    private func loadPostDetailData() {
+        guard let postingId = self.postingId else { return }
+        
         APIService.shared.getPostDetail(postingId: postingId) { [weak self] result in
             DispatchQueue.main.async {
                 self?.isLoading = false
@@ -902,23 +919,42 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     }
     
     private func loadAllImages(from imageUrls: [String]) {
+        // 중복 URL 제거
+        let uniqueImageUrls = Array(Set(imageUrls))
+        if uniqueImageUrls.count != imageUrls.count {
+            print("⚠️ 중복 이미지 URL 발견: \(imageUrls.count)개 -> \(uniqueImageUrls.count)개")
+            print("📸 원본 URLs: \(imageUrls)")
+        }
+        
+        // 이전 이미지 초기화
         postImages = []
         imagesCollectionView.reloadData()
         
-        for (index, imageUrl) in imageUrls.enumerated() {
+        let group = DispatchGroup()
+        var loadedImages: [UIImage] = []
+        var loadedCount = 0
+        
+        for (index, imageUrl) in uniqueImageUrls.enumerated() {
             guard let url = URL(string: imageUrl) else { continue }
             
+            group.enter()
             DispatchQueue.global().async { [weak self] in
                 if let data = try? Data(contentsOf: url),
                    let image = UIImage(data: data) {
-                    DispatchQueue.main.async {
-                        self?.postImages.append(image)
-                        self?.updateCollectionViewLayout()
-                        self?.imagesCollectionView.reloadData()
-                        print("✅ 이미지 로드 완료: \(index + 1)/\(imageUrls.count)")
-                    }
+                    loadedImages.append(image)
+                    loadedCount += 1
+                    print("✅ 이미지 다운로드 완료: \(loadedCount)/\(uniqueImageUrls.count)")
                 }
+                group.leave()
             }
+        }
+        
+        group.notify(queue: .main) { [weak self] in
+            // 모든 이미지가 로드된 후 한 번에 업데이트
+            self?.postImages = loadedImages
+            self?.imagesCollectionView.reloadData()
+            self?.updateCollectionViewLayout()
+            print("✅ 모든 이미지 로드 완료: \(loadedImages.count)개")
         }
     }
     
@@ -928,12 +964,12 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
                 // 이미지가 하나면 스크롤 비활성화하고 원본 비율 유지
                 layout.scrollDirection = .vertical
                 imagesCollectionView.isScrollEnabled = false
-                // 이미지의 원본 비율을 유지하기 위해 컬렉션뷰 높이를 설정하지 않음
-                imagesCollectionView.heightAnchor.constraint(equalToConstant: 250).isActive = false
+                imagesCollectionViewHeightConstraint?.constant = 250
             } else {
                 // 여러 개면 가로 스크롤 활성화
                 layout.scrollDirection = .horizontal
                 imagesCollectionView.isScrollEnabled = true
+                imagesCollectionViewHeightConstraint?.constant = 200
             }
         }
     }
@@ -1465,7 +1501,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         alert.addAction(UIAlertAction(title: "수정", style: .default) { _ in
             guard let newContent = alert.textFields?.first?.text, !newContent.isEmpty else { return }
-            self.performEditComment(commentItem, newContent: newContent)
+            self.performEditComment(commentItem: commentItem, newContent: newContent)
         })
         
         present(alert, animated: true)
@@ -1482,7 +1518,9 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         present(alert, animated: true)
     }
     
-    private func performEditComment(_ commentItem: CommentItem, newContent: String) {
+    private func performEditComment(commentItem: CommentItem, newContent: String) {
+        print("📝 댓글 수정 API 호출: 댓글 ID \(commentItem.commentId), 내용: \(newContent)")
+        
         let updateData = UpdateCommentRequest(
             isCommentSecret: commentItem.isCommentSecret,
             commentContent: newContent,
