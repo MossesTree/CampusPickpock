@@ -147,6 +147,7 @@ class PostDetailHeaderView: UIView {
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy.MM.dd HH:mm"
+        formatter.timeZone = TimeZone(identifier: "Asia/Seoul") ?? TimeZone(secondsFromGMT: 9 * 3600)
         return formatter.string(from: date)
     }
 }

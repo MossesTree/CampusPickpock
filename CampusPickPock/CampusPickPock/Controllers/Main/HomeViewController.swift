@@ -91,10 +91,10 @@ class HomeViewController: UIViewController {
         let view = UIView()
         view.backgroundColor = UIColor(red: 247/255, green: 247/255, blue: 247/255, alpha: 1.0) // F7F7F7
         view.layer.cornerRadius = 12
-        view.layer.shadowColor = UIColor.black.cgColor
-        view.layer.shadowOffset = CGSize(width: 0, height: 2)
-        view.layer.shadowOpacity = 0.1
-        view.layer.shadowRadius = 4
+        view.layer.shadowColor = UIColor.clear.cgColor
+        view.layer.shadowOffset = CGSize(width: 0, height: 0)
+        view.layer.shadowOpacity = 0
+        view.layer.shadowRadius = 0
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -267,9 +267,17 @@ class HomeViewController: UIViewController {
     }()
     
     // MARK: - JupJup Notification Popup
+    private let notificationOverlayView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.6)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.isHidden = true
+        return view
+    }()
+    
     private let notificationPopupView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor(red: 0.8, green: 0.9, blue: 1.0, alpha: 0.95)
+        view.backgroundColor = UIColor(red: 199/255.0, green: 207/255.0, blue: 225/255.0, alpha: 1.0)
         view.layer.cornerRadius = 16
         view.layer.shadowColor = UIColor.black.cgColor
         view.layer.shadowOffset = CGSize(width: 0, height: 4)
@@ -282,7 +290,7 @@ class HomeViewController: UIViewController {
     
     private let notificationCloseButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "xmark"), for: .normal)
+        button.setImage(UIImage(named: "CloseIcon1"), for: .normal)
         button.tintColor = .gray
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
@@ -290,8 +298,7 @@ class HomeViewController: UIViewController {
     
     private let notificationStarIcon: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "star.fill")
-        imageView.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+        imageView.image = UIImage(named: "StarIcon3")
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
@@ -300,8 +307,15 @@ class HomeViewController: UIViewController {
     private let notificationTitleLabel: UILabel = {
         let label = UILabel()
         label.text = "줍줍 알림이 도착했어요!"
-        label.font = UIFont.boldSystemFont(ofSize: 18)
-        label.textColor = .primaryTextColor
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 17) {
+            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
+                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.semibold]
+            ])
+            label.font = UIFont(descriptor: fontDescriptor, size: 17)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
+        }
+        label.textColor = UIColor(red: 19/255.0, green: 45/255.0, blue: 100/255.0, alpha: 1.0)
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -309,9 +323,9 @@ class HomeViewController: UIViewController {
     
     private let notificationMessageLabel: UILabel = {
         let label = UILabel()
-        label.text = "누군가 내가 올린 게시글에 줍줍 버튼을 눌렀어요!"
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .secondaryTextColor
+        label.text = "누군가 내 분실물을 발견했어요!"
+        label.font = UIFont(name: "Pretendard Variable", size: 13) ?? UIFont.systemFont(ofSize: 13, weight: .regular)
+        label.textColor = UIColor(red: 19/255.0, green: 45/255.0, blue: 100/255.0, alpha: 1.0)
         label.textAlignment = .center
         label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -321,9 +335,16 @@ class HomeViewController: UIViewController {
     private let notificationActionButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("게시글 확인하기", for: .normal)
-        button.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
-        button.setTitleColor(UIColor(red: 247/255, green: 247/255, blue: 247/255, alpha: 1.0), for: .normal)
-        button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
+        button.backgroundColor = UIColor(red: 74/255.0, green: 128/255.0, blue: 240/255.0, alpha: 1.0)
+        button.setTitleColor(UIColor(red: 219/255.0, green: 230/255.0, blue: 255/255.0, alpha: 1.0), for: .normal)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 12) {
+            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
+                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.medium]
+            ])
+            button.titleLabel?.font = UIFont(descriptor: fontDescriptor, size: 12)
+        } else {
+            button.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .medium)
+        }
         button.layer.cornerRadius = 8
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
@@ -371,6 +392,7 @@ class HomeViewController: UIViewController {
         
 //        view.addSubview(scrollView)
         view.addSubview(contentView)
+        view.addSubview(notificationOverlayView)
         view.addSubview(notificationPopupView)
         
         contentView.addSubview(headerView)
@@ -534,22 +556,27 @@ class HomeViewController: UIViewController {
             bottomBarIcon.widthAnchor.constraint(equalToConstant: 20),
             bottomBarIcon.heightAnchor.constraint(equalToConstant: 20),
             
+            // Notification Overlay Constraints
+            notificationOverlayView.topAnchor.constraint(equalTo: view.topAnchor),
+            notificationOverlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            notificationOverlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            notificationOverlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
             // Notification Popup Constraints
             notificationPopupView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             notificationPopupView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            notificationPopupView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            notificationPopupView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            notificationPopupView.heightAnchor.constraint(equalToConstant: 280),
+            notificationPopupView.widthAnchor.constraint(equalToConstant: 263),
+            notificationPopupView.heightAnchor.constraint(equalToConstant: 264),
             
             notificationCloseButton.topAnchor.constraint(equalTo: notificationPopupView.topAnchor, constant: 16),
             notificationCloseButton.trailingAnchor.constraint(equalTo: notificationPopupView.trailingAnchor, constant: -16),
-            notificationCloseButton.widthAnchor.constraint(equalToConstant: 24),
-            notificationCloseButton.heightAnchor.constraint(equalToConstant: 24),
+            notificationCloseButton.widthAnchor.constraint(equalToConstant: 22),
+            notificationCloseButton.heightAnchor.constraint(equalToConstant: 22),
             
             notificationStarIcon.topAnchor.constraint(equalTo: notificationPopupView.topAnchor, constant: 40),
             notificationStarIcon.centerXAnchor.constraint(equalTo: notificationPopupView.centerXAnchor),
-            notificationStarIcon.widthAnchor.constraint(equalToConstant: 60),
-            notificationStarIcon.heightAnchor.constraint(equalToConstant: 60),
+            notificationStarIcon.widthAnchor.constraint(equalToConstant: 71),
+            notificationStarIcon.heightAnchor.constraint(equalToConstant: 71),
             
             notificationTitleLabel.topAnchor.constraint(equalTo: notificationStarIcon.bottomAnchor, constant: 16),
             notificationTitleLabel.leadingAnchor.constraint(equalTo: notificationPopupView.leadingAnchor, constant: 20),
@@ -560,9 +587,9 @@ class HomeViewController: UIViewController {
             notificationMessageLabel.trailingAnchor.constraint(equalTo: notificationPopupView.trailingAnchor, constant: -20),
             
             notificationActionButton.topAnchor.constraint(equalTo: notificationMessageLabel.bottomAnchor, constant: 24),
-            notificationActionButton.leadingAnchor.constraint(equalTo: notificationPopupView.leadingAnchor, constant: 20),
-            notificationActionButton.trailingAnchor.constraint(equalTo: notificationPopupView.trailingAnchor, constant: -20),
-            notificationActionButton.heightAnchor.constraint(equalToConstant: 44)
+            notificationActionButton.centerXAnchor.constraint(equalTo: notificationPopupView.centerXAnchor),
+            notificationActionButton.widthAnchor.constraint(equalToConstant: 179),
+            notificationActionButton.heightAnchor.constraint(equalToConstant: 33)
         ])
     }
     
@@ -942,8 +969,8 @@ class HomeViewController: UIViewController {
     private func checkJupJupNotifications() {
         print("🔔 줍줍 알림 확인 시작")
         
-        // Found 타입 알림 확인 (분실물을 찾았다는 알림)
-        APIService.shared.getJupJupNotifications(type: "Found") { [weak self] result in
+        // 줍줍 알림 확인
+        APIService.shared.getJupJupNotifications { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let notifications):
@@ -1000,11 +1027,16 @@ class HomeViewController: UIViewController {
     private func showJupJupNotificationPopup() {
         print("🔔 줍줍 알림 팝업 표시")
         
+        // 배경 오버레이 표시
+        notificationOverlayView.isHidden = false
+        notificationOverlayView.alpha = 0
+        
         notificationPopupView.isHidden = false
         notificationPopupView.alpha = 0
         notificationPopupView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
         
         UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0.5, options: .curveEaseOut) {
+            self.notificationOverlayView.alpha = 1
             self.notificationPopupView.alpha = 1
             self.notificationPopupView.transform = .identity
         }
@@ -1014,9 +1046,11 @@ class HomeViewController: UIViewController {
         print("🔔 줍줍 알림 팝업 숨김")
         
         UIView.animate(withDuration: 0.2, animations: {
+            self.notificationOverlayView.alpha = 0
             self.notificationPopupView.alpha = 0
             self.notificationPopupView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
         }) { _ in
+            self.notificationOverlayView.isHidden = true
             self.notificationPopupView.isHidden = true
             self.pendingJupJupNotification = nil
         }
