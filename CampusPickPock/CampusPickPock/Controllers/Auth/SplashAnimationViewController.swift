@@ -29,14 +29,36 @@ class SplashAnimationViewController: UIViewController {
     
     private var splashPostings: [SplashPosting] = []
     
+    // 제약조건 관리
+    private var titleLabelCenterYConstraint: NSLayoutConstraint?
+    private var titleLabelTopConstraint: NSLayoutConstraint?
+    
+    private var radialGradientView: nRadialGradientView?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupGradientView()
         setupUI()
         loadSplashPostings()
     }
     
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        radialGradientView?.frame = view.bounds
+        radialGradientView?.setNeedsDisplay()
+    }
+    
+    private func setupGradientView() {
+        let radialView = nRadialGradientView(frame: view.bounds)
+        radialView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        radialView.backgroundColor = .clear
+        view.insertSubview(radialView, at: 0)
+        self.radialGradientView = radialView
+    }
+    
     private func setupUI() {
-        view.backgroundColor = .backgroundColor
+        // 배경색을 clear로 설정하여 그라데이션이 보이도록 함
+        view.backgroundColor = .clear
         
         view.addSubview(titleLabel)
         view.addSubview(cardContainerView)
@@ -158,7 +180,7 @@ class SplashAnimationViewController: UIViewController {
     
     private func animateCards() {
         for (index, card) in postCards.enumerated() {
-            UIView.animate(withDuration: 0.6, delay: Double(index) * 0.3, usingSpringWithDamping: 0.8, initialSpringVelocity: 0.5, options: .curveEaseOut) {
+            UIView.animate(withDuration: 1, delay: Double(index) * 0.3, usingSpringWithDamping: 0.8, initialSpringVelocity: 0.5, options: .curveEaseOut) {
                 card.alpha = 1
                 card.transform = .identity
             }
@@ -308,4 +330,30 @@ struct PostCardData {
     let primaryMessage: String
     let secondaryMessage: String
     let detailMessage: String
+}
+
+// MARK: - RadialGradientView
+class nRadialGradientView: UIView {
+    override func draw(_ rect: CGRect) {
+        guard let context = UIGraphicsGetCurrentContext() else { return }
+
+        let colors = [UIColor(red: 233/255, green: 252/255, blue: 255/255, alpha: 1.0).cgColor,
+                      UIColor(red: 221/255, green: 227/255, blue: 235/255, alpha: 1.0).cgColor
+        ] as CFArray
+
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let gradient = CGGradient(colorsSpace: colorSpace, colors: colors, locations: [0, 1])!
+
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let radius = min(rect.width, rect.height) / 2.5
+
+        context.drawRadialGradient(
+            gradient,
+            startCenter: center,
+            startRadius: 0,
+            endCenter: center,
+            endRadius: radius,
+            options: .drawsAfterEndLocation
+        )
+    }
 }

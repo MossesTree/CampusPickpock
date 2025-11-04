@@ -10,96 +10,220 @@ import UIKit
 class SignUpViewController: UIViewController {
     
     // MARK: - UI Components
-    private let titleLabel: UILabel = {
-        let label = UILabel()
-        label.text = "회원가입"
-        label.font = UIFont.boldSystemFont(ofSize: 28)
-        label.textColor = .primaryTextColor
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
+    private let scrollView: UIScrollView = {
+        let scrollView = UIScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        return scrollView
     }()
     
-    private let navDividerLine: UIView = {
+    private let contentView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor(red: 0xC7/255.0, green: 0xCF/255.0, blue: 0xE1/255.0, alpha: 1.0)
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
     
-    private let studentIdTextField: UITextField = {
-        let textField = UITextField()
-        textField.placeholder = "학번"
-        textField.borderStyle = .roundedRect
-        textField.keyboardType = .numberPad
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        return textField
-    }()
-    
-    private let birthDateTextField: UITextField = {
-        let textField = UITextField()
-        textField.placeholder = "생년월일 (YYYY-MM-DD)"
-        textField.borderStyle = .roundedRect
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        return textField
-    }()
-    
-    private let realNameTextField: UITextField = {
-        let textField = UITextField()
-        textField.placeholder = "실명"
-        textField.borderStyle = .roundedRect
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        return textField
-    }()
-    
-    private let nicknameTextField: UITextField = {
-        let textField = UITextField()
-        textField.placeholder = "닉네임"
-        textField.borderStyle = .roundedRect
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        return textField
-    }()
-    
-    private let passwordTextField: UITextField = {
-        let textField = UITextField()
-        textField.placeholder = "비밀번호"
-        textField.borderStyle = .roundedRect
-        textField.isSecureTextEntry = true
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        return textField
-    }()
-    
-    private let confirmPasswordTextField: UITextField = {
-        let textField = UITextField()
-        textField.placeholder = "비밀번호 확인"
-        textField.borderStyle = .roundedRect
-        textField.isSecureTextEntry = true
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        return textField
-    }()
-    
-    private let autoLoginSwitch: UISwitch = {
-        let toggle = UISwitch()
-        toggle.isOn = true // 기본값으로 자동 로그인 활성화
-        toggle.translatesAutoresizingMaskIntoConstraints = false
-        return toggle
-    }()
-    
-    private let autoLoginLabel: UILabel = {
+    private let titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "자동 로그인"
+        label.text = "회원가입"
+        label.font = UIFont.boldSystemFont(ofSize: 28)
+        label.textColor = .primaryColor
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    // 이름 필드
+    private let nameLabel: UILabel = {
+        let label = UILabel()
+        label.text = "이름"
         label.font = UIFont.systemFont(ofSize: 14)
         label.textColor = .primaryTextColor
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
+    private let nameTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "이름"
+        textField.borderStyle = .none
+        textField.backgroundColor = .white
+        textField.layer.cornerRadius = 8
+        textField.layer.borderWidth = 1
+        textField.layer.borderColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0).cgColor
+        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.textColor = .primaryTextColor
+        textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 0))
+        textField.leftViewMode = .always
+        textField.attributedPlaceholder = NSAttributedString(
+            string: "이름",
+            attributes: [NSAttributedString.Key.foregroundColor: UIColor.secondaryTextColor]
+        )
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        return textField
+    }()
+    
+    // 학번 필드
+    private let studentIdLabel: UILabel = {
+        let label = UILabel()
+        label.text = "학번"
+        label.font = UIFont.systemFont(ofSize: 14)
+        label.textColor = .primaryTextColor
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let studentIdTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "학번"
+        textField.borderStyle = .none
+        textField.backgroundColor = .white
+        textField.layer.cornerRadius = 8
+        textField.layer.borderWidth = 1
+        textField.layer.borderColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0).cgColor
+        textField.keyboardType = .numberPad
+        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.textColor = .primaryTextColor
+        textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 0))
+        textField.leftViewMode = .always
+        textField.attributedPlaceholder = NSAttributedString(
+            string: "학번",
+            attributes: [NSAttributedString.Key.foregroundColor: UIColor.secondaryTextColor]
+        )
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        return textField
+    }()
+    
+    // 생년월일 필드
+    private let birthDateLabel: UILabel = {
+        let label = UILabel()
+        label.text = "생년월일"
+        label.font = UIFont.systemFont(ofSize: 14)
+        label.textColor = .primaryTextColor
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let birthDateTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "ex) 2003/02/05"
+        textField.borderStyle = .none
+        textField.backgroundColor = .white
+        textField.layer.cornerRadius = 8
+        textField.layer.borderWidth = 1
+        textField.layer.borderColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0).cgColor
+        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.textColor = .primaryTextColor
+        textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 0))
+        textField.leftViewMode = .always
+        textField.attributedPlaceholder = NSAttributedString(
+            string: "ex) 2003/02/05",
+            attributes: [NSAttributedString.Key.foregroundColor: UIColor.secondaryTextColor]
+        )
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        return textField
+    }()
+    
+    // 닉네임 필드
+    private let nicknameLabel: UILabel = {
+        let label = UILabel()
+        label.text = "닉네임"
+        label.font = UIFont.systemFont(ofSize: 14)
+        label.textColor = .primaryTextColor
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let nicknameTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "닉네임"
+        textField.borderStyle = .none
+        textField.backgroundColor = .white
+        textField.layer.cornerRadius = 8
+        textField.layer.borderWidth = 1
+        textField.layer.borderColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0).cgColor
+        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.textColor = .primaryTextColor
+        textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 0))
+        textField.leftViewMode = .always
+        textField.attributedPlaceholder = NSAttributedString(
+            string: "닉네임",
+            attributes: [NSAttributedString.Key.foregroundColor: UIColor.secondaryTextColor]
+        )
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        return textField
+    }()
+    
+    // 비밀번호 필드
+    private let passwordLabel: UILabel = {
+        let label = UILabel()
+        label.text = "비밀번호"
+        label.font = UIFont.systemFont(ofSize: 14)
+        label.textColor = .primaryTextColor
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let passwordTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "비밀번호"
+        textField.borderStyle = .none
+        textField.backgroundColor = .white
+        textField.layer.cornerRadius = 8
+        textField.layer.borderWidth = 1
+        textField.layer.borderColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0).cgColor
+        textField.isSecureTextEntry = true
+        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.textColor = .primaryTextColor
+        textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 0))
+        textField.leftViewMode = .always
+        textField.attributedPlaceholder = NSAttributedString(
+            string: "비밀번호",
+            attributes: [NSAttributedString.Key.foregroundColor: UIColor.secondaryTextColor]
+        )
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        return textField
+    }()
+    
+    // 비밀번호 확인 필드
+    private let confirmPasswordTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "비밀번호 확인"
+        textField.borderStyle = .none
+        textField.backgroundColor = .white
+        textField.layer.cornerRadius = 8
+        textField.layer.borderWidth = 1
+        textField.layer.borderColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0).cgColor
+        textField.isSecureTextEntry = true
+        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.textColor = .primaryTextColor
+        textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 0))
+        textField.leftViewMode = .always
+        textField.attributedPlaceholder = NSAttributedString(
+            string: "비밀번호 확인",
+            attributes: [NSAttributedString.Key.foregroundColor: UIColor.secondaryTextColor]
+        )
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        return textField
+    }()
+    
+    // 비밀번호 안내 문구
+    private let passwordGuideLabel: UILabel = {
+        let label = UILabel()
+        label.text = "영문 대문자와 소문자, 숫자, 특수문자 중 2가지 이상을 조합하여 6-20자로 입력해주세요."
+        label.font = UIFont.systemFont(ofSize: 12)
+        label.textColor = .secondaryTextColor
+        label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
     private let signUpButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("회원가입", for: .normal)
+        button.setTitle("회원가입 하기", for: .normal)
         button.backgroundColor = .primaryColor
         button.setTitleColor(.white, for: .normal)
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 18)
-        button.layer.cornerRadius = 12
+        button.layer.cornerRadius = 27 // 높이(54)의 절반
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -114,66 +238,112 @@ class SignUpViewController: UIViewController {
         view.backgroundColor = .backgroundColor
         
         // Set up navigation bar
-        title = "회원가입"
-        navigationController?.navigationBar.prefersLargeTitles = false
+        title = ""
+        navigationController?.navigationBar.isHidden = true
         
-        view.addSubview(navDividerLine)
-        view.addSubview(studentIdTextField)
-        view.addSubview(birthDateTextField)
-        view.addSubview(realNameTextField)
-        view.addSubview(nicknameTextField)
-        view.addSubview(passwordTextField)
-        view.addSubview(confirmPasswordTextField)
-        view.addSubview(autoLoginSwitch)
-        view.addSubview(autoLoginLabel)
-        view.addSubview(signUpButton)
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(nameLabel)
+        contentView.addSubview(nameTextField)
+        contentView.addSubview(studentIdLabel)
+        contentView.addSubview(studentIdTextField)
+        contentView.addSubview(birthDateLabel)
+        contentView.addSubview(birthDateTextField)
+        contentView.addSubview(nicknameLabel)
+        contentView.addSubview(nicknameTextField)
+        contentView.addSubview(passwordLabel)
+        contentView.addSubview(passwordTextField)
+        contentView.addSubview(confirmPasswordTextField)
+        contentView.addSubview(passwordGuideLabel)
+        contentView.addSubview(signUpButton)
         
         NSLayoutConstraint.activate([
-            navDividerLine.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            navDividerLine.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            navDividerLine.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            navDividerLine.heightAnchor.constraint(equalToConstant: 1),
+            // ScrollView
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
-            studentIdTextField.topAnchor.constraint(equalTo: navDividerLine.bottomAnchor, constant: 24),
-            studentIdTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            studentIdTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            // ContentView
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
+            
+            // 제목
+            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 40),
+            titleLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            
+            // 이름 필드
+            nameLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 40),
+            nameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            nameLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
+            
+            nameTextField.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 8),
+            nameTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            nameTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
+            nameTextField.heightAnchor.constraint(equalToConstant: 50),
+            
+            // 학번 필드
+            studentIdLabel.topAnchor.constraint(equalTo: nameTextField.bottomAnchor, constant: 20),
+            studentIdLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            studentIdLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
+            
+            studentIdTextField.topAnchor.constraint(equalTo: studentIdLabel.bottomAnchor, constant: 8),
+            studentIdTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            studentIdTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
             studentIdTextField.heightAnchor.constraint(equalToConstant: 50),
             
-            birthDateTextField.topAnchor.constraint(equalTo: studentIdTextField.bottomAnchor, constant: 16),
-            birthDateTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            birthDateTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            // 생년월일 필드
+            birthDateLabel.topAnchor.constraint(equalTo: studentIdTextField.bottomAnchor, constant: 20),
+            birthDateLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            birthDateLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
+            
+            birthDateTextField.topAnchor.constraint(equalTo: birthDateLabel.bottomAnchor, constant: 8),
+            birthDateTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            birthDateTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
             birthDateTextField.heightAnchor.constraint(equalToConstant: 50),
             
-            realNameTextField.topAnchor.constraint(equalTo: birthDateTextField.bottomAnchor, constant: 16),
-            realNameTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            realNameTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-            realNameTextField.heightAnchor.constraint(equalToConstant: 50),
+            // 닉네임 필드
+            nicknameLabel.topAnchor.constraint(equalTo: birthDateTextField.bottomAnchor, constant: 20),
+            nicknameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            nicknameLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
             
-            nicknameTextField.topAnchor.constraint(equalTo: realNameTextField.bottomAnchor, constant: 16),
-            nicknameTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            nicknameTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            nicknameTextField.topAnchor.constraint(equalTo: nicknameLabel.bottomAnchor, constant: 8),
+            nicknameTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            nicknameTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
             nicknameTextField.heightAnchor.constraint(equalToConstant: 50),
             
-            passwordTextField.topAnchor.constraint(equalTo: nicknameTextField.bottomAnchor, constant: 16),
-            passwordTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            passwordTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            // 비밀번호 필드
+            passwordLabel.topAnchor.constraint(equalTo: nicknameTextField.bottomAnchor, constant: 20),
+            passwordLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            passwordLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
+            
+            passwordTextField.topAnchor.constraint(equalTo: passwordLabel.bottomAnchor, constant: 8),
+            passwordTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            passwordTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
             passwordTextField.heightAnchor.constraint(equalToConstant: 50),
             
+            // 비밀번호 확인 필드
             confirmPasswordTextField.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 16),
-            confirmPasswordTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            confirmPasswordTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            confirmPasswordTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            confirmPasswordTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
             confirmPasswordTextField.heightAnchor.constraint(equalToConstant: 50),
             
-            autoLoginSwitch.topAnchor.constraint(equalTo: confirmPasswordTextField.bottomAnchor, constant: 16),
-            autoLoginSwitch.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            // 비밀번호 안내 문구
+            passwordGuideLabel.topAnchor.constraint(equalTo: confirmPasswordTextField.bottomAnchor, constant: 8),
+            passwordGuideLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            passwordGuideLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
             
-            autoLoginLabel.leadingAnchor.constraint(equalTo: autoLoginSwitch.trailingAnchor, constant: 8),
-            autoLoginLabel.centerYAnchor.constraint(equalTo: autoLoginSwitch.centerYAnchor),
-            
-            signUpButton.topAnchor.constraint(equalTo: autoLoginSwitch.bottomAnchor, constant: 32),
-            signUpButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            signUpButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-            signUpButton.heightAnchor.constraint(equalToConstant: 54)
+            // 회원가입 버튼
+            signUpButton.topAnchor.constraint(equalTo: passwordGuideLabel.bottomAnchor, constant: 32),
+            signUpButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            signUpButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
+            signUpButton.heightAnchor.constraint(equalToConstant: 54),
+            signUpButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -40)
         ])
     }
     
@@ -195,11 +365,11 @@ class SignUpViewController: UIViewController {
         // 8자리로 제한
         let limited = String(numbers.prefix(8))
         
-        // 자동으로 하이픈 추가
+        // 자동으로 슬래시 추가 (YYYY/MM/DD 형식)
         var formatted = ""
         for (index, char) in limited.enumerated() {
             if index == 4 || index == 6 {
-                formatted += "-"
+                formatted += "/"
             }
             formatted += String(char)
         }
@@ -211,9 +381,9 @@ class SignUpViewController: UIViewController {
     }
     
     @objc private func signUpTapped() {
-        guard let studentId = studentIdTextField.text, !studentId.isEmpty,
+        guard let name = nameTextField.text, !name.isEmpty,
+              let studentId = studentIdTextField.text, !studentId.isEmpty,
               let birthDate = birthDateTextField.text, !birthDate.isEmpty,
-              let realName = realNameTextField.text, !realName.isEmpty,
               let nickname = nicknameTextField.text, !nickname.isEmpty,
               let password = passwordTextField.text, !password.isEmpty,
               let confirmPassword = confirmPasswordTextField.text, !confirmPassword.isEmpty else {
@@ -226,11 +396,14 @@ class SignUpViewController: UIViewController {
             return
         }
         
-        // 생년월일 형식 검증
+        // 생년월일 형식 검증 (YYYY/MM/DD)
         guard isValidDateFormat(birthDate) else {
-            showAlert(message: "생년월일 형식을 올바르게 입력해주세요. (YYYY-MM-DD)")
+            showAlert(message: "생년월일 형식을 올바르게 입력해주세요. (YYYY/MM/DD)")
             return
         }
+        
+        // API에 전송하기 위해 슬래시를 하이픈으로 변환
+        let formattedBirthDate = birthDate.replacingOccurrences(of: "/", with: "-")
         
         // 로딩 표시
         signUpButton.isEnabled = false
@@ -242,15 +415,15 @@ class SignUpViewController: UIViewController {
         // API 호출
         APIService.shared.registerUser(
             userStudentId: studentId,
-            userBirthDate: birthDate,
-            userRealName: realName,
+            userBirthDate: formattedBirthDate,
+            userRealName: name,
             userNickname: nickname,
             userPassword: password
         ) { [weak self] result in
             DispatchQueue.main.async {
                 // 버튼 상태 복원
                 button.isEnabled = true
-                button.setTitle("회원가입", for: .normal)
+                button.setTitle("회원가입 하기", for: .normal)
                 
                 guard let self = self else { return }
                 
@@ -277,7 +450,12 @@ class SignUpViewController: UIViewController {
     
     private func isValidDateFormat(_ dateString: String) -> Bool {
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
+        // 슬래시 형식도 지원
+        if dateString.contains("/") {
+            dateFormatter.dateFormat = "yyyy/MM/dd"
+        } else {
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+        }
         return dateFormatter.date(from: dateString) != nil
     }
     
