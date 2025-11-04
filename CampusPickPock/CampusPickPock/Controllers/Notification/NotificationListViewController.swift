@@ -197,15 +197,18 @@ class NotificationListViewController: UIViewController {
             DispatchQueue.main.async {
                 self?.isLoading = false
                 self?.loadingIndicator.stopAnimating()
-                self?.tableView.isHidden = false
                 
                 switch result {
                 case .success(let notifications):
                     print("✅ 알림 목록 로드 성공: \(notifications.count)개")
                     self?.notificationItems = notifications
-                    self?.tableView.isHidden = !notifications.isEmpty
+                    // 알림이 있으면 tableView 표시, 없으면 emptyStateView 표시
+                    self?.tableView.isHidden = notifications.isEmpty
                     self?.emptyStateView.isHidden = !notifications.isEmpty
+                    print("📊 tableView.isHidden=\(self?.tableView.isHidden ?? true), emptyStateView.isHidden=\(self?.emptyStateView.isHidden ?? true)")
+                    print("📊 tableView.frame=\(self?.tableView.frame ?? .zero)")
                     self?.tableView.reloadData()
+                    print("🔄 tableView.reloadData() 완료")
                     
                 case .failure(let error):
                     print("❌ 알림 목록 로드 실패: \(error.localizedDescription)")
@@ -237,11 +240,14 @@ extension NotificationListViewController: UITableViewDelegate, UITableViewDataSo
         let cell = tableView.dequeueReusableCell(withIdentifier: "NotificationCell", for: indexPath)
         let notification = notificationItems[indexPath.row]
         
+        print("📱 셀 구성 시작: row=\(indexPath.row), 총 알림=\(notificationItems.count)")
+        
         // 셀 선택 스타일 제거
         cell.selectionStyle = .none
         
-        // 기존 서브뷰 제거
+        // 기존 서브뷰 및 제약 조건 제거
         cell.contentView.subviews.forEach { $0.removeFromSuperview() }
+        cell.contentView.constraints.forEach { $0.isActive = false }
         cell.backgroundView = nil
         cell.backgroundColor = .backgroundColor
         
@@ -260,7 +266,7 @@ extension NotificationListViewController: UITableViewDelegate, UITableViewDataSo
         switch notification.notificationType {
         case "Comment":
             iconImageView.image = UIImage(named: "CommentIcon1")
-        case "Found":
+        case "Found", "pickedUp", "PickedUp":
             iconImageView.image = UIImage(named: "StarIcon2")
         default:
             iconImageView.image = UIImage(systemName: "bell.fill")
@@ -292,7 +298,7 @@ extension NotificationListViewController: UITableViewDelegate, UITableViewDataSo
         case "Comment":
             titleLabel.text = "내 게시물에 댓글이 달렸어요"
             contentLabel.text = formatNotificationContent(notification.notificationContent)
-        case "Found":
+        case "Found", "pickedUp", "PickedUp":
             titleLabel.text = "줍줍 알림 도착 !"
             contentLabel.text = formatNotificationContent(notification.notificationContent)
         default:
@@ -310,11 +316,16 @@ extension NotificationListViewController: UITableViewDelegate, UITableViewDataSo
         containerView.addSubview(timeLabel)
         cell.contentView.addSubview(containerView)
         
+        // 셀 높이 계산
+        let topMargin: CGFloat = indexPath.row == 0 ? 31 : 8
+        let bottomMargin: CGFloat = 8
+        
         var constraints: [NSLayoutConstraint] = [
-            // 컨테이너 뷰
+            // 컨테이너 뷰 (topAnchor와 bottomAnchor로 높이 제어)
             containerView.centerXAnchor.constraint(equalTo: cell.contentView.centerXAnchor),
             containerView.widthAnchor.constraint(equalToConstant: 325),
-            containerView.heightAnchor.constraint(equalToConstant: 69),
+            containerView.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: topMargin),
+            containerView.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -bottomMargin),
             
             // 아이콘 (상, 하, 좌로 15씩 여백, 크기 40x40)
             iconImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 15),
@@ -339,31 +350,21 @@ extension NotificationListViewController: UITableViewDelegate, UITableViewDataSo
             contentLabel.bottomAnchor.constraint(lessThanOrEqualTo: containerView.bottomAnchor, constant: -15)
         ]
         
-        // 첫 번째 셀: 상단에서 31pt 아래
-        // 나머지 셀: 상단 정렬 (이전 셀과의 8pt 간격은 셀 높이에서 처리)
-        if indexPath.row == 0 {
-            constraints.append(containerView.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 31))
-            // 첫 번째 셀의 하단 여백 8pt
-            constraints.append(containerView.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -8))
-        } else {
-            constraints.append(containerView.topAnchor.constraint(equalTo: cell.contentView.topAnchor))
-            // 나머지 셀의 하단 여백 8pt (다음 셀과의 간격)
-            constraints.append(containerView.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -8))
-        }
-        
         NSLayoutConstraint.activate(constraints)
+        
+        print("✅ 셀 구성 완료: row=\(indexPath.row), topMargin=\(topMargin), bottomMargin=\(bottomMargin)")
         
         return cell
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        // 각 셀의 높이는 컨테이너 높이(69) + 여백
-        // 첫 번째 셀: 상단 여백 31 + 컨테이너 높이 69 + 하단 여백 8 = 108
-        // 나머지 셀: 컨테이너 높이 69 + 하단 여백 8 = 77
+        // 각 셀의 높이는 컨테이너 높이(70) + 여백
+        // 첫 번째 셀: 상단 여백 31 + 컨테이너 높이 70 + 하단 여백 8 = 109
+        // 나머지 셀: 상단 여백 8 + 컨테이너 높이 70 + 하단 여백 8 = 86
         if indexPath.row == 0 {
-            return 31 + 69 + 8
+            return 31 + 70 + 8
         } else {
-            return 69 + 8
+            return 8 + 70 + 8
         }
     }
     

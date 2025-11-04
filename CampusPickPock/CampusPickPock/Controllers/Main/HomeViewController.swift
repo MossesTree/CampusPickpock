@@ -351,6 +351,7 @@ class HomeViewController: UIViewController {
     }()
     
     private var pendingJupJupNotification: JupJupNotificationItem?
+    private var pendingJupJupNotificationType: String? // 알림 타입 저장 (Found 또는 PickedUp)
     
     // MARK: - Data Properties
     private var posts: [Post] = []
@@ -978,7 +979,9 @@ class HomeViewController: UIViewController {
                     
                     if !notifications.isEmpty {
                         // 첫 번째 알림을 표시
-                        self?.pendingJupJupNotification = notifications.first
+                        let firstNotification = notifications.first
+                        self?.pendingJupJupNotification = firstNotification?.item
+                        self?.pendingJupJupNotificationType = firstNotification?.type
                         self?.showJupJupNotificationPopup()
                     } else {
                         print("📭 확인하지 않은 줍줍 알림 없음")
@@ -1027,6 +1030,17 @@ class HomeViewController: UIViewController {
     private func showJupJupNotificationPopup() {
         print("🔔 줍줍 알림 팝업 표시")
         
+        // 알림 타입에 따라 문구 설정
+        if pendingJupJupNotificationType == "PickedUp" || pendingJupJupNotificationType == "pickedUp" {
+            // PickedUp 타입: "누군가 내가 올린 게시글에 줍줍 버튼을 눌렀어요!"
+            notificationTitleLabel.text = "줍줍 알림이 도착했어요!"
+            notificationMessageLabel.text = "누군가 내가 올린 게시글에 줍줍 버튼을 눌렀어요!"
+        } else {
+            // Found 타입 (기본): "누군가 내 분실물을 발견했어요!"
+            notificationTitleLabel.text = "줍줍 알림이 도착했어요!"
+            notificationMessageLabel.text = "누군가 내 분실물을 발견했어요!"
+        }
+        
         // 배경 오버레이 표시
         notificationOverlayView.isHidden = false
         notificationOverlayView.alpha = 0
@@ -1053,6 +1067,7 @@ class HomeViewController: UIViewController {
             self.notificationOverlayView.isHidden = true
             self.notificationPopupView.isHidden = true
             self.pendingJupJupNotification = nil
+            self.pendingJupJupNotificationType = nil
         }
     }
     
