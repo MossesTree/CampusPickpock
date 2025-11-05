@@ -74,8 +74,15 @@ class WritePopoverView: UIView {
         separators.forEach { $0.removeFromSuperview() }
         separators.removeAll()
         
+        // 구분선 높이 계산
+        let separatorHeight = 1.0 / UIScreen.main.scale
+        // 버튼 높이 계산 (총 높이 53에서 구분선 높이를 빼고 버튼 개수로 나눔)
+        let totalHeight: CGFloat = 53
+        let separatorCount = CGFloat(items.count - 1)  // 구분선 개수
+        let itemHeight = (totalHeight - separatorCount * separatorHeight) / CGFloat(items.count)
+        
         for (index, item) in items.enumerated() {
-            let itemView = createMenuItemView(for: item, at: index)
+            let itemView = createMenuItemView(for: item, at: index, height: itemHeight)
             stackView.addArrangedSubview(itemView)
             
             if index < items.count - 1 {
@@ -92,7 +99,7 @@ class WritePopoverView: UIView {
                 stackView.addArrangedSubview(separatorContainer)
                 
                 NSLayoutConstraint.activate([
-                    separatorContainer.heightAnchor.constraint(equalToConstant: 1.0 / UIScreen.main.scale),
+                    separatorContainer.heightAnchor.constraint(equalToConstant: separatorHeight),
                     
                     separator.topAnchor.constraint(equalTo: separatorContainer.topAnchor),
                     separator.bottomAnchor.constraint(equalTo: separatorContainer.bottomAnchor),
@@ -103,8 +110,8 @@ class WritePopoverView: UIView {
         }
     }
     
-    private func createMenuItemView(for item: MenuItem, at index: Int) -> UIView {
-        let button = UIButton(type: .system)
+    private func createMenuItemView(for item: MenuItem, at index: Int, height: CGFloat) -> UIView {
+        let button = UIButton(type: .custom)  // .system에서 .custom으로 변경
         button.translatesAutoresizingMaskIntoConstraints = false
         button.tag = index
         button.backgroundColor = .clear
@@ -112,6 +119,7 @@ class WritePopoverView: UIView {
         
         let iconImageView = UIImageView()
         iconImageView.contentMode = .scaleAspectFit
+        iconImageView.isUserInteractionEnabled = false  // 버튼의 터치를 차단하지 않도록
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         
         // 아이콘 설정
@@ -139,6 +147,7 @@ class WritePopoverView: UIView {
         
         let titleLabel = UILabel()
         titleLabel.text = item.title
+        titleLabel.isUserInteractionEnabled = false  // 버튼의 터치를 차단하지 않도록
         // Pretendard Variable Regular 10px, rgba(74, 128, 240, 1)
         if let pretendardFont = UIFont(name: "Pretendard Variable", size: 10) {
             let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
@@ -157,15 +166,13 @@ class WritePopoverView: UIView {
         contentStackView.axis = .horizontal
         contentStackView.spacing = 8
         contentStackView.alignment = .center
+        contentStackView.isUserInteractionEnabled = false  // 버튼의 터치를 차단하지 않도록
         contentStackView.translatesAutoresizingMaskIntoConstraints = false
         
         button.addSubview(contentStackView)
         
-        // 각 버튼 높이 계산 (총 높이 53, 구분선 1px)
-        let itemHeight: CGFloat = (53 - 1) / 2  // 26
-        
         NSLayoutConstraint.activate([
-            button.heightAnchor.constraint(equalToConstant: itemHeight),
+            button.heightAnchor.constraint(equalToConstant: height),
             
             iconImageView.widthAnchor.constraint(equalToConstant: index == 0 ? 8 : 13),
             iconImageView.heightAnchor.constraint(equalToConstant: index == 0 ? 8 : 12),
@@ -178,6 +185,7 @@ class WritePopoverView: UIView {
     }
     
     @objc private func itemButtonTapped(_ sender: UIButton) {
+        print("✍️ WritePopoverView 버튼 터치됨: tag = \(sender.tag)")
         delegate?.writePopoverView(self, didSelectItemAt: sender.tag)
     }
 }

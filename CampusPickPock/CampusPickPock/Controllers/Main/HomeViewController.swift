@@ -887,12 +887,6 @@ class HomeViewController: UIViewController {
         print("📱 showMyPagePopover 호출됨")
         hideAllPopovers()
         
-        // 배경 터치 가능하게 만들기
-        backgroundTapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
-        if let tapGesture = backgroundTapGesture {
-            view.addGestureRecognizer(tapGesture)
-        }
-        
         let menuItems = [
             MenuItem(title: DataManager.shared.currentUser?.name ?? "사용자", iconName: "person.circle"),
             MenuItem(title: "로그아웃", iconName: "rectangle.portrait.and.arrow.right"),
@@ -954,6 +948,14 @@ class HomeViewController: UIViewController {
             popover.alpha = 1
             popover.transform = .identity
         }
+        
+        // 배경 터치 가능하게 만들기 (팝업 뒤에 추가하여 팝업 내부 터치는 차단하지 않음)
+        backgroundTapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
+        if let tapGesture = backgroundTapGesture {
+            tapGesture.delegate = self
+            tapGesture.cancelsTouchesInView = false  // 팝업 내부 터치를 차단하지 않도록
+            view.addGestureRecognizer(tapGesture)
+        }
     }
     
     @objc private func backgroundTapped() {
@@ -964,12 +966,6 @@ class HomeViewController: UIViewController {
     private func showWritePopover() {
         print("✍️ showWritePopover 호출됨")
         hideAllPopovers()
-        
-        // 배경 터치 가능하게 만들기
-        backgroundTapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
-        if let tapGesture = backgroundTapGesture {
-            view.addGestureRecognizer(tapGesture)
-        }
         
         let menuItems = [
             MenuItem(title: "주인을 찾아요", iconName: "magnifyingglass"),
@@ -1006,6 +1002,14 @@ class HomeViewController: UIViewController {
         UIView.animate(withDuration: 0.2) {
             popover.alpha = 1
             popover.transform = .identity
+        }
+        
+        // 배경 터치 가능하게 만들기 (팝업 뒤에 추가하여 팝업 내부 터치는 차단하지 않음)
+        backgroundTapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
+        if let tapGesture = backgroundTapGesture {
+            tapGesture.delegate = self
+            tapGesture.cancelsTouchesInView = false  // 팝업 내부 터치를 차단하지 않도록
+            view.addGestureRecognizer(tapGesture)
         }
     }
     
@@ -1374,16 +1378,23 @@ extension HomeViewController: PopoverMenuViewDelegate {
     
     func handleWriteMenuSelection(index: Int) {
         print("✍️ 글쓰기 메뉴 처리 시작: index = \(index)")
+        print("✍️ navigationController 확인: \(navigationController != nil ? "존재함" : "nil")")
+        
+        guard let navController = navigationController else {
+            print("❌ navigationController가 nil입니다!")
+            return
+        }
+        
         switch index {
-        case 0: // 주인을 찾아요 (습득물 등록)
+        case 0: // 주인을 찾아요 (습득물 등록) → Found
             print("🔍 주인을 찾아요 선택 - 기능 실행")
             let createPostVC = PostCreateViewController()
-            navigationController?.pushViewController(createPostVC, animated: true)
+            navController.pushViewController(createPostVC, animated: true)
             print("🔍 PostCreateViewController로 이동 완료")
-        case 1: // 잃어버렸어요 (분실물 등록)
+        case 1: // 잃어버렸어요 (분실물 등록) → Lost
             print("💡 잃어버렸어요 선택 - 기능 실행")
             let lostPostVC = PostLostViewController()
-            navigationController?.pushViewController(lostPostVC, animated: true)
+            navController.pushViewController(lostPostVC, animated: true)
             print("💡 PostLostViewController로 이동 완료")
         default:
             print("❌ 알 수 없는 index: \(index)")
@@ -1445,6 +1456,32 @@ extension HomeViewController: PostCellDelegate {
                 }
             }
         }
+    }
+}
+
+// MARK: - UIGestureRecognizerDelegate
+extension HomeViewController: UIGestureRecognizerDelegate {
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        // 팝업 뷰 내부를 터치했을 때는 배경 제스처가 작동하지 않도록
+        let touchLocation = touch.location(in: view)
+        
+        if let writePopover = writePopover {
+            // WritePopoverView의 frame 내부인지 확인
+            if writePopover.frame.contains(touchLocation) {
+                print("✍️ WritePopoverView 내부 터치 감지 - 배경 제스처 무시")
+                return false
+            }
+        }
+        
+        if let myPagePopover = myPagePopover {
+            // PopoverMenuView의 frame 내부인지 확인
+            if myPagePopover.frame.contains(touchLocation) {
+                print("📱 PopoverMenuView 내부 터치 감지 - 배경 제스처 무시")
+                return false
+            }
+        }
+        
+        return true
     }
 }
 
