@@ -386,7 +386,7 @@ class HomeViewController: UIViewController {
     private var homePostingItems: [HomePostingItem] = []
     private var bannerItem: BannerItem?
     private var myPagePopover: PopoverMenuView?
-    private var writePopover: PopoverMenuView?
+    private var writePopover: WritePopoverView?
     private var backgroundTapGesture: UITapGestureRecognizer?
     private var currentPage = 0
     private let pageSize = 10
@@ -976,8 +976,8 @@ class HomeViewController: UIViewController {
             MenuItem(title: "잃어버렸어요", iconName: "lightbulb")
         ]
         
-        writePopover = PopoverMenuView()
-        print("✍️ PopoverMenuView 생성됨")
+        writePopover = WritePopoverView()
+        print("✍️ WritePopoverView 생성됨")
         writePopover?.delegate = self
         print("✍️ delegate 설정됨: \(writePopover?.delegate != nil ? "성공" : "실패")")
         writePopover?.configure(with: menuItems)
@@ -996,7 +996,8 @@ class HomeViewController: UIViewController {
         NSLayoutConstraint.activate([
             popover.centerXAnchor.constraint(equalTo: writeButton.centerXAnchor),
             popover.bottomAnchor.constraint(equalTo: writeButton.topAnchor, constant: -8),
-            popover.widthAnchor.constraint(equalToConstant: 160)
+            popover.widthAnchor.constraint(equalToConstant: 114),
+            popover.heightAnchor.constraint(equalToConstant: 53)
         ])
         
         popover.alpha = 0
@@ -1309,9 +1310,6 @@ extension HomeViewController: PopoverMenuViewDelegate {
         if menuView == myPagePopover {
             print("📱 MY PAGE 메뉴 선택")
             handleMyPageMenuSelection(index: index)
-        } else if menuView == writePopover {
-            print("✍️ 글쓰기 메뉴 선택")
-            handleWriteMenuSelection(index: index)
         }
         
         hideAllPopovers()
@@ -1392,6 +1390,14 @@ extension HomeViewController: PopoverMenuViewDelegate {
             break
         }
         print("✍️ 글쓰기 메뉴 처리 완료")
+    }
+}
+
+extension HomeViewController: WritePopoverViewDelegate {
+    func writePopoverView(_ view: WritePopoverView, didSelectItemAt index: Int) {
+        print("✍️ 글쓰기 팝업 메뉴 선택됨: index = \(index)")
+        handleWriteMenuSelection(index: index)
+        hideAllPopovers()
     }
 }
 
