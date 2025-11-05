@@ -101,8 +101,8 @@ class HomeViewController: UIViewController {
     
     private let alertIcon: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "speaker.wave.2")
-        imageView.tintColor = .primaryColor
+        imageView.image = UIImage(named: "HomeSoundIcon")
+        imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()
@@ -118,17 +118,38 @@ class HomeViewController: UIViewController {
     private let alertTitleLabel: UILabel = {
         let label = UILabel()
         label.text = "에어팟찾아삼만리"
-        label.font = UIFont.systemFont(ofSize: 12)
-        label.textColor = .secondaryTextColor
+        // Pretendard Variable Regular 10px
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 10) {
+            label.font = UIFont(descriptor: pretendardFont.fontDescriptor, size: 10)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 10)
+        }
+        label.textColor = UIColor(red: 98/255.0, green: 95/255.0, blue: 95/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
+    }()
+    
+    private let alertProfileIcon: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "HomeProfileIcon")
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
     }()
     
     private let alertSubtitleLabel: UILabel = {
         let label = UILabel()
         label.text = "에어팟 왼쪽 찾아요 ㅠㅠ! 어제 학관 앞에서 10시쯤 잃어버렸습니다 ㅠㅠㅠㅠㅠㅠㅠ 찾으신 분들 있으실까요"
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .primaryTextColor
+        // Pretendard Variable Medium 12px
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 12) {
+            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
+                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.medium]
+            ])
+            label.font = UIFont(descriptor: fontDescriptor, size: 12)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 12, weight: .medium)
+        }
+        label.textColor = UIColor(red: 86/255.0, green: 86/255.0, blue: 86/255.0, alpha: 1.0)
         label.numberOfLines = 2
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -206,7 +227,15 @@ class HomeViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle("더 보기 >", for: .normal)
         button.setTitleColor(.primaryColor, for: .normal)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
+        // Pretendard Variable Medium 11px
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 11) {
+            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
+                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.medium]
+            ])
+            button.titleLabel?.font = UIFont(descriptor: fontDescriptor, size: 11)
+        } else {
+            button.titleLabel?.font = UIFont.systemFont(ofSize: 11, weight: .medium)
+        }
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -390,6 +419,7 @@ class HomeViewController: UIViewController {
     private var backgroundTapGesture: UITapGestureRecognizer?
     private var currentPage = 0
     private let pageSize = 10
+    private var radialGradientView: RadialGradientView?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -415,8 +445,20 @@ class HomeViewController: UIViewController {
         checkJupJupNotifications()
     }
     
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        radialGradientView?.frame = view.bounds
+        radialGradientView?.setNeedsDisplay()
+    }
+    
     private func setupUI() {
-        view.backgroundColor = .backgroundColor
+        // 방사형 그라데이션 배경 추가 (스플래시 화면과 동일)
+        radialGradientView = RadialGradientView(frame: view.bounds)
+        radialGradientView?.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        view.backgroundColor = .clear
+        if let gradientView = radialGradientView {
+            view.insertSubview(gradientView, at: 0)
+        }
         
 //        view.addSubview(scrollView)
         view.addSubview(contentView)
@@ -429,6 +471,12 @@ class HomeViewController: UIViewController {
         contentView.addSubview(segmentedControl)
         contentView.addSubview(moreButton)
         contentView.addSubview(tableView)
+        
+        alertCard.addSubview(alertIcon)
+        alertCard.addSubview(alertProfileIcon)
+        alertCard.addSubview(alertTitleLabel)
+        alertCard.addSubview(alertSubtitleLabel)
+        alertCard.addSubview(alertButtonLabel)
         
         segmentedControlContainer.addSubview(foundButton)
         segmentedControlContainer.addSubview(lostButton)
@@ -508,14 +556,20 @@ class HomeViewController: UIViewController {
             alertCard.widthAnchor.constraint(equalToConstant: 325),
             alertCard.heightAnchor.constraint(equalToConstant: 60),
             
-            // 왼쪽 아이콘 (스피커 아이콘으로 변경)
+            // 왼쪽 아이콘 (HomeSoundIcon)
             alertIcon.leadingAnchor.constraint(equalTo: alertCard.leadingAnchor, constant: 12),
             alertIcon.centerYAnchor.constraint(equalTo: alertCard.centerYAnchor),
-            alertIcon.widthAnchor.constraint(equalToConstant: 20),
-            alertIcon.heightAnchor.constraint(equalToConstant: 20),
+            alertIcon.widthAnchor.constraint(equalToConstant: 36),
+            alertIcon.heightAnchor.constraint(equalToConstant: 36),
+            
+            // 프로필 아이콘 (닉네임 왼쪽)
+            alertProfileIcon.leadingAnchor.constraint(equalTo: alertIcon.trailingAnchor, constant: 12),
+            alertProfileIcon.centerYAnchor.constraint(equalTo: alertTitleLabel.centerYAnchor),
+            alertProfileIcon.widthAnchor.constraint(equalToConstant: 13),
+            alertProfileIcon.heightAnchor.constraint(equalToConstant: 13),
             
             // 중앙 텍스트 영역 (닉네임과 메시지 내용)
-            alertTitleLabel.leadingAnchor.constraint(equalTo: alertIcon.trailingAnchor, constant: 12),
+            alertTitleLabel.leadingAnchor.constraint(equalTo: alertProfileIcon.trailingAnchor, constant: 5),
             alertTitleLabel.topAnchor.constraint(equalTo: alertCard.topAnchor, constant: 12),
             
             alertSubtitleLabel.leadingAnchor.constraint(equalTo: alertTitleLabel.leadingAnchor),
@@ -551,7 +605,7 @@ class HomeViewController: UIViewController {
             lostBadge.widthAnchor.constraint(equalToConstant: 6),
             lostBadge.heightAnchor.constraint(equalToConstant: 6),
             
-            moreButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            moreButton.trailingAnchor.constraint(equalTo: lostButton.trailingAnchor, constant: -5),  // Lost 버튼 오른쪽 끝에서 5px 안쪽
             moreButton.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor, constant: 8),
             
             tableView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 377),
@@ -696,9 +750,7 @@ class HomeViewController: UIViewController {
         alertTitleLabel.text = bannerItem.postingWriterNickName
         alertSubtitleLabel.text = bannerItem.postingTitle
         
-        // 배너 아이콘 업데이트 (스피커 아이콘으로 변경)
-        alertIcon.image = UIImage(systemName: "speaker.wave.2.fill")
-        alertIcon.tintColor = .primaryColor
+        // HomeSoundIcon은 이미 초기화 시 설정되어 있음
     }
     
     private func loadPosts() {
@@ -1484,5 +1536,7 @@ extension HomeViewController: UIGestureRecognizerDelegate {
         return true
     }
 }
+
+
 
 
