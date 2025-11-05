@@ -15,6 +15,8 @@ class PostCell: UITableViewCell {
     
     weak var delegate: PostCellDelegate?
     private var post: Post?
+    private var locationLabelTopConstraint: NSLayoutConstraint?
+    private var contentLabelTopConstraint: NSLayoutConstraint?
     
     private let titleLabel: UILabel = {
         let label = UILabel()
@@ -24,7 +26,7 @@ class PostCell: UITableViewCell {
         } else {
             label.font = UIFont.systemFont(ofSize: 15, weight: .semibold)
         }
-        label.textColor = .primaryTextColor
+        label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 2
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -51,7 +53,7 @@ class PostCell: UITableViewCell {
         } else {
             label.font = UIFont.systemFont(ofSize: 13, weight: .medium)
         }
-        label.textColor = .secondaryTextColor
+        label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 2
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -128,11 +130,9 @@ class PostCell: UITableViewCell {
             titleLabel.leadingAnchor.constraint(equalTo: thumbnailImageView.trailingAnchor, constant: 11),
             titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
             
-            locationLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 1.6),
             locationLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             locationLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
             
-            contentLabel.topAnchor.constraint(equalTo: locationLabel.bottomAnchor, constant: 6),
             contentLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             contentLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
             contentLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -6),
@@ -143,12 +143,38 @@ class PostCell: UITableViewCell {
             joopjoopButton.widthAnchor.constraint(equalToConstant: 60),
             joopjoopButton.heightAnchor.constraint(equalToConstant: 32)
         ])
+        
+        // 동적 제약 조건 저장
+        locationLabelTopConstraint = locationLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4)
+        contentLabelTopConstraint = contentLabel.topAnchor.constraint(equalTo: locationLabel.bottomAnchor, constant: 4)
+        
+        // 초기 활성화 (Found일 때는 위치 표시)
+        locationLabelTopConstraint?.isActive = true
+        contentLabelTopConstraint?.isActive = true
     }
     
     func configure(with post: Post) {
         self.post = post
         titleLabel.text = post.title
         locationLabel.text = post.location ?? "위치 정보 없음"
+        
+        // Lost 타입일 때 분실장소 숨기기 및 레이아웃 조정
+        if post.type == .lost {
+            locationLabel.isHidden = true
+            // 기존 제약 조건 비활성화
+            locationLabelTopConstraint?.isActive = false
+            contentLabelTopConstraint?.isActive = false
+            // 본문이 제목 바로 아래에 오도록 제약 조건 재설정
+            contentLabelTopConstraint = contentLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4)
+            contentLabelTopConstraint?.isActive = true
+        } else {
+            locationLabel.isHidden = false
+            // Found 타입일 때는 원래 제약 조건 사용
+            contentLabelTopConstraint?.isActive = false
+            locationLabelTopConstraint?.isActive = true
+            contentLabelTopConstraint = contentLabel.topAnchor.constraint(equalTo: locationLabel.bottomAnchor, constant: 4)
+            contentLabelTopConstraint?.isActive = true
+        }
         
         // 본문내용 일부분만 표시 (최대 50자)
         let content = post.isHidden ? "개인 정보가 포함된 게시글입니다" : post.content

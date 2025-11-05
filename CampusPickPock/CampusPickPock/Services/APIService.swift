@@ -909,8 +909,37 @@ class APIService {
                 case 200:
                     if let data = data {
                         do {
+                            // 서버 응답 전체 JSON 확인
+                            if let jsonString = String(data: data, encoding: .utf8) {
+                                print(String(repeating: "=", count: 80))
+                                print("📦 [내가 쓴 글] 서버 응답 전체 JSON:")
+                                print(String(repeating: "=", count: 80))
+                                print(jsonString)
+                                print(String(repeating: "=", count: 80))
+                            }
+                            
                             let myPostings = try JSONDecoder().decode([PostingItem].self, from: data)
                             print("✅ 내가 쓴 글 조회 성공: \(myPostings.count)개 항목")
+                            
+                            // 각 PostingItem의 모든 필드 확인
+                            print("\n📝 [내가 쓴 글] PostingItem 상세 정보:")
+                            print(String(repeating: "-", count: 80))
+                            for (index, item) in myPostings.enumerated() {
+                                print("📌 [항목 \(index + 1)]")
+                                print("   - postingId: \(item.postingId)")
+                                print("   - postingTitle: '\(item.postingTitle)'")
+                                print("   - postingCategory: '\(item.postingCategory ?? "nil")' ⭐ 카테고리 값")
+                                print("   - postingType: '\(item.postingType ?? "nil")' ⭐⭐ 게시글 타입 (LOST/FOUND)")
+                                print("   - postingContent: '\(String(item.postingContent.prefix(30)))...'")
+                                print("   - isPickedUp: \(item.isPickedUp)")
+                                print("   - itemPlace: '\(item.itemPlace ?? "nil")'")
+                                print("   - postingImageUrl: '\(item.postingImageUrl ?? "nil")'")
+                                print("   - postingWriterNickName: '\(item.postingWriterNickName ?? "nil")'")
+                                print("   - commentCount: \(item.commentCount)")
+                                print("   - postingCreatedAt: '\(item.postingCreatedAt)'")
+                                print(String(repeating: "-", count: 80))
+                            }
+                            
                             completion(.success(myPostings))
                         } catch {
                             print("❌ JSON 디코딩 오류: \(error)")
@@ -1507,7 +1536,7 @@ class APIService {
     }
     
     // MARK: - JupJup Notifications
-    func getJupJupNotifications(completion: @escaping (Result<[JupJupNotificationItem], APIError>) -> Void) {
+    func getJupJupNotifications(completion: @escaping (Result<[(item: JupJupNotificationItem, type: String)], APIError>) -> Void) {
         print("🔔 줍줍 알림 확인 API 시작")
         
         // 토큰 유효성 검증
@@ -1530,27 +1559,83 @@ class APIService {
         print("✅ 줍줍 알림 확인 API 권한 확인 완료")
         print("✅ 인증 토큰 유효: \(token.prefix(20))...")
         
-        let jupJupNotificationURL = "\(baseURL)/notification/jupJup"
-        print("🔔 줍줍 알림 확인 API 호출: \(jupJupNotificationURL)")
+        // Found와 PickedUp 타입을 각각 호출하여 결과를 합침
+        let group = DispatchGroup()
+        var foundNotifications: [JupJupNotificationItem] = []
+        var pickedUpNotifications: [JupJupNotificationItem] = []
+        var apiError: APIError?
         
-        guard let url = URL(string: jupJupNotificationURL) else {
-            print("❌ 잘못된 URL: \(jupJupNotificationURL)")
+        // Found 타입 호출
+        group.enter()
+        getJupJupNotificationsByType(type: "Found", token: token) { result in
+            switch result {
+            case .success(let notifications):
+                foundNotifications = notifications
+                print("✅ Found 타입 알림 로드 성공: \(notifications.count)개")
+            case .failure(let error):
+                print("❌ Found 타입 알림 로드 실패: \(error.localizedDescription)")
+                if apiError == nil {
+                    apiError = error
+                }
+            }
+            group.leave()
+        }
+        
+        // PickedUp 타입 호출
+        group.enter()
+        getJupJupNotificationsByType(type: "PickedUp", token: token) { result in
+            switch result {
+            case .success(let notifications):
+                pickedUpNotifications = notifications
+                print("✅ PickedUp 타입 알림 로드 성공: \(notifications.count)개")
+            case .failure(let error):
+                print("❌ PickedUp 타입 알림 로드 실패: \(error.localizedDescription)")
+                if apiError == nil {
+                    apiError = error
+                }
+            }
+            group.leave()
+        }
+        
+        // 두 호출이 모두 완료되면 결과 합치기 (타입 정보와 함께)
+        group.notify(queue: .main) {
+            // Found 타입 알림에 타입 정보 추가
+            var typedNotifications: [(item: JupJupNotificationItem, type: String)] = []
+            typedNotifications.append(contentsOf: foundNotifications.map { (item: $0, type: "Found") })
+            typedNotifications.append(contentsOf: pickedUpNotifications.map { (item: $0, type: "PickedUp") })
+            
+            print("✅ 전체 줍줍 알림 확인 완료: \(typedNotifications.count)개 (Found: \(foundNotifications.count), PickedUp: \(pickedUpNotifications.count))")
+            
+            if typedNotifications.isEmpty && apiError != nil {
+                completion(.failure(apiError!))
+            } else {
+                completion(.success(typedNotifications))
+            }
+        }
+    }
+    
+    // MARK: - JupJup Notifications by Type (내부 헬퍼 함수)
+    private func getJupJupNotificationsByType(type: String, token: String, completion: @escaping (Result<[JupJupNotificationItem], APIError>) -> Void) {
+        var urlComponents = URLComponents(string: "\(baseURL)/notification/jupJup")!
+        urlComponents.queryItems = [URLQueryItem(name: "type", value: type)]
+        
+        guard let url = urlComponents.url else {
+            print("❌ 잘못된 URL")
             completion(.failure(.invalidURL))
             return
         }
         
+        print("🔔 \(type) 타입 줍줍 알림 확인 API 호출: \(url.absoluteString)")
+        
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        
-        // 인증 토큰 추가
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        print("🔐 인증 토큰 추가됨")
         
-        print("🚀 줍줍 알림 확인 요청 시작")
+        print("🚀 \(type) 타입 줍줍 알림 확인 요청 시작")
         session.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
-                print("📥 줍줍 알림 확인 응답 수신")
+                print("📥 \(type) 타입 줍줍 알림 확인 응답 수신")
                 
                 if let error = error {
                     print("❌ 네트워크 오류: \(error.localizedDescription)")
@@ -1575,7 +1660,7 @@ class APIService {
                     if let data = data {
                         do {
                             let notifications = try JSONDecoder().decode([JupJupNotificationItem].self, from: data)
-                            print("✅ 줍줍 알림 확인 성공: \(notifications.count)개 알림")
+                            print("✅ \(type) 타입 줍줍 알림 확인 성공: \(notifications.count)개 알림")
                             completion(.success(notifications))
                         } catch {
                             print("❌ JSON 디코딩 오류: \(error)")
@@ -1583,7 +1668,7 @@ class APIService {
                         }
                     } else {
                         print("❌ 응답 데이터 없음")
-                        completion(.failure(.noData))
+                        completion(.success([])) // 데이터 없음은 빈 배열로 처리
                     }
                 case 400:
                     print("❌ 잘못된 요청")
@@ -1595,8 +1680,8 @@ class APIService {
                     print("❌ 접근 권한 없음 - 토큰은 유효하지만 해당 리소스에 접근 권한이 없음")
                     completion(.failure(.unauthorized("접근 권한이 없습니다. 관리자에게 문의하세요.")))
                 case 404:
-                    print("❌ 줍줍 알림을 찾을 수 없음")
-                    completion(.failure(.notFound("줍줍 알림을 찾을 수 없습니다.")))
+                    print("❌ \(type) 타입 줍줍 알림을 찾을 수 없음")
+                    completion(.success([])) // 404는 빈 배열로 처리 (알림이 없는 것)
                 case 500:
                     print("❌ 서버 오류")
                     completion(.failure(.serverError))
@@ -2428,6 +2513,7 @@ struct PostingItem: Codable {
     let postingCategory: String?
     let postingContent: String
     let commentCount: Int
+    let postingType: String?  // 게시글 타입: "LOST" 또는 "FOUND"
     
     // 커스텀 디코딩으로 null 값 처리
     init(from decoder: Decoder) throws {
@@ -2443,6 +2529,7 @@ struct PostingItem: Codable {
         postingCategory = try container.decodeIfPresent(String.self, forKey: .postingCategory)
         postingContent = try container.decode(String.self, forKey: .postingContent)
         commentCount = try container.decode(Int.self, forKey: .commentCount)
+        postingType = try container.decodeIfPresent(String.self, forKey: .postingType)
     }
     
     private enum CodingKeys: String, CodingKey {
@@ -2456,6 +2543,7 @@ struct PostingItem: Codable {
         case postingCategory
         case postingContent
         case commentCount
+        case postingType
     }
 }
 

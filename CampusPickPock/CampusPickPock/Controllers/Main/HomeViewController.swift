@@ -101,8 +101,8 @@ class HomeViewController: UIViewController {
     
     private let alertIcon: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "speaker.wave.2")
-        imageView.tintColor = .primaryColor
+        imageView.image = UIImage(named: "HomeSoundIcon")
+        imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()
@@ -118,17 +118,38 @@ class HomeViewController: UIViewController {
     private let alertTitleLabel: UILabel = {
         let label = UILabel()
         label.text = "에어팟찾아삼만리"
-        label.font = UIFont.systemFont(ofSize: 12)
-        label.textColor = .secondaryTextColor
+        // Pretendard Variable Regular 10px
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 10) {
+            label.font = UIFont(descriptor: pretendardFont.fontDescriptor, size: 10)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 10)
+        }
+        label.textColor = UIColor(red: 98/255.0, green: 95/255.0, blue: 95/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
+    }()
+    
+    private let alertProfileIcon: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "HomeProfileIcon")
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
     }()
     
     private let alertSubtitleLabel: UILabel = {
         let label = UILabel()
         label.text = "에어팟 왼쪽 찾아요 ㅠㅠ! 어제 학관 앞에서 10시쯤 잃어버렸습니다 ㅠㅠㅠㅠㅠㅠㅠ 찾으신 분들 있으실까요"
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .primaryTextColor
+        // Pretendard Variable Medium 12px
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 12) {
+            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
+                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.medium]
+            ])
+            label.font = UIFont(descriptor: fontDescriptor, size: 12)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 12, weight: .medium)
+        }
+        label.textColor = UIColor(red: 86/255.0, green: 86/255.0, blue: 86/255.0, alpha: 1.0)
         label.numberOfLines = 2
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -206,7 +227,15 @@ class HomeViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle("더 보기 >", for: .normal)
         button.setTitleColor(.primaryColor, for: .normal)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
+        // Pretendard Variable Medium 11px
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 11) {
+            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
+                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.medium]
+            ])
+            button.titleLabel?.font = UIFont(descriptor: fontDescriptor, size: 11)
+        } else {
+            button.titleLabel?.font = UIFont.systemFont(ofSize: 11, weight: .medium)
+        }
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -229,9 +258,34 @@ class HomeViewController: UIViewController {
     private let writeButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("글쓰기", for: .normal)
-        button.setImage(UIImage(systemName: "pencil"), for: .normal)
+        // HomeWritingIcon1 사용, 크기 11x11
+        let iconSize = CGSize(width: 11, height: 11)
+        if let writingIcon1 = UIImage(named: "HomeWritingIcon1") {
+            UIGraphicsBeginImageContextWithOptions(iconSize, false, 0.0)
+            writingIcon1.draw(in: CGRect(origin: .zero, size: iconSize))
+            let resizedIcon1 = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            button.setImage(resizedIcon1?.withRenderingMode(.alwaysOriginal), for: .normal)
+            
+            // 선택된 상태: HomeWritingIcon2
+            if let writingIcon2 = UIImage(named: "HomeWritingIcon2") {
+                UIGraphicsBeginImageContextWithOptions(iconSize, false, 0.0)
+                writingIcon2.draw(in: CGRect(origin: .zero, size: iconSize))
+                let resizedIcon2 = UIGraphicsGetImageFromCurrentImageContext()
+                UIGraphicsEndImageContext()
+                button.setImage(resizedIcon2?.withRenderingMode(.alwaysOriginal), for: .selected)
+                button.setImage(resizedIcon2?.withRenderingMode(.alwaysOriginal), for: [.selected, .highlighted])
+            }
+        } else {
+            button.setImage(UIImage(systemName: "pencil"), for: .normal)
+        }
+        // 아이콘과 텍스트 사이 여백 조정 (기본값보다 줄임)
+        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 5)
+        button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: 0)
         button.backgroundColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0) // CED6E9
         button.setTitleColor(.primaryColor, for: .normal)
+        // 선택된 상태의 텍스트 색상 미리 설정
+        button.setTitleColor(UIColor(red: 172/255.0, green: 190/255.0, blue: 226/255.0, alpha: 1.0), for: .selected)
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
         button.layer.cornerRadius = 10
         button.layer.borderWidth = 1
@@ -260,7 +314,9 @@ class HomeViewController: UIViewController {
     
     private let bottomBarIcon: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "archivebox")
+        // BoxIcon으로 변경
+        imageView.image = UIImage(named: "BoxIcon")
+        imageView.contentMode = .scaleAspectFit
         imageView.tintColor = UIColor(red: 247/255, green: 247/255, blue: 247/255, alpha: 1.0) // F7F7F7
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
@@ -351,6 +407,7 @@ class HomeViewController: UIViewController {
     }()
     
     private var pendingJupJupNotification: JupJupNotificationItem?
+    private var pendingJupJupNotificationType: String? // 알림 타입 저장 (Found 또는 PickedUp)
     
     // MARK: - Data Properties
     private var posts: [Post] = []
@@ -358,10 +415,11 @@ class HomeViewController: UIViewController {
     private var homePostingItems: [HomePostingItem] = []
     private var bannerItem: BannerItem?
     private var myPagePopover: PopoverMenuView?
-    private var writePopover: PopoverMenuView?
+    private var writePopover: WritePopoverView?
     private var backgroundTapGesture: UITapGestureRecognizer?
     private var currentPage = 0
     private let pageSize = 10
+    private var radialGradientView: RadialGradientView?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -387,8 +445,20 @@ class HomeViewController: UIViewController {
         checkJupJupNotifications()
     }
     
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        radialGradientView?.frame = view.bounds
+        radialGradientView?.setNeedsDisplay()
+    }
+    
     private func setupUI() {
-        view.backgroundColor = .backgroundColor
+        // 방사형 그라데이션 배경 추가 (스플래시 화면과 동일)
+        radialGradientView = RadialGradientView(frame: view.bounds)
+        radialGradientView?.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        view.backgroundColor = .clear
+        if let gradientView = radialGradientView {
+            view.insertSubview(gradientView, at: 0)
+        }
         
 //        view.addSubview(scrollView)
         view.addSubview(contentView)
@@ -401,6 +471,12 @@ class HomeViewController: UIViewController {
         contentView.addSubview(segmentedControl)
         contentView.addSubview(moreButton)
         contentView.addSubview(tableView)
+        
+        alertCard.addSubview(alertIcon)
+        alertCard.addSubview(alertProfileIcon)
+        alertCard.addSubview(alertTitleLabel)
+        alertCard.addSubview(alertSubtitleLabel)
+        alertCard.addSubview(alertButtonLabel)
         
         segmentedControlContainer.addSubview(foundButton)
         segmentedControlContainer.addSubview(lostButton)
@@ -480,14 +556,20 @@ class HomeViewController: UIViewController {
             alertCard.widthAnchor.constraint(equalToConstant: 325),
             alertCard.heightAnchor.constraint(equalToConstant: 60),
             
-            // 왼쪽 아이콘 (스피커 아이콘으로 변경)
+            // 왼쪽 아이콘 (HomeSoundIcon)
             alertIcon.leadingAnchor.constraint(equalTo: alertCard.leadingAnchor, constant: 12),
             alertIcon.centerYAnchor.constraint(equalTo: alertCard.centerYAnchor),
-            alertIcon.widthAnchor.constraint(equalToConstant: 20),
-            alertIcon.heightAnchor.constraint(equalToConstant: 20),
+            alertIcon.widthAnchor.constraint(equalToConstant: 36),
+            alertIcon.heightAnchor.constraint(equalToConstant: 36),
+            
+            // 프로필 아이콘 (닉네임 왼쪽)
+            alertProfileIcon.leadingAnchor.constraint(equalTo: alertIcon.trailingAnchor, constant: 12),
+            alertProfileIcon.centerYAnchor.constraint(equalTo: alertTitleLabel.centerYAnchor),
+            alertProfileIcon.widthAnchor.constraint(equalToConstant: 13),
+            alertProfileIcon.heightAnchor.constraint(equalToConstant: 13),
             
             // 중앙 텍스트 영역 (닉네임과 메시지 내용)
-            alertTitleLabel.leadingAnchor.constraint(equalTo: alertIcon.trailingAnchor, constant: 12),
+            alertTitleLabel.leadingAnchor.constraint(equalTo: alertProfileIcon.trailingAnchor, constant: 5),
             alertTitleLabel.topAnchor.constraint(equalTo: alertCard.topAnchor, constant: 12),
             
             alertSubtitleLabel.leadingAnchor.constraint(equalTo: alertTitleLabel.leadingAnchor),
@@ -523,7 +605,7 @@ class HomeViewController: UIViewController {
             lostBadge.widthAnchor.constraint(equalToConstant: 6),
             lostBadge.heightAnchor.constraint(equalToConstant: 6),
             
-            moreButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            moreButton.trailingAnchor.constraint(equalTo: lostButton.trailingAnchor, constant: -5),  // Lost 버튼 오른쪽 끝에서 5px 안쪽
             moreButton.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor, constant: 8),
             
             tableView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 377),
@@ -551,7 +633,8 @@ class HomeViewController: UIViewController {
             bottomBarLabel.centerXAnchor.constraint(equalTo: bottomBar.centerXAnchor),
             bottomBarLabel.centerYAnchor.constraint(equalTo: bottomBar.centerYAnchor),
             
-            bottomBarIcon.trailingAnchor.constraint(equalTo: bottomBar.trailingAnchor, constant: -20),
+            // 아이콘을 텍스트 오른쪽에서 7px 떨어진 위치에 배치
+            bottomBarIcon.leadingAnchor.constraint(equalTo: bottomBarLabel.trailingAnchor, constant: 7),
             bottomBarIcon.centerYAnchor.constraint(equalTo: bottomBar.centerYAnchor),
             bottomBarIcon.widthAnchor.constraint(equalToConstant: 20),
             bottomBarIcon.heightAnchor.constraint(equalToConstant: 20),
@@ -667,9 +750,7 @@ class HomeViewController: UIViewController {
         alertTitleLabel.text = bannerItem.postingWriterNickName
         alertSubtitleLabel.text = bannerItem.postingTitle
         
-        // 배너 아이콘 업데이트 (스피커 아이콘으로 변경)
-        alertIcon.image = UIImage(systemName: "speaker.wave.2.fill")
-        alertIcon.tintColor = .primaryColor
+        // HomeSoundIcon은 이미 초기화 시 설정되어 있음
     }
     
     private func loadPosts() {
@@ -716,6 +797,9 @@ class HomeViewController: UIViewController {
             hideAllPopovers()
         } else {
             // 팝오버가 없으면 열기
+            writeButton.isSelected = true
+            // 선택된 상태 스타일 적용: 배경색 변경
+            writeButton.backgroundColor = UIColor(red: 107/255.0, green: 132/255.0, blue: 190/255.0, alpha: 1.0)
             showWritePopover()
         }
     }
@@ -855,21 +939,38 @@ class HomeViewController: UIViewController {
         print("📱 showMyPagePopover 호출됨")
         hideAllPopovers()
         
-        // 배경 터치 가능하게 만들기
-        backgroundTapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
-        if let tapGesture = backgroundTapGesture {
-            view.addGestureRecognizer(tapGesture)
-        }
-        
         let menuItems = [
             MenuItem(title: DataManager.shared.currentUser?.name ?? "사용자", iconName: "person.circle"),
-            MenuItem(title: "내가 쓴 글", iconName: "doc.text"),
-            MenuItem(title: "댓글 단 글", iconName: "text.bubble"),
-            MenuItem(title: "로그아웃", iconName: "rectangle.portrait.and.arrow.right")
+            MenuItem(title: "로그아웃", iconName: "rectangle.portrait.and.arrow.right"),
+            MenuItem(title: "내가 쓴 글 보기", iconName: "doc.text"),
+            MenuItem(title: "댓글 단 글 보기", iconName: "text.bubble")
         ]
         
         myPagePopover = PopoverMenuView()
         print("📱 PopoverMenuView 생성됨")
+        
+        // MY PAGE 팝업 커스터마이징
+        // 팝업 크기: 135x100
+        // 상하 패딩: 2 + 2 = 4 (줄임)
+        // 실제 콘텐츠 높이: 100 - 4 = 96
+        // 메뉴 아이템: 4개, 구분선: 3개 (각 1px)
+        // 각 버튼 높이: (96 - 3*1) / 4 = (96 - 3) / 4 = 23.25
+        let popupHeight: CGFloat = 100
+        let verticalPadding: CGFloat = 2 + 2  // 상하 패딩 (8+8에서 2+2로 줄임)
+        let separatorCount: CGFloat = 3  // 구분선 개수
+        let separatorHeight: CGFloat = 1.0 / UIScreen.main.scale  // 구분선 높이 1px
+        let itemCount: CGFloat = 4  // 메뉴 아이템 개수
+        let calculatedItemHeight = (popupHeight - verticalPadding - separatorCount * separatorHeight) / itemCount
+        print("📏 팝업 높이 계산: 팝업=\(popupHeight), 패딩=\(verticalPadding), 구분선=\(separatorCount * separatorHeight), 버튼개수=\(itemCount), 각 버튼 높이=\(calculatedItemHeight)")
+        
+        myPagePopover?.customBackgroundColor = UIColor(red: 242/255.0, green: 247/255.0, blue: 255/255.0, alpha: 1.0)
+        myPagePopover?.customBorderColor = UIColor(red: 206/255.0, green: 214/255.0, blue: 233/255.0, alpha: 1.0)
+        myPagePopover?.customBorderWidth = 1.0 / UIScreen.main.scale
+        myPagePopover?.customCornerRadius = 10  // 상단 왼쪽만 둥글게 하기 위한 기본값
+        myPagePopover?.customMaskedCorners = [.layerMinXMinYCorner]  // 상단 왼쪽만
+        myPagePopover?.customItemHeight = calculatedItemHeight  // 계산된 아이템 높이
+        myPagePopover?.customPadding = UIEdgeInsets(top: 2, left: 12, bottom: 2, right: 12)  // 패딩 설정 (상하 8에서 2로 줄임)
+        
         myPagePopover?.delegate = self
         print("📱 delegate 설정됨: \(myPagePopover?.delegate != nil ? "성공" : "실패")")
         myPagePopover?.configure(with: menuItems)
@@ -887,8 +988,9 @@ class HomeViewController: UIViewController {
         
         NSLayoutConstraint.activate([
             popover.trailingAnchor.constraint(equalTo: myPageButton.trailingAnchor),
-            popover.topAnchor.constraint(equalTo: myPageButton.bottomAnchor, constant: 7),
-            popover.widthAnchor.constraint(equalToConstant: 200)
+            popover.topAnchor.constraint(equalTo: myPageButton.bottomAnchor, constant: 5),
+            popover.widthAnchor.constraint(equalToConstant: 135),
+            popover.heightAnchor.constraint(equalToConstant: 100)
         ])
         
         popover.alpha = 0
@@ -897,6 +999,14 @@ class HomeViewController: UIViewController {
         UIView.animate(withDuration: 0.2) {
             popover.alpha = 1
             popover.transform = .identity
+        }
+        
+        // 배경 터치 가능하게 만들기 (팝업 뒤에 추가하여 팝업 내부 터치는 차단하지 않음)
+        backgroundTapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
+        if let tapGesture = backgroundTapGesture {
+            tapGesture.delegate = self
+            tapGesture.cancelsTouchesInView = false  // 팝업 내부 터치를 차단하지 않도록
+            view.addGestureRecognizer(tapGesture)
         }
     }
     
@@ -909,19 +1019,13 @@ class HomeViewController: UIViewController {
         print("✍️ showWritePopover 호출됨")
         hideAllPopovers()
         
-        // 배경 터치 가능하게 만들기
-        backgroundTapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
-        if let tapGesture = backgroundTapGesture {
-            view.addGestureRecognizer(tapGesture)
-        }
-        
         let menuItems = [
             MenuItem(title: "주인을 찾아요", iconName: "magnifyingglass"),
             MenuItem(title: "잃어버렸어요", iconName: "lightbulb")
         ]
         
-        writePopover = PopoverMenuView()
-        print("✍️ PopoverMenuView 생성됨")
+        writePopover = WritePopoverView()
+        print("✍️ WritePopoverView 생성됨")
         writePopover?.delegate = self
         print("✍️ delegate 설정됨: \(writePopover?.delegate != nil ? "성공" : "실패")")
         writePopover?.configure(with: menuItems)
@@ -940,7 +1044,8 @@ class HomeViewController: UIViewController {
         NSLayoutConstraint.activate([
             popover.centerXAnchor.constraint(equalTo: writeButton.centerXAnchor),
             popover.bottomAnchor.constraint(equalTo: writeButton.topAnchor, constant: -8),
-            popover.widthAnchor.constraint(equalToConstant: 160)
+            popover.widthAnchor.constraint(equalToConstant: 114),
+            popover.heightAnchor.constraint(equalToConstant: 53)
         ])
         
         popover.alpha = 0
@@ -950,6 +1055,14 @@ class HomeViewController: UIViewController {
             popover.alpha = 1
             popover.transform = .identity
         }
+        
+        // 배경 터치 가능하게 만들기 (팝업 뒤에 추가하여 팝업 내부 터치는 차단하지 않음)
+        backgroundTapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
+        if let tapGesture = backgroundTapGesture {
+            tapGesture.delegate = self
+            tapGesture.cancelsTouchesInView = false  // 팝업 내부 터치를 차단하지 않도록
+            view.addGestureRecognizer(tapGesture)
+        }
     }
     
     private func hideAllPopovers() {
@@ -957,6 +1070,11 @@ class HomeViewController: UIViewController {
         writePopover?.removeFromSuperview()
         myPagePopover = nil
         writePopover = nil
+        
+        // 버튼 선택 상태 해제 및 원래 스타일 복구
+        writeButton.isSelected = false
+        writeButton.backgroundColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0) // CED6E9
+        writeButton.setTitleColor(.primaryColor, for: .normal)
         
         // 배경 제스처 제거
         if let tapGesture = backgroundTapGesture {
@@ -978,7 +1096,9 @@ class HomeViewController: UIViewController {
                     
                     if !notifications.isEmpty {
                         // 첫 번째 알림을 표시
-                        self?.pendingJupJupNotification = notifications.first
+                        let firstNotification = notifications.first
+                        self?.pendingJupJupNotification = firstNotification?.item
+                        self?.pendingJupJupNotificationType = firstNotification?.type
                         self?.showJupJupNotificationPopup()
                     } else {
                         print("📭 확인하지 않은 줍줍 알림 없음")
@@ -1027,6 +1147,17 @@ class HomeViewController: UIViewController {
     private func showJupJupNotificationPopup() {
         print("🔔 줍줍 알림 팝업 표시")
         
+        // 알림 타입에 따라 문구 설정
+        if pendingJupJupNotificationType == "PickedUp" || pendingJupJupNotificationType == "pickedUp" {
+            // PickedUp 타입: "누군가 내가 올린 게시글에 줍줍 버튼을 눌렀어요!"
+            notificationTitleLabel.text = "줍줍 알림이 도착했어요!"
+            notificationMessageLabel.text = "누군가 내가 올린 게시글에 줍줍 버튼을 눌렀어요!"
+        } else {
+            // Found 타입 (기본): "누군가 내 분실물을 발견했어요!"
+            notificationTitleLabel.text = "줍줍 알림이 도착했어요!"
+            notificationMessageLabel.text = "누군가 내 분실물을 발견했어요!"
+        }
+        
         // 배경 오버레이 표시
         notificationOverlayView.isHidden = false
         notificationOverlayView.alpha = 0
@@ -1053,6 +1184,7 @@ class HomeViewController: UIViewController {
             self.notificationOverlayView.isHidden = true
             self.notificationPopupView.isHidden = true
             self.pendingJupJupNotification = nil
+            self.pendingJupJupNotificationType = nil
         }
     }
     
@@ -1234,9 +1366,6 @@ extension HomeViewController: PopoverMenuViewDelegate {
         if menuView == myPagePopover {
             print("📱 MY PAGE 메뉴 선택")
             handleMyPageMenuSelection(index: index)
-        } else if menuView == writePopover {
-            print("✍️ 글쓰기 메뉴 선택")
-            handleWriteMenuSelection(index: index)
         }
         
         hideAllPopovers()
@@ -1251,19 +1380,19 @@ extension HomeViewController: PopoverMenuViewDelegate {
             print("👤 사용자 닉네임 선택 - 기능 실행")
             // 사용자 정보 표시 또는 프로필 수정 (현재는 아무 동작 없음)
             break
-                case 1: // 내가 쓴 글
-                    print("📝 내가 쓴 글 선택 - 기능 실행")
-                    let myPostsVC = MyPostsViewController()
-                    navigationController?.pushViewController(myPostsVC, animated: true)
-                    print("📝 MyPostsViewController로 이동 완료")
-                case 2: // 댓글 단 글
-                    print("💬 댓글 단 글 선택 - 기능 실행")
-                    let myCommentedPostsVC = MyCommentedPostsViewController()
-                    navigationController?.pushViewController(myCommentedPostsVC, animated: true)
-                    print("💬 MyCommentedPostsViewController로 이동 완료")
-        case 3: // 로그아웃
+        case 1: // 로그아웃
             print("🚪 로그아웃 선택 - 기능 실행")
             showLogoutAlert()
+        case 2: // 내가 쓴 글 보기
+            print("📝 내가 쓴 글 선택 - 기능 실행")
+            let myPostsVC = MyPostsViewController()
+            navigationController?.pushViewController(myPostsVC, animated: true)
+            print("📝 MyPostsViewController로 이동 완료")
+        case 3: // 댓글 단 글 보기
+            print("💬 댓글 단 글 선택 - 기능 실행")
+            let myCommentedPostsVC = MyCommentedPostsViewController()
+            navigationController?.pushViewController(myCommentedPostsVC, animated: true)
+            print("💬 MyCommentedPostsViewController로 이동 완료")
         default:
             print("❌ 알 수 없는 index: \(index)")
             break
@@ -1301,22 +1430,37 @@ extension HomeViewController: PopoverMenuViewDelegate {
     
     func handleWriteMenuSelection(index: Int) {
         print("✍️ 글쓰기 메뉴 처리 시작: index = \(index)")
+        print("✍️ navigationController 확인: \(navigationController != nil ? "존재함" : "nil")")
+        
+        guard let navController = navigationController else {
+            print("❌ navigationController가 nil입니다!")
+            return
+        }
+        
         switch index {
-        case 0: // 주인을 찾아요 (습득물 등록)
+        case 0: // 주인을 찾아요 (습득물 등록) → Found
             print("🔍 주인을 찾아요 선택 - 기능 실행")
             let createPostVC = PostCreateViewController()
-            navigationController?.pushViewController(createPostVC, animated: true)
+            navController.pushViewController(createPostVC, animated: true)
             print("🔍 PostCreateViewController로 이동 완료")
-        case 1: // 잃어버렸어요 (분실물 등록)
+        case 1: // 잃어버렸어요 (분실물 등록) → Lost
             print("💡 잃어버렸어요 선택 - 기능 실행")
             let lostPostVC = PostLostViewController()
-            navigationController?.pushViewController(lostPostVC, animated: true)
+            navController.pushViewController(lostPostVC, animated: true)
             print("💡 PostLostViewController로 이동 완료")
         default:
             print("❌ 알 수 없는 index: \(index)")
             break
         }
         print("✍️ 글쓰기 메뉴 처리 완료")
+    }
+}
+
+extension HomeViewController: WritePopoverViewDelegate {
+    func writePopoverView(_ view: WritePopoverView, didSelectItemAt index: Int) {
+        print("✍️ 글쓰기 팝업 메뉴 선택됨: index = \(index)")
+        handleWriteMenuSelection(index: index)
+        hideAllPopovers()
     }
 }
 
@@ -1366,5 +1510,33 @@ extension HomeViewController: PostCellDelegate {
         }
     }
 }
+
+// MARK: - UIGestureRecognizerDelegate
+extension HomeViewController: UIGestureRecognizerDelegate {
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        // 팝업 뷰 내부를 터치했을 때는 배경 제스처가 작동하지 않도록
+        let touchLocation = touch.location(in: view)
+        
+        if let writePopover = writePopover {
+            // WritePopoverView의 frame 내부인지 확인
+            if writePopover.frame.contains(touchLocation) {
+                print("✍️ WritePopoverView 내부 터치 감지 - 배경 제스처 무시")
+                return false
+            }
+        }
+        
+        if let myPagePopover = myPagePopover {
+            // PopoverMenuView의 frame 내부인지 확인
+            if myPagePopover.frame.contains(touchLocation) {
+                print("📱 PopoverMenuView 내부 터치 감지 - 배경 제스처 무시")
+                return false
+            }
+        }
+        
+        return true
+    }
+}
+
+
 
 
