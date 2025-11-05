@@ -229,9 +229,34 @@ class HomeViewController: UIViewController {
     private let writeButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("글쓰기", for: .normal)
-        button.setImage(UIImage(systemName: "pencil"), for: .normal)
+        // HomeWritingIcon1 사용, 크기 11x11
+        let iconSize = CGSize(width: 11, height: 11)
+        if let writingIcon1 = UIImage(named: "HomeWritingIcon1") {
+            UIGraphicsBeginImageContextWithOptions(iconSize, false, 0.0)
+            writingIcon1.draw(in: CGRect(origin: .zero, size: iconSize))
+            let resizedIcon1 = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            button.setImage(resizedIcon1?.withRenderingMode(.alwaysOriginal), for: .normal)
+            
+            // 선택된 상태: HomeWritingIcon2
+            if let writingIcon2 = UIImage(named: "HomeWritingIcon2") {
+                UIGraphicsBeginImageContextWithOptions(iconSize, false, 0.0)
+                writingIcon2.draw(in: CGRect(origin: .zero, size: iconSize))
+                let resizedIcon2 = UIGraphicsGetImageFromCurrentImageContext()
+                UIGraphicsEndImageContext()
+                button.setImage(resizedIcon2?.withRenderingMode(.alwaysOriginal), for: .selected)
+                button.setImage(resizedIcon2?.withRenderingMode(.alwaysOriginal), for: [.selected, .highlighted])
+            }
+        } else {
+            button.setImage(UIImage(systemName: "pencil"), for: .normal)
+        }
+        // 아이콘과 텍스트 사이 여백 조정 (기본값보다 줄임)
+        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 5)
+        button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: 0)
         button.backgroundColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0) // CED6E9
         button.setTitleColor(.primaryColor, for: .normal)
+        // 선택된 상태의 텍스트 색상 미리 설정
+        button.setTitleColor(UIColor(red: 172/255.0, green: 190/255.0, blue: 226/255.0, alpha: 1.0), for: .selected)
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
         button.layer.cornerRadius = 10
         button.layer.borderWidth = 1
@@ -720,6 +745,9 @@ class HomeViewController: UIViewController {
             hideAllPopovers()
         } else {
             // 팝오버가 없으면 열기
+            writeButton.isSelected = true
+            // 선택된 상태 스타일 적용: 배경색 변경
+            writeButton.backgroundColor = UIColor(red: 107/255.0, green: 132/255.0, blue: 190/255.0, alpha: 1.0)
             showWritePopover()
         }
     }
@@ -985,6 +1013,11 @@ class HomeViewController: UIViewController {
         writePopover?.removeFromSuperview()
         myPagePopover = nil
         writePopover = nil
+        
+        // 버튼 선택 상태 해제 및 원래 스타일 복구
+        writeButton.isSelected = false
+        writeButton.backgroundColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0) // CED6E9
+        writeButton.setTitleColor(.primaryColor, for: .normal)
         
         // 배경 제스처 제거
         if let tapGesture = backgroundTapGesture {
