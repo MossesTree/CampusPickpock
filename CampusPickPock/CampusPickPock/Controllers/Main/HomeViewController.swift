@@ -867,13 +867,36 @@ class HomeViewController: UIViewController {
         
         let menuItems = [
             MenuItem(title: DataManager.shared.currentUser?.name ?? "사용자", iconName: "person.circle"),
-            MenuItem(title: "내가 쓴 글", iconName: "doc.text"),
-            MenuItem(title: "댓글 단 글", iconName: "text.bubble"),
-            MenuItem(title: "로그아웃", iconName: "rectangle.portrait.and.arrow.right")
+            MenuItem(title: "로그아웃", iconName: "rectangle.portrait.and.arrow.right"),
+            MenuItem(title: "내가 쓴 글 보기", iconName: "doc.text"),
+            MenuItem(title: "댓글 단 글 보기", iconName: "text.bubble")
         ]
         
         myPagePopover = PopoverMenuView()
         print("📱 PopoverMenuView 생성됨")
+        
+        // MY PAGE 팝업 커스터마이징
+        // 팝업 크기: 135x100
+        // 상하 패딩: 2 + 2 = 4 (줄임)
+        // 실제 콘텐츠 높이: 100 - 4 = 96
+        // 메뉴 아이템: 4개, 구분선: 3개 (각 1px)
+        // 각 버튼 높이: (96 - 3*1) / 4 = (96 - 3) / 4 = 23.25
+        let popupHeight: CGFloat = 100
+        let verticalPadding: CGFloat = 2 + 2  // 상하 패딩 (8+8에서 2+2로 줄임)
+        let separatorCount: CGFloat = 3  // 구분선 개수
+        let separatorHeight: CGFloat = 1.0 / UIScreen.main.scale  // 구분선 높이 1px
+        let itemCount: CGFloat = 4  // 메뉴 아이템 개수
+        let calculatedItemHeight = (popupHeight - verticalPadding - separatorCount * separatorHeight) / itemCount
+        print("📏 팝업 높이 계산: 팝업=\(popupHeight), 패딩=\(verticalPadding), 구분선=\(separatorCount * separatorHeight), 버튼개수=\(itemCount), 각 버튼 높이=\(calculatedItemHeight)")
+        
+        myPagePopover?.customBackgroundColor = UIColor(red: 242/255.0, green: 247/255.0, blue: 255/255.0, alpha: 1.0)
+        myPagePopover?.customBorderColor = UIColor(red: 206/255.0, green: 214/255.0, blue: 233/255.0, alpha: 1.0)
+        myPagePopover?.customBorderWidth = 1.0 / UIScreen.main.scale
+        myPagePopover?.customCornerRadius = 10  // 상단 왼쪽만 둥글게 하기 위한 기본값
+        myPagePopover?.customMaskedCorners = [.layerMinXMinYCorner]  // 상단 왼쪽만
+        myPagePopover?.customItemHeight = calculatedItemHeight  // 계산된 아이템 높이
+        myPagePopover?.customPadding = UIEdgeInsets(top: 2, left: 12, bottom: 2, right: 12)  // 패딩 설정 (상하 8에서 2로 줄임)
+        
         myPagePopover?.delegate = self
         print("📱 delegate 설정됨: \(myPagePopover?.delegate != nil ? "성공" : "실패")")
         myPagePopover?.configure(with: menuItems)
@@ -891,8 +914,9 @@ class HomeViewController: UIViewController {
         
         NSLayoutConstraint.activate([
             popover.trailingAnchor.constraint(equalTo: myPageButton.trailingAnchor),
-            popover.topAnchor.constraint(equalTo: myPageButton.bottomAnchor, constant: 7),
-            popover.widthAnchor.constraint(equalToConstant: 200)
+            popover.topAnchor.constraint(equalTo: myPageButton.bottomAnchor, constant: 5),
+            popover.widthAnchor.constraint(equalToConstant: 135),
+            popover.heightAnchor.constraint(equalToConstant: 100)
         ])
         
         popover.alpha = 0
