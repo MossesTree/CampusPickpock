@@ -236,7 +236,16 @@ class MyCommentedPostsViewController: UIViewController {
                     
                     // PostingItem을 Post로 변환
                     self?.posts = commentedPostings.map { postingItem in
-                        Post(
+                        // postingType을 기준으로 타입 판단 (대소문자 구분 없이)
+                        let postingType = postingItem.postingType?.uppercased() ?? ""
+                        let postType: PostType = postingType == "LOST" ? .lost : .found
+                        
+                        print("💬 댓글 단 글 타입 변환:")
+                        print("   - postingId: \(postingItem.postingId)")
+                        print("   - postingType: '\(postingItem.postingType ?? "nil")'")
+                        print("   - 변환된 타입: \(postType)")
+                        
+                        return Post(
                             id: String(postingItem.postingId),
                             postingId: postingItem.postingId,
                             title: postingItem.postingTitle,
@@ -249,7 +258,7 @@ class MyCommentedPostsViewController: UIViewController {
                             isHidden: false,
                             createdAt: self?.parseDate(postingItem.postingCreatedAt) ?? Date(),
                             commentCount: postingItem.commentCount,
-                            type: postingItem.postingCategory == "LOST" ? .lost : .found,
+                            type: postType,
                             isPickedUp: postingItem.isPickedUp
                         )
                     }
@@ -305,7 +314,9 @@ extension MyCommentedPostsViewController: UITableViewDelegate, UITableViewDataSo
         let post = posts[indexPath.row]
         let isFirst = indexPath.row == 0
         // 댓글 단 글이므로 프로필 표시함
-        cell.configure(with: post, isFirst: isFirst, showProfile: true)
+        // Found 타입일 때는 줍줍 버튼 숨김, Lost 타입일 때는 줍줍 버튼 표시
+        let hidePickedUpButton = post.type == .found
+        cell.configure(with: post, isFirst: isFirst, showProfile: true, hidePickedUpButton: hidePickedUpButton)
         return cell
     }
     

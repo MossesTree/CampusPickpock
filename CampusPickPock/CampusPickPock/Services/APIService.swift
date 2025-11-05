@@ -909,8 +909,37 @@ class APIService {
                 case 200:
                     if let data = data {
                         do {
+                            // 서버 응답 전체 JSON 확인
+                            if let jsonString = String(data: data, encoding: .utf8) {
+                                print(String(repeating: "=", count: 80))
+                                print("📦 [내가 쓴 글] 서버 응답 전체 JSON:")
+                                print(String(repeating: "=", count: 80))
+                                print(jsonString)
+                                print(String(repeating: "=", count: 80))
+                            }
+                            
                             let myPostings = try JSONDecoder().decode([PostingItem].self, from: data)
                             print("✅ 내가 쓴 글 조회 성공: \(myPostings.count)개 항목")
+                            
+                            // 각 PostingItem의 모든 필드 확인
+                            print("\n📝 [내가 쓴 글] PostingItem 상세 정보:")
+                            print(String(repeating: "-", count: 80))
+                            for (index, item) in myPostings.enumerated() {
+                                print("📌 [항목 \(index + 1)]")
+                                print("   - postingId: \(item.postingId)")
+                                print("   - postingTitle: '\(item.postingTitle)'")
+                                print("   - postingCategory: '\(item.postingCategory ?? "nil")' ⭐ 카테고리 값")
+                                print("   - postingType: '\(item.postingType ?? "nil")' ⭐⭐ 게시글 타입 (LOST/FOUND)")
+                                print("   - postingContent: '\(String(item.postingContent.prefix(30)))...'")
+                                print("   - isPickedUp: \(item.isPickedUp)")
+                                print("   - itemPlace: '\(item.itemPlace ?? "nil")'")
+                                print("   - postingImageUrl: '\(item.postingImageUrl ?? "nil")'")
+                                print("   - postingWriterNickName: '\(item.postingWriterNickName ?? "nil")'")
+                                print("   - commentCount: \(item.commentCount)")
+                                print("   - postingCreatedAt: '\(item.postingCreatedAt)'")
+                                print(String(repeating: "-", count: 80))
+                            }
+                            
                             completion(.success(myPostings))
                         } catch {
                             print("❌ JSON 디코딩 오류: \(error)")
@@ -2484,6 +2513,7 @@ struct PostingItem: Codable {
     let postingCategory: String?
     let postingContent: String
     let commentCount: Int
+    let postingType: String?  // 게시글 타입: "LOST" 또는 "FOUND"
     
     // 커스텀 디코딩으로 null 값 처리
     init(from decoder: Decoder) throws {
@@ -2499,6 +2529,7 @@ struct PostingItem: Codable {
         postingCategory = try container.decodeIfPresent(String.self, forKey: .postingCategory)
         postingContent = try container.decode(String.self, forKey: .postingContent)
         commentCount = try container.decode(Int.self, forKey: .commentCount)
+        postingType = try container.decodeIfPresent(String.self, forKey: .postingType)
     }
     
     private enum CodingKeys: String, CodingKey {
@@ -2512,6 +2543,7 @@ struct PostingItem: Codable {
         case postingCategory
         case postingContent
         case commentCount
+        case postingType
     }
 }
 

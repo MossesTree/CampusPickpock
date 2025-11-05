@@ -470,14 +470,14 @@ class FoundPostCell: UITableViewCell {
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        // Pretendard Variable SemiBold 20px (22px에서 2px 감소)
-        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 20) {
+        // Pretendard Variable SemiBold 18px (20px에서 2px 감소)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 18) {
             let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
                 .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.semibold.rawValue]
             ])
-            label.font = UIFont(descriptor: fontDescriptor, size: 20)
+            label.font = UIFont(descriptor: fontDescriptor, size: 18)
         } else {
-            label.font = UIFont.systemFont(ofSize: 20, weight: .semibold)
+            label.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
         }
         label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 2
@@ -516,14 +516,17 @@ class FoundPostCell: UITableViewCell {
     
     private let descriptionLabel: UILabel = {
         let label = UILabel()
-        // Pretendard Variable Regular 16px (18px에서 2px 감소)
-        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 16) {
-            label.font = UIFont(descriptor: pretendardFont.fontDescriptor, size: 16)
+        // Pretendard Variable Regular 14px (16px에서 2px 감소)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 14) {
+            label.font = UIFont(descriptor: pretendardFont.fontDescriptor, size: 14)
         } else {
-            label.font = UIFont.systemFont(ofSize: 16)
+            label.font = UIFont.systemFont(ofSize: 14)
         }
         label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 3
+        label.lineBreakMode = .byTruncatingTail
+        label.adjustsFontSizeToFitWidth = false
+        label.minimumScaleFactor = 1.0  // 폰트 크기 자동 조정 방지
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -606,24 +609,24 @@ class FoundPostCell: UITableViewCell {
             itemImageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             itemImageView.heightAnchor.constraint(equalToConstant: 200),
             
-            titleLabel.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 12),
             titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             titleLabel.trailingAnchor.constraint(equalTo: pickedUpButton.leadingAnchor, constant: -8),
+            titleLabel.centerYAnchor.constraint(equalTo: pickedUpButton.centerYAnchor),
             
-            pickedUpButton.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 12),
+            pickedUpButton.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 23),
             pickedUpButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             pickedUpButton.widthAnchor.constraint(equalToConstant: 75),
             pickedUpButton.heightAnchor.constraint(equalToConstant: 24),
             
-            clockIcon.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            clockIcon.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6),
             clockIcon.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             clockIcon.widthAnchor.constraint(equalToConstant: 16),
             clockIcon.heightAnchor.constraint(equalToConstant: 16),
             
-            locationTimeLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            locationTimeLabel.centerYAnchor.constraint(equalTo: clockIcon.centerYAnchor),
             locationTimeLabel.leadingAnchor.constraint(equalTo: clockIcon.trailingAnchor, constant: 5),
             
-            descriptionLabel.topAnchor.constraint(equalTo: locationTimeLabel.bottomAnchor, constant: 8),
+            descriptionLabel.topAnchor.constraint(equalTo: locationTimeLabel.bottomAnchor, constant: 6),
             descriptionLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             descriptionLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             
@@ -663,8 +666,13 @@ class FoundPostCell: UITableViewCell {
             itemImageView.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
         }
         
-        // isPickedUp 상태에 따라 버튼 표시
-        configureJoopjoopButton(isPickedUp: post.isPickedUp)
+        // Found 타입일 때는 줍줍 버튼 숨김
+        if post.type == .found {
+            pickedUpButton.isHidden = true
+        } else {
+            // Lost 타입일 때만 isPickedUp 상태에 따라 버튼 표시
+            configureJoopjoopButton(isPickedUp: post.isPickedUp)
+        }
         
         // 구분선 위치 설정
         if !isFirstCell {
