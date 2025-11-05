@@ -20,8 +20,15 @@ class PostLostViewController: UIViewController {
     
     private let backButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "arrow.left"), for: .normal)
-        button.tintColor = UIColor(red: 0x51/255.0, green: 0x5B/255.0, blue: 0x70/255.0, alpha: 1.0)
+        // DefaultBackIcon을 48x48 크기로 설정
+        if let backIcon = UIImage(named: "DefaultBackIcon") {
+            let size = CGSize(width: 48, height: 48)
+            UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+            backIcon.draw(in: CGRect(origin: .zero, size: size))
+            let resizedIcon = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            button.setImage(resizedIcon?.withRenderingMode(.alwaysOriginal), for: .normal)
+        }
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -29,8 +36,16 @@ class PostLostViewController: UIViewController {
     private let navTitleLabel: UILabel = {
         let label = UILabel()
         label.text = "잃어버렸어요"
-        label.font = UIFont.boldSystemFont(ofSize: 18)
-        label.textColor = .primaryTextColor
+        // Pretendard Variable 20px, bold (주인을 찾아요와 동일한 두께), rgba(19, 45, 100, 1)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 20) {
+            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
+                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.bold.rawValue]
+            ])
+            label.font = UIFont(descriptor: fontDescriptor, size: 20)
+        } else {
+            label.font = UIFont.boldSystemFont(ofSize: 20)
+        }
+        label.textColor = UIColor(red: 19/255.0, green: 45/255.0, blue: 100/255.0, alpha: 1.0)
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -76,7 +91,7 @@ class PostLostViewController: UIViewController {
         let label = UILabel()
         label.text = "0/5"
         label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .gray
+        label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -103,8 +118,16 @@ class PostLostViewController: UIViewController {
     private let categoryLabel: UILabel = {
         let label = UILabel()
         label.text = "카테고리"
-        label.font = UIFont.boldSystemFont(ofSize: 16)
-        label.textColor = .primaryTextColor
+        // Pretendard Variable SemiBold 15px
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 15) {
+            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
+                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.semibold.rawValue]
+            ])
+            label.font = UIFont(descriptor: fontDescriptor, size: 15)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 15, weight: .semibold)
+        }
+        label.textColor = UIColor(red: 59/255.0, green: 59/255.0, blue: 59/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -121,20 +144,53 @@ class PostLostViewController: UIViewController {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "제목"
-        label.font = UIFont.boldSystemFont(ofSize: 16)
-        label.textColor = .primaryTextColor
+        // Pretendard Variable SemiBold 15px
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 15) {
+            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
+                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.semibold.rawValue]
+            ])
+            label.font = UIFont(descriptor: fontDescriptor, size: 15)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 15, weight: .semibold)
+        }
+        label.textColor = UIColor(red: 59/255.0, green: 59/255.0, blue: 59/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
     private let titleTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "글 제목"
+        // Placeholder 스타일 설정: Pretendard Variable 15px rgba(106, 106, 106, 1)
+        let placeholderText = "글 제목"
+        let placeholderColor = UIColor(red: 106/255.0, green: 106/255.0, blue: 106/255.0, alpha: 1.0)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 15) {
+            textField.attributedPlaceholder = NSAttributedString(
+                string: placeholderText,
+                attributes: [
+                    .font: pretendardFont,
+                    .foregroundColor: placeholderColor
+                ]
+            )
+        } else {
+            textField.attributedPlaceholder = NSAttributedString(
+                string: placeholderText,
+                attributes: [
+                    .font: UIFont.systemFont(ofSize: 15),
+                    .foregroundColor: placeholderColor
+                ]
+            )
+        }
         textField.font = UIFont.systemFont(ofSize: 16)
         textField.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
         textField.layer.cornerRadius = 8
-        textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 0))
+        // 테두리 추가: rgba(199, 207, 225, 1) 색상의 1px 테두리
+        textField.layer.borderWidth = 1.0 / UIScreen.main.scale
+        textField.layer.borderColor = UIColor(red: 199/255.0, green: 207/255.0, blue: 225/255.0, alpha: 1.0).cgColor
+        // 좌우 14px 패딩
+        textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 14, height: 0))
         textField.leftViewMode = .always
+        textField.rightView = UIView(frame: CGRect(x: 0, y: 0, width: 14, height: 0))
+        textField.rightViewMode = .always
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
     }()
@@ -143,19 +199,39 @@ class PostLostViewController: UIViewController {
     private let descriptionLabel: UILabel = {
         let label = UILabel()
         label.text = "자세한 설명"
-        label.font = UIFont.boldSystemFont(ofSize: 16)
-        label.textColor = .primaryTextColor
+        // Pretendard Variable SemiBold 15px
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 15) {
+            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
+                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.semibold.rawValue]
+            ])
+            label.font = UIFont(descriptor: fontDescriptor, size: 15)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 15, weight: .semibold)
+        }
+        label.textColor = UIColor(red: 59/255.0, green: 59/255.0, blue: 59/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
     private let descriptionTextView: UITextView = {
         let textView = UITextView()
-        textView.text = "캠퍼스 줍줍에서 잃어버린 분실물에 대한 내용을 작성해주세요."
-        textView.textColor = .placeholderText
-        textView.font = UIFont.systemFont(ofSize: 16)
+        textView.text = ""
+        // Placeholder 스타일: Pretendard Variable 15px rgba(106, 106, 106, 1)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 15) {
+            textView.font = pretendardFont
+        } else {
+            textView.font = UIFont.systemFont(ofSize: 15)
+        }
+        textView.textColor = UIColor(red: 106/255.0, green: 106/255.0, blue: 106/255.0, alpha: 1.0)
+        // 패딩: 좌우 14px, 상하 10px
+        textView.textContainerInset = UIEdgeInsets(top: 10, left: 14, bottom: 10, right: 14)
+        // lineFragmentPadding을 0으로 설정하여 추가 여백 제거
+        textView.textContainer.lineFragmentPadding = 0
         textView.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
         textView.layer.cornerRadius = 8
+        // 테두리 추가: rgba(199, 207, 225, 1) 색상의 1px 테두리
+        textView.layer.borderWidth = 1.0 / UIScreen.main.scale
+        textView.layer.borderColor = UIColor(red: 199/255.0, green: 207/255.0, blue: 225/255.0, alpha: 1.0).cgColor
         textView.translatesAutoresizingMaskIntoConstraints = false
         return textView
     }()
@@ -221,7 +297,7 @@ class PostLostViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle("올리기", for: .normal)
         button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+        button.backgroundColor = UIColor(red: 74/255.0, green: 128/255.0, blue: 240/255.0, alpha: 1.0)
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 18)
         button.layer.cornerRadius = 12
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -250,6 +326,29 @@ class PostLostViewController: UIViewController {
         setupCollectionView()
         setupActions()
         updateImageCount()
+        setupDescriptionPlaceholder()
+    }
+    
+    private func setupDescriptionPlaceholder() {
+        // 초기 placeholder 설정 (행간 25px)
+        if descriptionTextView.text.isEmpty {
+            let placeholderText = "캠퍼스 줍줍에서 잃어버린 분실물에 대한 내용을 작성해주세요."
+            let placeholderColor = UIColor(red: 106/255.0, green: 106/255.0, blue: 106/255.0, alpha: 1.0)
+            let font = descriptionTextView.font ?? UIFont.systemFont(ofSize: 15)
+            
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.lineSpacing = 25 - font.lineHeight  // 행간 25px (lineHeight를 고려)
+            
+            let attributedText = NSAttributedString(
+                string: placeholderText,
+                attributes: [
+                    .font: font,
+                    .foregroundColor: placeholderColor,
+                    .paragraphStyle: paragraphStyle
+                ]
+            )
+            descriptionTextView.attributedText = attributedText
+        }
     }
     
     private func setupUI() {
@@ -316,8 +415,8 @@ class PostLostViewController: UIViewController {
             
             backButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 16),
             backButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
-            backButton.widthAnchor.constraint(equalToConstant: 24),
-            backButton.heightAnchor.constraint(equalToConstant: 24),
+            backButton.widthAnchor.constraint(equalToConstant: 48),
+            backButton.heightAnchor.constraint(equalToConstant: 48),
             
             navTitleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
             navTitleLabel.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
@@ -338,8 +437,8 @@ class PostLostViewController: UIViewController {
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             
-            // Image Upload Section - positioned at (96, 60) from top
-            imageUploadView.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 60),
+            // Image Upload Section - positioned at 20 from navDividerLine (1px 헤더 라인으로부터 20 떨어진 위치)
+            imageUploadView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
             imageUploadView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 96),
             imageUploadView.widthAnchor.constraint(equalToConstant: 185),
             imageUploadView.heightAnchor.constraint(equalToConstant: 185),
@@ -352,8 +451,8 @@ class PostLostViewController: UIViewController {
             imageCountLabel.centerXAnchor.constraint(equalTo: imageUploadView.centerXAnchor),
             imageCountLabel.topAnchor.constraint(equalTo: cameraIconImageView.bottomAnchor, constant: 8),
             
-            // Image Collection View
-            imageCollectionView.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 60),
+            // Image Collection View (1px 헤더 라인으로부터 20 떨어진 위치)
+            imageCollectionView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
             imageCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             imageCollectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             imageCollectionView.heightAnchor.constraint(equalToConstant: 200),
@@ -448,7 +547,7 @@ class PostLostViewController: UIViewController {
             let button = UIButton(type: .system)
             button.setTitle(category, for: .normal)
             button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
-            button.backgroundColor = UIColor(red: 0.9, green: 0.93, blue: 1.0, alpha: 1.0)
+            button.backgroundColor = UIColor(red: 206/255.0, green: 214/255.0, blue: 233/255.0, alpha: 1.0)
             button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
             button.layer.cornerRadius = 8
             button.heightAnchor.constraint(equalToConstant: 40).isActive = true
@@ -461,7 +560,7 @@ class PostLostViewController: UIViewController {
             let button = UIButton(type: .system)
             button.setTitle(category, for: .normal)
             button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
-            button.backgroundColor = UIColor(red: 0.9, green: 0.93, blue: 1.0, alpha: 1.0)
+            button.backgroundColor = UIColor(red: 206/255.0, green: 214/255.0, blue: 233/255.0, alpha: 1.0)
             button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
             button.layer.cornerRadius = 8
             button.heightAnchor.constraint(equalToConstant: 40).isActive = true
@@ -507,9 +606,14 @@ class PostLostViewController: UIViewController {
     }
     
     @objc private func uploadTapped() {
+        // placeholder인지 확인
+        let placeholderText = "캠퍼스 줍줍에서 잃어버린 분실물에 대한 내용을 작성해주세요."
+        let placeholderColor = UIColor(red: 106/255.0, green: 106/255.0, blue: 106/255.0, alpha: 1.0)
+        let isPlaceholder = descriptionTextView.text == placeholderText && descriptionTextView.textColor == placeholderColor
+        
         guard let title = titleTextField.text, !title.isEmpty,
               let description = descriptionTextView.text, !description.isEmpty,
-              description != "캠퍼스 줍줍에서 잃어버린 분실물에 대한 내용을 작성해주세요." else {
+              !isPlaceholder else {
             showAlert(message: "제목과 설명을 입력해주세요.")
             return
         }
@@ -669,7 +773,7 @@ class PostLostViewController: UIViewController {
             if let stackView = subview as? UIStackView {
                 for arrangedSubview in stackView.arrangedSubviews {
                     if let button = arrangedSubview as? UIButton {
-                        button.backgroundColor = UIColor(red: 0.9, green: 0.93, blue: 1.0, alpha: 1.0)
+                        button.backgroundColor = UIColor(red: 206/255.0, green: 214/255.0, blue: 233/255.0, alpha: 1.0)
                         button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
                     }
                 }
@@ -765,17 +869,58 @@ extension PostLostViewController: UICollectionViewDelegate, UICollectionViewData
 
 // MARK: - UITextViewDelegate
 extension PostLostViewController: UITextViewDelegate {
+    private var placeholderText: String {
+        return "캠퍼스 줍줍에서 잃어버린 분실물에 대한 내용을 작성해주세요."
+    }
+    
+    private var placeholderColor: UIColor {
+        return UIColor(red: 106/255.0, green: 106/255.0, blue: 106/255.0, alpha: 1.0)
+    }
+    
     func textViewDidBeginEditing(_ textView: UITextView) {
-        if textView.textColor == .placeholderText {
-            textView.text = nil
-            textView.textColor = .primaryTextColor
+        // placeholder인지 확인 (attributedText의 텍스트와 색상 확인)
+        let placeholderText = "캠퍼스 줍줍에서 잃어버린 분실물에 대한 내용을 작성해주세요."
+        let placeholderColor = UIColor(red: 106/255.0, green: 106/255.0, blue: 106/255.0, alpha: 1.0)
+        
+        if textView.text == placeholderText {
+            // attributedText의 색상 확인
+            let isPlaceholder = textView.textColor == placeholderColor || 
+                               (textView.attributedText.length > 0 && 
+                                textView.attributedText.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? UIColor == placeholderColor)
+            
+            if isPlaceholder {
+                textView.text = ""
+                textView.textColor = .primaryTextColor
+                // 입력 시 기본 행간으로 변경 (기존 attributedText의 paragraphStyle 제거)
+                let font = textView.font ?? UIFont.systemFont(ofSize: 15)
+                let paragraphStyle = NSMutableParagraphStyle()
+                textView.typingAttributes = [
+                    .font: font,
+                    .foregroundColor: UIColor.primaryTextColor,
+                    .paragraphStyle: paragraphStyle
+                ]
+            }
         }
     }
     
     func textViewDidEndEditing(_ textView: UITextView) {
         if textView.text.isEmpty {
-            textView.text = "캠퍼스 줍줍에서 잃어버린 분실물에 대한 내용을 작성해주세요."
-            textView.textColor = .placeholderText
+            let placeholderText = "캠퍼스 줍줍에서 잃어버린 분실물에 대한 내용을 작성해주세요."
+            let placeholderColor = UIColor(red: 106/255.0, green: 106/255.0, blue: 106/255.0, alpha: 1.0)
+            let font = textView.font ?? UIFont.systemFont(ofSize: 15)
+            
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.lineSpacing = 25 - font.lineHeight  // 행간 25px (lineHeight를 고려)
+            
+            let attributedText = NSAttributedString(
+                string: placeholderText,
+                attributes: [
+                    .font: font,
+                    .foregroundColor: placeholderColor,
+                    .paragraphStyle: paragraphStyle
+                ]
+            )
+            textView.attributedText = attributedText
         }
     }
 }

@@ -38,6 +38,9 @@ class PostListCell: UITableViewCell {
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 8
         imageView.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
+        // 테두리 추가: rgba(199, 207, 225, 1) 색상의 1px 테두리
+        imageView.layer.borderWidth = 1.0 / UIScreen.main.scale
+        imageView.layer.borderColor = UIColor(red: 199/255.0, green: 207/255.0, blue: 225/255.0, alpha: 1.0).cgColor
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()
@@ -71,6 +74,9 @@ class PostListCell: UITableViewCell {
         let button = UIButton(type: .system)
         button.backgroundColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0)
         button.clipsToBounds = true
+        // 테두리 추가: rgba(199, 207, 225, 1) 색상의 1px 테두리
+        button.layer.borderWidth = 1.0 / UIScreen.main.scale
+        button.layer.borderColor = UIColor(red: 199/255.0, green: 207/255.0, blue: 225/255.0, alpha: 1.0).cgColor
         button.titleLabel?.font = UIFont(name: "Pretendard Variable", size: 13) ?? UIFont.systemFont(ofSize: 13, weight: .medium)
         button.setTitleColor(UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0), for: .normal)
         button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: 4)

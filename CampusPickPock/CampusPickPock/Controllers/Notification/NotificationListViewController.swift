@@ -29,9 +29,15 @@ class NotificationListViewController: UIViewController {
     
     private let closeButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("×", for: .normal)
-        button.setTitleColor(.primaryTextColor, for: .normal)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 28, weight: .light)
+        // DefaultCloseIcon을 27x27 크기로 설정
+        if let closeIcon = UIImage(named: "DefaultCloseIcon") {
+            let size = CGSize(width: 27, height: 27)
+            UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+            closeIcon.draw(in: CGRect(origin: .zero, size: size))
+            let resizedIcon = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            button.setImage(resizedIcon?.withRenderingMode(.alwaysOriginal), for: .normal)
+        }
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -132,10 +138,11 @@ class NotificationListViewController: UIViewController {
             titleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
             titleLabel.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
             
-            closeButton.trailingAnchor.constraint(equalTo: customNavHeader.trailingAnchor, constant: -16),
-            closeButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
-            closeButton.widthAnchor.constraint(equalToConstant: 44),
-            closeButton.heightAnchor.constraint(equalToConstant: 44),
+            // X 버튼 위치 (323, 70)
+            closeButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 323),
+            closeButton.topAnchor.constraint(equalTo: view.topAnchor, constant: 70),
+            closeButton.widthAnchor.constraint(equalToConstant: 27),
+            closeButton.heightAnchor.constraint(equalToConstant: 27),
             
             navDividerLine.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
             navDividerLine.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -143,9 +150,10 @@ class NotificationListViewController: UIViewController {
             navDividerLine.heightAnchor.constraint(equalToConstant: 1),
             
             // Table view constraints - start below custom header
+            // 셀의 오른쪽 끝이 X 버튼의 오른쪽 끝(350)에 맞춰지도록 trailingAnchor 조정
             tableView.topAnchor.constraint(equalTo: navDividerLine.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.leadingAnchor, constant: 350),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
             // Empty State View
@@ -254,7 +262,10 @@ extension NotificationListViewController: UITableViewDelegate, UITableViewDataSo
         // 흰색 컨테이너 배경 설정
         let containerView = UIView()
         containerView.backgroundColor = .white
-        containerView.layer.cornerRadius = 15
+        containerView.layer.cornerRadius = 10  // 더 각지게 (15 -> 10)
+        // 테두리 추가: rgba(221, 221, 221, 1) 색상의 1px 테두리
+        containerView.layer.borderWidth = 1.0 / UIScreen.main.scale
+        containerView.layer.borderColor = UIColor(red: 221/255.0, green: 221/255.0, blue: 221/255.0, alpha: 1.0).cgColor
         containerView.translatesAutoresizingMaskIntoConstraints = false
         
         // 아이콘 이미지뷰
@@ -316,13 +327,13 @@ extension NotificationListViewController: UITableViewDelegate, UITableViewDataSo
         containerView.addSubview(timeLabel)
         cell.contentView.addSubview(containerView)
         
-        // 셀 높이 계산
-        let topMargin: CGFloat = indexPath.row == 0 ? 31 : 8
-        let bottomMargin: CGFloat = 8
+        // 셀 높이 계산 (셀 간 간격 8픽셀: 하단 여백 4 + 상단 여백 4 = 8)
+        let topMargin: CGFloat = indexPath.row == 0 ? 31 : 4
+        let bottomMargin: CGFloat = 4
         
         var constraints: [NSLayoutConstraint] = [
-            // 컨테이너 뷰 (topAnchor와 bottomAnchor로 높이 제어)
-            containerView.centerXAnchor.constraint(equalTo: cell.contentView.centerXAnchor),
+            // 컨테이너 뷰 (오른쪽 끝이 X 버튼의 오른쪽 끝에 맞춰지도록 정렬)
+            containerView.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor),
             containerView.widthAnchor.constraint(equalToConstant: 325),
             containerView.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: topMargin),
             containerView.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -bottomMargin),
@@ -359,12 +370,13 @@ extension NotificationListViewController: UITableViewDelegate, UITableViewDataSo
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         // 각 셀의 높이는 컨테이너 높이(70) + 여백
-        // 첫 번째 셀: 상단 여백 31 + 컨테이너 높이 70 + 하단 여백 8 = 109
-        // 나머지 셀: 상단 여백 8 + 컨테이너 높이 70 + 하단 여백 8 = 86
+        // 셀 간 간격 8픽셀: 하단 여백 4 + 상단 여백 4 = 8
+        // 첫 번째 셀: 상단 여백 31 + 컨테이너 높이 70 + 하단 여백 4 = 105
+        // 나머지 셀: 상단 여백 4 + 컨테이너 높이 70 + 하단 여백 4 = 78
         if indexPath.row == 0 {
-            return 31 + 70 + 8
+            return 31 + 70 + 4
         } else {
-            return 8 + 70 + 8
+            return 4 + 70 + 4
         }
     }
     

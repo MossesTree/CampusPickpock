@@ -23,8 +23,18 @@ class LostPostListViewController: UIViewController {
     
     private let backButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "arrow.left"), for: .normal)
-        button.tintColor = UIColor(red: 0x51/255.0, green: 0x5B/255.0, blue: 0x70/255.0, alpha: 1.0)
+        // DefaultBackIcon을 48x48 크기로 설정
+        if let backIcon = UIImage(named: "DefaultBackIcon") {
+            let size = CGSize(width: 48, height: 48)
+            UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+            backIcon.draw(in: CGRect(origin: .zero, size: size))
+            let resizedIcon = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            // 원본 색상을 유지하기 위해 renderingMode 설정
+            button.setImage(resizedIcon?.withRenderingMode(.alwaysOriginal), for: .normal)
+        }
+        // 색상 명시적으로 설정 (rgba(19, 45, 100, 1))
+        button.tintColor = UIColor(red: 19/255.0, green: 45/255.0, blue: 100/255.0, alpha: 1.0)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -160,8 +170,8 @@ class LostPostListViewController: UIViewController {
             
             backButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 10),
             backButton.topAnchor.constraint(equalTo: customNavHeader.topAnchor, constant: 70),
-            backButton.widthAnchor.constraint(equalToConstant: 24),
-            backButton.heightAnchor.constraint(equalToConstant: 24),
+            backButton.widthAnchor.constraint(equalToConstant: 48),
+            backButton.heightAnchor.constraint(equalToConstant: 48),
             
             titleLabel.centerYAnchor.constraint(equalTo: backButton.centerYAnchor),
             titleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),

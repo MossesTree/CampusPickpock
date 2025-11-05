@@ -19,38 +19,78 @@ class SearchViewController: UIViewController {
     
     private let backButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "arrow.left"), for: .normal)
-        button.tintColor = UIColor(red: 0x51/255.0, green: 0x5B/255.0, blue: 0x70/255.0, alpha: 1.0)
+        // DefaultBackIcon을 48x48 크기로 설정, 원본 색상 유지
+        if let backIcon = UIImage(named: "DefaultBackIcon") {
+            let size = CGSize(width: 48, height: 48)
+            UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+            backIcon.draw(in: CGRect(origin: .zero, size: size))
+            let resizedIcon = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            // 원본 색상을 유지하기 위해 renderingMode 설정
+            button.setImage(resizedIcon?.withRenderingMode(.alwaysOriginal), for: .normal)
+        }
+        // 색상 명시적으로 설정 (rgba(19, 45, 100, 1))
+        button.tintColor = UIColor(red: 19/255.0, green: 45/255.0, blue: 100/255.0, alpha: 1.0)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
     
     private let searchTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "잃어버린 물건을 검색해 보세요."
         textField.backgroundColor = UIColor(red: 0xF5/255.0, green: 0xF5/255.0, blue: 0xF5/255.0, alpha: 1.0)
-        textField.layer.cornerRadius = 20
-        textField.font = UIFont.systemFont(ofSize: 15)
+        textField.layer.cornerRadius = 10  // 더 각지게 둥글게 (20 -> 10)
+        
+        // 테두리 추가: rgba(199, 207, 225, 1) 색상의 1px 테두리
+        textField.layer.borderWidth = 1.0 / UIScreen.main.scale
+        textField.layer.borderColor = UIColor(red: 199/255.0, green: 207/255.0, blue: 225/255.0, alpha: 1.0).cgColor
+        
+        // Pretendard Variable Medium 14px placeholder 설정
+        let placeholderText = "잃어버린 물건을 검색해 보세요."
+        let placeholderColor = UIColor(red: 143/255.0, green: 143/255.0, blue: 143/255.0, alpha: 1.0)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 14) {
+            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
+                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.medium]
+            ])
+            let font = UIFont(descriptor: fontDescriptor, size: 14)
+            textField.attributedPlaceholder = NSAttributedString(
+                string: placeholderText,
+                attributes: [
+                    .font: font,
+                    .foregroundColor: placeholderColor
+                ]
+            )
+        } else {
+            textField.attributedPlaceholder = NSAttributedString(
+                string: placeholderText,
+                attributes: [
+                    .font: UIFont.systemFont(ofSize: 14, weight: .medium),
+                    .foregroundColor: placeholderColor
+                ]
+            )
+        }
+        
+        textField.font = UIFont(name: "Pretendard Variable", size: 14) ?? UIFont.systemFont(ofSize: 14, weight: .medium)
         textField.leftViewMode = .always
-        textField.clearButtonMode = .whileEditing
+        textField.rightViewMode = .always
+        textField.clearButtonMode = .never  // clearButton 대신 검색 아이콘 사용
         textField.translatesAutoresizingMaskIntoConstraints = false
         
-        // 왼쪽에 돋보기 아이콘 추가
-        let searchIcon = UIImageView(image: UIImage(systemName: "magnifyingglass"))
-        searchIcon.tintColor = .gray
-        searchIcon.frame = CGRect(x: 0, y: 0, width: 20, height: 20)
-        searchIcon.contentMode = .scaleAspectFit
-        
-        let iconContainer = UIView(frame: CGRect(x: 0, y: 0, width: 30, height: 20))
-        iconContainer.addSubview(searchIcon)
-        searchIcon.center = iconContainer.center
-        
-        textField.leftView = iconContainer
-        
-        // 텍스트 왼쪽 여백
-        textField.leftViewMode = .always
+        // 왼쪽 여백
         let leftPaddingView = UIView(frame: CGRect(x: 0, y: 0, width: 15, height: 20))
-        textField.leftView?.addSubview(leftPaddingView)
+        textField.leftView = leftPaddingView
+        
+        // 오른쪽에 SearchIcon 추가
+        if let searchIconImage = UIImage(named: "SearchIcon") {
+            let searchIcon = UIImageView(image: searchIconImage)
+            searchIcon.contentMode = .scaleAspectFit
+            searchIcon.frame = CGRect(x: 0, y: 0, width: 20, height: 20)
+            
+            let iconContainer = UIView(frame: CGRect(x: 0, y: 0, width: 35, height: 20))
+            iconContainer.addSubview(searchIcon)
+            searchIcon.center = iconContainer.center
+            
+            textField.rightView = iconContainer
+        }
         
         return textField
     }()
@@ -72,13 +112,13 @@ class SearchViewController: UIViewController {
         // 선택된 상태: 4A80F0
         control.setTitleTextAttributes([
             .foregroundColor: UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0),
-            .font: UIFont.systemFont(ofSize: 14, weight: .medium)
+            .font: UIFont.systemFont(ofSize: 17, weight: .medium)
         ], for: .selected)
         
         // 선택되지 않은 상태: 7A7A7A
         control.setTitleTextAttributes([
             .foregroundColor: UIColor(red: 0x7A/255.0, green: 0x7A/255.0, blue: 0x7A/255.0, alpha: 1.0),
-            .font: UIFont.systemFont(ofSize: 14)
+            .font: UIFont.systemFont(ofSize: 17)
         ], for: .normal)
         
         // 배경 이미지 완전히 제거
@@ -138,10 +178,12 @@ class SearchViewController: UIViewController {
         // Hide default navigation bar
         navigationController?.setNavigationBarHidden(true, animated: false)
         
-        // Add custom header with back button, search text field and segmented control
+        // Add custom header with segmented control
         view.addSubview(customHeader)
-        customHeader.addSubview(backButton)
-        customHeader.addSubview(searchTextField)
+        // 백버튼을 view에 직접 추가 (절대 위치 (10, 60))
+        view.addSubview(backButton)
+        // 검색창을 view에 직접 추가 (절대 위치 (55, 62))
+        view.addSubview(searchTextField)
         customHeader.addSubview(segmentedControl)
         customHeader.addSubview(headerDividerLine)
         
@@ -162,14 +204,14 @@ class SearchViewController: UIViewController {
             customHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             customHeader.bottomAnchor.constraint(equalTo: headerDividerLine.bottomAnchor),
             
-            backButton.leadingAnchor.constraint(equalTo: customHeader.leadingAnchor, constant: 16),
-            backButton.topAnchor.constraint(equalTo: customHeader.topAnchor, constant: 10),
-            backButton.widthAnchor.constraint(equalToConstant: 24),
-            backButton.heightAnchor.constraint(equalToConstant: 24),
+            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+            backButton.topAnchor.constraint(equalTo: view.topAnchor, constant: 60),
+            backButton.widthAnchor.constraint(equalToConstant: 48),
+            backButton.heightAnchor.constraint(equalToConstant: 48),
             
-            searchTextField.leadingAnchor.constraint(equalTo: backButton.trailingAnchor, constant: 8),
-            searchTextField.trailingAnchor.constraint(equalTo: customHeader.trailingAnchor, constant: -16),
-            searchTextField.topAnchor.constraint(equalTo: customHeader.topAnchor, constant: 10),
+            searchTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 55),
+            searchTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            searchTextField.topAnchor.constraint(equalTo: view.topAnchor, constant: 62),
             searchTextField.heightAnchor.constraint(equalToConstant: 40),
             
             segmentedControl.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 40),

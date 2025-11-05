@@ -260,7 +260,9 @@ class HomeViewController: UIViewController {
     
     private let bottomBarIcon: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "archivebox")
+        // BoxIcon으로 변경
+        imageView.image = UIImage(named: "BoxIcon")
+        imageView.contentMode = .scaleAspectFit
         imageView.tintColor = UIColor(red: 247/255, green: 247/255, blue: 247/255, alpha: 1.0) // F7F7F7
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
@@ -552,7 +554,8 @@ class HomeViewController: UIViewController {
             bottomBarLabel.centerXAnchor.constraint(equalTo: bottomBar.centerXAnchor),
             bottomBarLabel.centerYAnchor.constraint(equalTo: bottomBar.centerYAnchor),
             
-            bottomBarIcon.trailingAnchor.constraint(equalTo: bottomBar.trailingAnchor, constant: -20),
+            // 아이콘을 텍스트 오른쪽에서 7px 떨어진 위치에 배치
+            bottomBarIcon.leadingAnchor.constraint(equalTo: bottomBarLabel.trailingAnchor, constant: 7),
             bottomBarIcon.centerYAnchor.constraint(equalTo: bottomBar.centerYAnchor),
             bottomBarIcon.widthAnchor.constraint(equalToConstant: 20),
             bottomBarIcon.heightAnchor.constraint(equalToConstant: 20),
