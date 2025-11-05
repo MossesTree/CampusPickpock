@@ -145,8 +145,8 @@ class PostCell: UITableViewCell {
         ])
         
         // 동적 제약 조건 저장
-        locationLabelTopConstraint = locationLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 1.6)
-        contentLabelTopConstraint = contentLabel.topAnchor.constraint(equalTo: locationLabel.bottomAnchor, constant: 6)
+        locationLabelTopConstraint = locationLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4)
+        contentLabelTopConstraint = contentLabel.topAnchor.constraint(equalTo: locationLabel.bottomAnchor, constant: 4)
         
         // 초기 활성화 (Found일 때는 위치 표시)
         locationLabelTopConstraint?.isActive = true
@@ -165,14 +165,14 @@ class PostCell: UITableViewCell {
             locationLabelTopConstraint?.isActive = false
             contentLabelTopConstraint?.isActive = false
             // 본문이 제목 바로 아래에 오도록 제약 조건 재설정
-            contentLabelTopConstraint = contentLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6)
+            contentLabelTopConstraint = contentLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4)
             contentLabelTopConstraint?.isActive = true
         } else {
             locationLabel.isHidden = false
             // Found 타입일 때는 원래 제약 조건 사용
             contentLabelTopConstraint?.isActive = false
             locationLabelTopConstraint?.isActive = true
-            contentLabelTopConstraint = contentLabel.topAnchor.constraint(equalTo: locationLabel.bottomAnchor, constant: 6)
+            contentLabelTopConstraint = contentLabel.topAnchor.constraint(equalTo: locationLabel.bottomAnchor, constant: 4)
             contentLabelTopConstraint?.isActive = true
         }
         

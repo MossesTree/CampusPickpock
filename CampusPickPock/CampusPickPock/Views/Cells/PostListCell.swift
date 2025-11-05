@@ -275,11 +275,11 @@ class PostListCell: UITableViewCell {
         // 프로필 표시 여부에 따라 본문 간격 조정
         descriptionLabelTopConstraint?.isActive = false
         if showProfile {
-            // 프로필이 있을 때는 6pt 간격
+            // 프로필이 있을 때는 bottomAnchor를 사용하여 6pt 간격 (댓글 단 글, Lost/Found 리스트)
             descriptionLabelTopConstraint = descriptionLabel.topAnchor.constraint(equalTo: locationTimeLabel.bottomAnchor, constant: 6)
         } else {
-            // 내가 쓴 글일 때는 0pt 간격
-            descriptionLabelTopConstraint = descriptionLabel.topAnchor.constraint(equalTo: locationTimeLabel.bottomAnchor, constant: 0)
+            // 내가 쓴 글일 때는 firstBaseline을 사용하여 텍스트 기준선으로 정렬 (간격 0)
+            descriptionLabelTopConstraint = descriptionLabel.firstBaselineAnchor.constraint(equalTo: locationTimeLabel.lastBaselineAnchor, constant: 0)
         }
         descriptionLabelTopConstraint?.isActive = true
         
