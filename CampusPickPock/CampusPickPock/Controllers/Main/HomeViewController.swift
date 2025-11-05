@@ -1326,19 +1326,19 @@ extension HomeViewController: PopoverMenuViewDelegate {
             print("👤 사용자 닉네임 선택 - 기능 실행")
             // 사용자 정보 표시 또는 프로필 수정 (현재는 아무 동작 없음)
             break
-                case 1: // 내가 쓴 글
-                    print("📝 내가 쓴 글 선택 - 기능 실행")
-                    let myPostsVC = MyPostsViewController()
-                    navigationController?.pushViewController(myPostsVC, animated: true)
-                    print("📝 MyPostsViewController로 이동 완료")
-                case 2: // 댓글 단 글
-                    print("💬 댓글 단 글 선택 - 기능 실행")
-                    let myCommentedPostsVC = MyCommentedPostsViewController()
-                    navigationController?.pushViewController(myCommentedPostsVC, animated: true)
-                    print("💬 MyCommentedPostsViewController로 이동 완료")
-        case 3: // 로그아웃
+        case 1: // 로그아웃
             print("🚪 로그아웃 선택 - 기능 실행")
             showLogoutAlert()
+        case 2: // 내가 쓴 글 보기
+            print("📝 내가 쓴 글 선택 - 기능 실행")
+            let myPostsVC = MyPostsViewController()
+            navigationController?.pushViewController(myPostsVC, animated: true)
+            print("📝 MyPostsViewController로 이동 완료")
+        case 3: // 댓글 단 글 보기
+            print("💬 댓글 단 글 선택 - 기능 실행")
+            let myCommentedPostsVC = MyCommentedPostsViewController()
+            navigationController?.pushViewController(myCommentedPostsVC, animated: true)
+            print("💬 MyCommentedPostsViewController로 이동 완료")
         default:
             print("❌ 알 수 없는 index: \(index)")
             break
