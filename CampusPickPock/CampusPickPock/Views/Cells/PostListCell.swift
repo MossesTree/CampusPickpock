@@ -26,8 +26,13 @@ class PostListCell: UITableViewCell {
     
     private let usernameLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .primaryTextColor
+        // Pretendard Variable Regular 15px (17px에서 2px 감소)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 15) {
+            label.font = UIFont(descriptor: pretendardFont.fontDescriptor, size: 15)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 15)
+        }
+        label.textColor = UIColor(red: 98/255.0, green: 95/255.0, blue: 95/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -47,8 +52,16 @@ class PostListCell: UITableViewCell {
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.boldSystemFont(ofSize: 16)
-        label.textColor = .primaryTextColor
+        // Pretendard Variable SemiBold 20px (22px에서 2px 감소)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 20) {
+            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
+                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.semibold.rawValue]
+            ])
+            label.font = UIFont(descriptor: fontDescriptor, size: 20)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 20, weight: .semibold)
+        }
+        label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 2
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -88,8 +101,13 @@ class PostListCell: UITableViewCell {
     
     private let descriptionLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .primaryTextColor
+        // Pretendard Variable Regular 16px (18px에서 2px 감소)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 16) {
+            label.font = UIFont(descriptor: pretendardFont.fontDescriptor, size: 16)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 16)
+        }
+        label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 3
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -231,9 +249,9 @@ class PostListCell: UITableViewCell {
             itemImageViewTopConstraint?.isActive = true
         } else {
             // 프로필이 없을 때는 이미지가 containerView.topAnchor에서 시작
-            // 프로필이 있을 때와 동일한 위치(16 + 24 + 12 = 52)로 맞춤
+            // 첫 번째 셀일 때 헤더 라인과 사진 사이 간격을 33pt로 설정 (containerView 8pt + itemImageView 25pt)
             itemImageViewTopConstraint?.isActive = false
-            itemImageViewTopConstraint = itemImageView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 52)
+            itemImageViewTopConstraint = itemImageView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 25)
             itemImageViewTopConstraint?.isActive = true
         }
         

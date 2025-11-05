@@ -197,7 +197,7 @@ class LostPostListViewController: UIViewController {
             categoryDividerLine.heightAnchor.constraint(equalToConstant: 1),
             
             // Posts Table View
-            postsTableView.topAnchor.constraint(equalTo: categoryDividerLine.bottomAnchor, constant: 16),
+            postsTableView.topAnchor.constraint(equalTo: categoryDividerLine.bottomAnchor, constant: 3),
             postsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             postsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             postsTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)

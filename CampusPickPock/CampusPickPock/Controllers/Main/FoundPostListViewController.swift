@@ -201,7 +201,7 @@ class FoundPostListViewController: UIViewController {
             categoryDividerLine.heightAnchor.constraint(equalToConstant: 1),
             
             // Posts Table View
-            postsTableView.topAnchor.constraint(equalTo: categoryDividerLine.bottomAnchor, constant: 16),
+            postsTableView.topAnchor.constraint(equalTo: categoryDividerLine.bottomAnchor, constant: 3),
             postsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             postsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             postsTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
@@ -447,8 +447,13 @@ class FoundPostCell: UITableViewCell {
     
     private let usernameLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .primaryTextColor
+        // Pretendard Variable Regular 15px (17px에서 2px 감소)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 15) {
+            label.font = UIFont(descriptor: pretendardFont.fontDescriptor, size: 15)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 15)
+        }
+        label.textColor = UIColor(red: 98/255.0, green: 95/255.0, blue: 95/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -465,8 +470,16 @@ class FoundPostCell: UITableViewCell {
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.boldSystemFont(ofSize: 16)
-        label.textColor = .primaryTextColor
+        // Pretendard Variable SemiBold 20px (22px에서 2px 감소)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 20) {
+            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
+                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.semibold.rawValue]
+            ])
+            label.font = UIFont(descriptor: fontDescriptor, size: 20)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 20, weight: .semibold)
+        }
+        label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 2
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -503,8 +516,13 @@ class FoundPostCell: UITableViewCell {
     
     private let descriptionLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .primaryTextColor
+        // Pretendard Variable Regular 16px (18px에서 2px 감소)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 16) {
+            label.font = UIFont(descriptor: pretendardFont.fontDescriptor, size: 16)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 16)
+        }
+        label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 3
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -512,7 +530,7 @@ class FoundPostCell: UITableViewCell {
     
     private let commentIcon: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(named: "CommentIcon1")
+        imageView.image = UIImage(named: "CommentIcon3")
         imageView.contentMode = .scaleAspectFit
         imageView.tintColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0)
         imageView.translatesAutoresizingMaskIntoConstraints = false
@@ -611,8 +629,8 @@ class FoundPostCell: UITableViewCell {
             
             commentIcon.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 8),
             commentIcon.trailingAnchor.constraint(equalTo: commentCountLabel.leadingAnchor, constant: -2),
-            commentIcon.widthAnchor.constraint(equalToConstant: 28),
-            commentIcon.heightAnchor.constraint(equalToConstant: 24),
+            commentIcon.widthAnchor.constraint(equalToConstant: 22),
+            commentIcon.heightAnchor.constraint(equalToConstant: 20),
             commentIcon.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16),
             
             commentCountLabel.centerYAnchor.constraint(equalTo: commentIcon.centerYAnchor),
