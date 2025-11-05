@@ -492,6 +492,7 @@ class PostCreateViewController: UIViewController {
     private var editingPostDetail: PostDetailItem?
     private var postType: PostType = .found
     private var uploadButtonTopConstraint: NSLayoutConstraint?
+    private var categoryLabelTopConstraint: NSLayoutConstraint? // 카테고리 레이블의 top 제약 조건 저장
     private var categoryToSelect: String? // 수정 모드에서 선택할 카테고리 저장
     private var initialImageCount = 0 // 수정 모드에서 초기에 로드된 이미지 개수
     private var initialImageUrls: [String] = [] // 초기 이미지 URL들 (순서 보장용)
@@ -503,6 +504,41 @@ class PostCreateViewController: UIViewController {
         setupActions()
         updateImageCount()
         setupDescriptionPlaceholder()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // 뷰가 로드되지 않았으면 제약 조건 업데이트 스킵
+        guard isViewLoaded else { return }
+        
+        // Lost 타입일 때 위치 관련 UI 숨기기 및 카테고리 위치 조정
+        if postType == .lost {
+            locationButton.isHidden = true
+            storageCheckbox.isHidden = true
+            storageLabel.isHidden = true
+            
+            // 카테고리 레이블을 이미지 컬렉션 뷰 바로 아래에 배치 (25포인트 간격)
+            if let existingConstraint = categoryLabelTopConstraint {
+                existingConstraint.isActive = false
+            }
+            categoryLabelTopConstraint = categoryLabel.topAnchor.constraint(equalTo: imageCollectionView.bottomAnchor, constant: 25)
+            categoryLabelTopConstraint?.isActive = true
+        } else {
+            locationButton.isHidden = false
+            storageCheckbox.isHidden = false
+            storageLabel.isHidden = false
+            
+            // 카테고리 레이블을 storageCheckbox 아래에 배치 (Found 타입)
+            if let existingConstraint = categoryLabelTopConstraint {
+                existingConstraint.isActive = false
+            }
+            categoryLabelTopConstraint = categoryLabel.topAnchor.constraint(equalTo: storageCheckbox.bottomAnchor, constant: 24)
+            categoryLabelTopConstraint?.isActive = true
+        }
+        
+        // 레이아웃 즉시 업데이트
+        view.layoutIfNeeded()
     }
     
     private func setupDescriptionPlaceholder() {
@@ -631,7 +667,7 @@ class PostCreateViewController: UIViewController {
             imageCollectionView.heightAnchor.constraint(equalToConstant: 200),
             
             // Location Section - constraint to whichever view is visible
-            locationButton.topAnchor.constraint(equalTo: imageUploadView.bottomAnchor, constant: 20),
+            locationButton.topAnchor.constraint(equalTo: imageUploadView.bottomAnchor, constant: 25),
             locationButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 23),
             
             storageCheckbox.topAnchor.constraint(equalTo: locationButton.bottomAnchor, constant: 16),
@@ -640,8 +676,8 @@ class PostCreateViewController: UIViewController {
             storageLabel.leadingAnchor.constraint(equalTo: storageCheckbox.trailingAnchor, constant: 5),
             storageLabel.centerYAnchor.constraint(equalTo: storageCheckbox.centerYAnchor),
             
-            // Category Section
-            categoryLabel.topAnchor.constraint(equalTo: storageCheckbox.bottomAnchor, constant: 24),
+            // Category Section - 기본값: storageCheckbox 아래 (Found 타입)
+            // categoryLabel.topAnchor는 아래에서 저장합니다
             categoryLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             
             categoryStackView.topAnchor.constraint(equalTo: categoryLabel.bottomAnchor, constant: 12),
@@ -700,6 +736,10 @@ class PostCreateViewController: UIViewController {
         let locationButtonTrailingConstraint = locationButton.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -20)
         locationButtonTrailingConstraint.priority = UILayoutPriority(250)  // 낮은 우선순위로 설정
         locationButtonTrailingConstraint.isActive = true
+        
+        // categoryLabel의 top 제약 조건 저장 (기본값: storageCheckbox 아래)
+        categoryLabelTopConstraint = categoryLabel.topAnchor.constraint(equalTo: storageCheckbox.bottomAnchor, constant: 24)
+        categoryLabelTopConstraint?.isActive = true
         
         // uploadButton의 top 제약조건 저장 (기본값: birthDateTextField 아래)
         uploadButtonTopConstraint = uploadButton.topAnchor.constraint(equalTo: birthDateTextField.bottomAnchor, constant: 32)
@@ -1246,7 +1286,7 @@ class PostCreateViewController: UIViewController {
         }
         
         // 선택된 버튼 표시
-        sender.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+        sender.backgroundColor = UIColor(red: 74/255.0, green: 128/255.0, blue: 240/255.0, alpha: 1.0)
         sender.setTitleColor(.white, for: .normal)
         
         // 선택된 카테고리 저장
@@ -1293,6 +1333,18 @@ class PostCreateViewController: UIViewController {
             navTitleLabel.text = "잃어버렸어요"
         }
         
+        // Lost 타입일 때 위치 관련 UI 숨기기
+        // 제약 조건 업데이트는 viewWillAppear에서 처리
+        if postType == .lost {
+            locationButton.isHidden = true
+            storageCheckbox.isHidden = true
+            storageLabel.isHidden = true
+        } else {
+            locationButton.isHidden = false
+            storageCheckbox.isHidden = false
+            storageLabel.isHidden = false
+        }
+        
         // 기존 데이터로 폼 채우기
         if let postDetail = postDetail {
             print("📝 수정 모드 데이터 채우기 시작")
@@ -1308,13 +1360,15 @@ class PostCreateViewController: UIViewController {
             titleTextField.resignFirstResponder()
             descriptionTextView.resignFirstResponder()
             
-            // 위치 설정
-            if let itemPlace = postDetail.itemPlace {
-                selectedLocation = itemPlace
-                updateLocationButtonTitle(itemPlace)
-                print("✅ 위치 설정 완료: \(itemPlace)")
-            } else {
-                print("⚠️ 위치 정보 없음")
+            // 위치 설정 (found 타입일 때만)
+            if postType == .found {
+                if let itemPlace = postDetail.itemPlace {
+                    selectedLocation = itemPlace
+                    updateLocationButtonTitle(itemPlace)
+                    print("✅ 위치 설정 완료: \(itemPlace)")
+                } else {
+                    print("⚠️ 위치 정보 없음")
+                }
             }
             
             // 카테고리 설정
@@ -1445,7 +1499,7 @@ class PostCreateViewController: UIViewController {
             if let stackView = subview as? UIStackView {
                 for arrangedSubview in stackView.arrangedSubviews {
                     if let button = arrangedSubview as? UIButton, button.title(for: .normal) == category {
-                        button.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+                        button.backgroundColor = UIColor(red: 74/255.0, green: 128/255.0, blue: 240/255.0, alpha: 1.0)
                         button.setTitleColor(.white, for: .normal)
                         return
                     }

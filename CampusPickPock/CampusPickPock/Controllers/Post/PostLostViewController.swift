@@ -781,7 +781,7 @@ class PostLostViewController: UIViewController {
         }
         
         // 선택된 버튼 표시
-        sender.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+        sender.backgroundColor = UIColor(red: 74/255.0, green: 128/255.0, blue: 240/255.0, alpha: 1.0)
         sender.setTitleColor(.white, for: .normal)
         
         // 선택된 카테고리 저장
