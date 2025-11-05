@@ -138,9 +138,9 @@ class NotificationListViewController: UIViewController {
             titleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
             titleLabel.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
             
-            // X 버튼 위치 (323, 70)
+            // X 버튼 위치 - '알림' 텍스트와 같은 y 위치
             closeButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 323),
-            closeButton.topAnchor.constraint(equalTo: view.topAnchor, constant: 70),
+            closeButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
             closeButton.widthAnchor.constraint(equalToConstant: 27),
             closeButton.heightAnchor.constraint(equalToConstant: 27),
             
