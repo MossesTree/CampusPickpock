@@ -62,8 +62,7 @@ class PostListCell: UITableViewCell {
             label.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
         }
         label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
-        label.numberOfLines = 1
-        label.lineBreakMode = .byTruncatingTail
+        label.numberOfLines = 2
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -202,12 +201,12 @@ class PostListCell: UITableViewCell {
             titleLabel.trailingAnchor.constraint(equalTo: pickedUpButton.leadingAnchor, constant: -8),
             titleLabel.centerYAnchor.constraint(equalTo: pickedUpButton.centerYAnchor),
             
-            pickedUpButton.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 20),
+            pickedUpButton.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 23),
             pickedUpButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             pickedUpButton.widthAnchor.constraint(equalToConstant: 75),
             pickedUpButton.heightAnchor.constraint(equalToConstant: 24),
             
-            clockIcon.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
+            clockIcon.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
             clockIcon.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             clockIcon.widthAnchor.constraint(equalToConstant: 16),
             clockIcon.heightAnchor.constraint(equalToConstant: 16),
@@ -273,19 +272,8 @@ class PostListCell: UITableViewCell {
             locationTimeLabel.text = formatRelativeTime(post.createdAt)
         }
         
-        // 프로필 표시 여부에 따라 본문 간격 조정
-        descriptionLabelTopConstraint?.isActive = false
-        if showProfile {
-            // 프로필이 있을 때는 8pt 간격 (댓글 단 글, Lost/Found 리스트)
-            descriptionLabelTopConstraint = descriptionLabel.topAnchor.constraint(equalTo: locationTimeLabel.bottomAnchor, constant: 8)
-            descriptionLabel.numberOfLines = 3
-        } else {
-            // 내가 쓴 글일 때는 텍스트 기준선 기준으로 정렬하여 간격 0
-            descriptionLabelTopConstraint = descriptionLabel.firstBaselineAnchor.constraint(equalTo: locationTimeLabel.lastBaselineAnchor, constant: 0)
-            descriptionLabel.numberOfLines = 1
-        }
-        descriptionLabelTopConstraint?.isActive = true
-        descriptionLabel.lineBreakMode = .byTruncatingTail
+        // Lost 타입일 때와 Found 타입일 때 본문 간격 동일하게 유지
+        // (이미 8pt로 설정되어 있으므로 추가 조정 불필요)
         
         descriptionLabel.text = post.content
         commentCountLabel.text = "\(post.commentCount)"

@@ -308,6 +308,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     private var commentItems: [CommentItem] = []
     private var isCommentPrivate = false
     private var lockButtonInTextField: UIButton? // rightView의 잠금 버튼 참조
+    private var parentCommentIdForReply: Int? // 대댓글 작성 시 부모 댓글 ID
     
     // 커스텀 팝업 관련
     private var popoverMenuView: PopoverMenuView?
@@ -1611,30 +1612,21 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     private func handleReplyToComment(_ commentItem: CommentItem) {
         print("📝 대댓글 작성 시작: 부모 댓글 ID \(commentItem.commentId)")
         
-        let alert = UIAlertController(title: "대댓글 작성", message: "\(commentItem.commentWriterNickName ?? "익명")님의 댓글에 답글을 작성합니다.", preferredStyle: .alert)
+        // 부모 댓글 ID 저장
+        parentCommentIdForReply = commentItem.commentId
         
-        alert.addTextField { textField in
-            textField.placeholder = "대댓글을 입력하세요..."
-            textField.text = ""
-        }
+        // 댓글 작성 폼 활성화 및 포커스
+        commentTextField.isEnabled = true
+        commentTextField.becomeFirstResponder()
         
-        let writeAction = UIAlertAction(title: "작성", style: .default) { _ in
-            guard let textField = alert.textFields?.first,
-                  let content = textField.text,
-                  !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                print("❌ 대댓글 내용이 비어있음")
-                return
-            }
-            
-            self.performReplyToComment(parentCommentId: commentItem.commentId, content: content)
-        }
-        
-        let cancelAction = UIAlertAction(title: "취소", style: .cancel)
-        
-        alert.addAction(writeAction)
-        alert.addAction(cancelAction)
-        
-        present(alert, animated: true)
+        // 플레이스홀더 업데이트
+        commentTextField.attributedPlaceholder = NSAttributedString(
+            string: "\(commentItem.commentWriterNickName ?? "익명")님에게 답글 작성...",
+            attributes: [
+                NSAttributedString.Key.foregroundColor: UIColor(red: 0x97/255.0, green: 0x97/255.0, blue: 0x97/255.0, alpha: 1.0),
+                NSAttributedString.Key.font: UIFont(name: "Pretendard Variable", size: 15) ?? UIFont.systemFont(ofSize: 15)
+            ]
+        )
     }
     
     private func performReplyToComment(parentCommentId: Int, content: String) {
@@ -1935,8 +1927,11 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
     private func createCommentWithImages(imageUrls: [String], commentText: String) {
         guard let postingId = self.postingId else { return }
         
+        // 대댓글인지 일반 댓글인지 확인
+        let parentCommentId = parentCommentIdForReply ?? 0
+        
         let commentRequest = CreateCommentRequest(
-            parentCommentId: 0, // API 스펙에 따라 일반 댓글은 0
+            parentCommentId: parentCommentId, // 대댓글인 경우 parentCommentIdForReply 사용, 아니면 0
             isCommentSecret: isCommentPrivate,
             commentContent: commentText.trimmingCharacters(in: .whitespacesAndNewlines),
             commentImageUrls: imageUrls.isEmpty ? nil : imageUrls
@@ -1956,9 +1951,22 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     // 댓글 입력 필드 초기화
                     self?.commentTextField.text = ""
                     self?.isCommentPrivate = false
-                    self?.privateButton.tintColor = .gray
+                    self?.lockButtonInTextField?.tintColor = UIColor(red: 0x93/255.0, green: 0x90/255.0, blue: 0x90/255.0, alpha: 1.0)
+                    self?.lockButtonInTextField?.setImage(UIImage(named: "UnRockIcon"), for: .normal)
                     self?.commentImages.removeAll()
                     self?.updateAttachButtonAppearance()
+                    
+                    // 부모 댓글 ID 초기화 (대댓글 작성 모드 해제)
+                    self?.parentCommentIdForReply = nil
+                    
+                    // 플레이스홀더 원래대로 복원
+                    self?.commentTextField.attributedPlaceholder = NSAttributedString(
+                        string: "댓글을 입력하세요",
+                        attributes: [
+                            NSAttributedString.Key.foregroundColor: UIColor(red: 0x97/255.0, green: 0x97/255.0, blue: 0x97/255.0, alpha: 1.0),
+                            NSAttributedString.Key.font: UIFont(name: "Pretendard Variable", size: 15) ?? UIFont.systemFont(ofSize: 15)
+                        ]
+                    )
                     
                     // 댓글 목록 새로고침
                     self?.loadComments()
@@ -2012,9 +2020,11 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
         isCommentPrivate.toggle()
         
         if isCommentPrivate {
-            privateButton.setImage(UIImage(named: "RockIcon"), for: .normal)
+            lockButtonInTextField?.setImage(UIImage(named: "RockIcon"), for: .normal)
+            lockButtonInTextField?.tintColor = UIColor(red: 0x93/255.0, green: 0x90/255.0, blue: 0x90/255.0, alpha: 1.0)
         } else {
-            privateButton.setImage(UIImage(named: "UnRockIcon"), for: .normal)
+            lockButtonInTextField?.setImage(UIImage(named: "UnRockIcon"), for: .normal)
+            lockButtonInTextField?.tintColor = UIColor(red: 0x93/255.0, green: 0x90/255.0, blue: 0x90/255.0, alpha: 1.0)
         }
         
         print("🔒 비밀 댓글 설정: \(isCommentPrivate)")
