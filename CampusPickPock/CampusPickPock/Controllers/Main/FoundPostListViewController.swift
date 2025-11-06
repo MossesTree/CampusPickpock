@@ -320,6 +320,7 @@ extension FoundPostListViewController: UITableViewDelegate, UITableViewDataSourc
             postingId: postingItem.postingId,
             title: postingItem.postingTitle,
             content: postingItem.postingContent,
+            location: postingItem.itemPlace,
             imageUrl: postingItem.postingImageUrl,
             images: [],
             authorId: postingItem.postingWriterNickName ?? "익명",
@@ -351,6 +352,7 @@ extension FoundPostListViewController: UITableViewDelegate, UITableViewDataSourc
             postingId: postingItem.postingId,
             title: postingItem.postingTitle,
             content: postingItem.postingContent,
+            location: postingItem.itemPlace,
             imageUrl: postingItem.postingImageUrl,
             images: [],
             authorId: postingItem.postingWriterNickName ?? "익명",
@@ -410,22 +412,9 @@ extension FoundPostListViewController: UITableViewDelegate, UITableViewDataSourc
             return Date()
         }
         
-        let now = Date()
-        let timeInterval = now.timeIntervalSince(date)
-        
-        print("📅 Found 포스팅 파싱:")
-        print("   원본: \(dateString)")
-        print("   파싱된 날짜(UTC): \(date)")
-        print("   현재 시간: \(now)")
-        print("   시간 차이(변환 전): \(timeInterval)초 (\(timeInterval/60)분, \(timeInterval/3600)시간)")
-        
-        // 서버가 UTC로 보내므로 한국 시간(KST)으로 변환 (UTC+9)
-        let koreanDate = date.addingTimeInterval(9 * 60 * 60)
-        let adjustedInterval = now.timeIntervalSince(koreanDate)
-        print("   한국 시간: \(koreanDate)")
-        print("   시간 차이(변환 후): \(adjustedInterval)초 (\(adjustedInterval/60)분, \(adjustedInterval/3600)시간)")
-        
-        return koreanDate
+        // Date 객체는 절대 시간이므로 UTC로 파싱한 Date를 그대로 반환
+        // 시간 비교는 FoundPostCell의 formatRelativeTime에서 처리됨
+        return date
     }
 }
 // MARK: - FoundPostCell
