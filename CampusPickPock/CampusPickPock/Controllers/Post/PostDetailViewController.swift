@@ -271,7 +271,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     private let attachButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(named: "ImageBoxIcon"), for: .normal)
-        button.tintColor = .gray
+        button.tintColor = UIColor(red: 146/255.0, green: 168/255.0, blue: 221/255.0, alpha: 1.0)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -2077,11 +2077,12 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
     
     private func updateAttachButtonAppearance() {
         if commentImages.isEmpty {
-            attachButton.tintColor = .gray
-            attachButton.setImage(UIImage(systemName: "photo.on.rectangle"), for: .normal)
+            attachButton.tintColor = UIColor(red: 146/255.0, green: 168/255.0, blue: 221/255.0, alpha: 1.0)
+            attachButton.setImage(UIImage(named: "ImageBoxIcon"), for: .normal)
         } else {
-            attachButton.tintColor = .systemBlue
-            attachButton.setImage(UIImage(systemName: "photo.on.rectangle.fill"), for: .normal)
+            // 전송 버튼과 같은 색상으로 변경
+            attachButton.tintColor = UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0)
+            attachButton.setImage(UIImage(named: "ImageBoxIcon"), for: .normal)
         }
     }
 }
