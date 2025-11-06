@@ -1327,7 +1327,7 @@ class PostCreateViewController: UIViewController {
         
         // 선택된 버튼 표시
         sender.backgroundColor = UIColor(red: 74/255.0, green: 128/255.0, blue: 240/255.0, alpha: 1.0)
-        sender.setTitleColor(.white, for: .normal)
+        sender.setTitleColor(UIColor(red: 247/255.0, green: 247/255.0, blue: 247/255.0, alpha: 1.0), for: .normal)
         
         // 선택된 카테고리 저장
         selectedCategory = sender.title(for: .normal)
@@ -1556,7 +1556,7 @@ class PostCreateViewController: UIViewController {
                 for arrangedSubview in stackView.arrangedSubviews {
                     if let button = arrangedSubview as? UIButton, button.title(for: .normal) == category {
                         button.backgroundColor = UIColor(red: 74/255.0, green: 128/255.0, blue: 240/255.0, alpha: 1.0)
-                        button.setTitleColor(.white, for: .normal)
+                        button.setTitleColor(UIColor(red: 247/255.0, green: 247/255.0, blue: 247/255.0, alpha: 1.0), for: .normal)
                         return
                     }
                 }
