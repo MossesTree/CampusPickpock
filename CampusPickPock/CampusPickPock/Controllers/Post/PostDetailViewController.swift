@@ -307,6 +307,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     private var comments: [Comment] = []
     private var commentItems: [CommentItem] = []
     private var isCommentPrivate = false
+    private var lockButtonInTextField: UIButton? // rightView의 잠금 버튼 참조
     
     // 커스텀 팝업 관련
     private var popoverMenuView: PopoverMenuView?
@@ -410,6 +411,21 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         commentInputView.addSubview(commentTextField)
         commentInputView.addSubview(privateButton)
         commentInputView.addSubview(sendButton)
+        
+        // 잠금 아이콘을 commentTextField의 rightView로 추가
+        let lockButton = UIButton(type: .system)
+        lockButton.setImage(UIImage(named: "UnRockIcon"), for: .normal)
+        lockButton.tintColor = UIColor(red: 0x93/255.0, green: 0x90/255.0, blue: 0x90/255.0, alpha: 1.0)
+        lockButton.frame = CGRect(x: 0, y: 0, width: 31, height: 31)
+        lockButton.addTarget(self, action: #selector(privateButtonTapped), for: .touchUpInside)
+        lockButtonInTextField = lockButton // 참조 저장
+        
+        let rightViewContainer = UIView(frame: CGRect(x: 0, y: 0, width: 35, height: 31))
+        rightViewContainer.addSubview(lockButton)
+        lockButton.center = rightViewContainer.center
+        
+        commentTextField.rightView = rightViewContainer
+        commentTextField.rightViewMode = .always
         
         // 버튼 액션 추가
         sendButton.addTarget(self, action: #selector(sendButtonTapped), for: .touchUpInside)
@@ -580,15 +596,9 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             
             commentTextField.leadingAnchor.constraint(equalTo: attachButton.trailingAnchor, constant: 12),
             commentTextField.centerYAnchor.constraint(equalTo: commentInputView.centerYAnchor),
-            commentTextField.widthAnchor.constraint(equalToConstant: 267),
+            commentTextField.trailingAnchor.constraint(equalTo: sendButton.leadingAnchor, constant: -8),
             commentTextField.heightAnchor.constraint(equalToConstant: 37),
             
-            privateButton.leadingAnchor.constraint(equalTo: commentTextField.trailingAnchor, constant: -40),
-            privateButton.centerYAnchor.constraint(equalTo: commentInputView.centerYAnchor),
-            privateButton.widthAnchor.constraint(equalToConstant: 31),
-            privateButton.heightAnchor.constraint(equalToConstant: 31),
-            
-            sendButton.leadingAnchor.constraint(equalTo: commentTextField.trailingAnchor, constant: 8),
             sendButton.trailingAnchor.constraint(equalTo: commentInputView.trailingAnchor, constant: -16),
             sendButton.centerYAnchor.constraint(equalTo: commentInputView.centerYAnchor),
             sendButton.widthAnchor.constraint(equalToConstant: 40),
@@ -597,6 +607,9 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
+        
+        // privateButton은 이제 commentTextField의 rightView로 사용되므로 숨김
+        privateButton.isHidden = true
         
         // Comments Header의 top 제약조건 저장 (기본값: headerView.bottomAnchor)
         commentsHeaderTopConstraint = commentsHeaderView.topAnchor.constraint(equalTo: headerView.bottomAnchor)
