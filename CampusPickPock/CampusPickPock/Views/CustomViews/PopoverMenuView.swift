@@ -180,6 +180,11 @@ class PopoverMenuView: UIView {
         button.addTarget(self, action: #selector(itemButtonTapped(_:)), for: .touchUpInside)
         
         let iconImageView = UIImageView()
+        iconImageView.translatesAutoresizingMaskIntoConstraints = false
+        iconImageView.contentMode = .scaleAspectFit
+        iconImageView.isHidden = false
+        iconImageView.clipsToBounds = true
+        iconImageView.backgroundColor = .clear
         // 커스텀 아이콘 설정
         // 상세페이지 더보기 메뉴 아이콘
         if item.iconName == "pencil" {
@@ -196,7 +201,7 @@ class PopoverMenuView: UIView {
                 iconImageView.tintColor = UIColor(red: 147/255.0, green: 145/255.0, blue: 145/255.0, alpha: 1.0)
             }
         } else if item.iconName == "trash" {
-            // 삭제: DetailTrashbinIcon 12x11
+            // 삭제 (포스트 팝업): DetailTrashbinIcon 12x11
             if let customIcon = UIImage(named: "DetailTrashbinIcon") {
                 let size = CGSize(width: 12, height: 11)
                 UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
@@ -205,6 +210,36 @@ class PopoverMenuView: UIView {
                 UIGraphicsEndImageContext()
                 iconImageView.image = resizedIcon?.withRenderingMode(.alwaysOriginal)
             } else {
+                iconImageView.image = UIImage(systemName: item.iconName)
+                iconImageView.tintColor = UIColor(red: 147/255.0, green: 145/255.0, blue: 145/255.0, alpha: 1.0)
+            }
+        } else if item.iconName == "comment-trash" {
+            // 삭제 (댓글 팝업): DetailCommentTrashbinIcon 12x11
+            if let customIcon = UIImage(named: "DetailCommentTrashbinIcon") {
+                let size = CGSize(width: 12, height: 11)
+                UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+                customIcon.draw(in: CGRect(origin: .zero, size: size))
+                let resizedIcon = UIGraphicsGetImageFromCurrentImageContext()
+                UIGraphicsEndImageContext()
+                iconImageView.image = resizedIcon?.withRenderingMode(.alwaysOriginal)
+                print("✅ DetailCommentTrashbinIcon 로드 성공")
+            } else {
+                print("❌ DetailCommentTrashbinIcon 로드 실패 - 시스템 아이콘 사용")
+                iconImageView.image = UIImage(systemName: "trash")
+                iconImageView.tintColor = UIColor(red: 147/255.0, green: 145/255.0, blue: 145/255.0, alpha: 1.0)
+            }
+        } else if item.iconName == "arrowshape.turn.up.right" {
+            // 대댓글 달기: DetailCommentIcon 12x11
+            if let customIcon = UIImage(named: "DetailCommentIcon") {
+                let size = CGSize(width: 12, height: 11)
+                UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+                customIcon.draw(in: CGRect(origin: .zero, size: size))
+                let resizedIcon = UIGraphicsGetImageFromCurrentImageContext()
+                UIGraphicsEndImageContext()
+                iconImageView.image = resizedIcon?.withRenderingMode(.alwaysOriginal)
+                print("✅ DetailCommentIcon 로드 성공")
+            } else {
+                print("❌ DetailCommentIcon 로드 실패 - 시스템 아이콘 사용")
                 iconImageView.image = UIImage(systemName: item.iconName)
                 iconImageView.tintColor = UIColor(red: 147/255.0, green: 145/255.0, blue: 145/255.0, alpha: 1.0)
             }
@@ -281,20 +316,33 @@ class PopoverMenuView: UIView {
         // 모든 버튼 높이를 동일하게 설정
         
         // 상세페이지 더보기 메뉴 (pencil, trash, checkmark.circle)는 모두 아이콘 표시
-        if item.iconName == "pencil" || item.iconName == "trash" || item.iconName == "checkmark.circle" {
+        // 댓글 팝업 메뉴 (arrowshape.turn.up.right, comment-trash)도 아이콘 표시
+        if item.iconName == "pencil" || item.iconName == "trash" || item.iconName == "checkmark.circle" || item.iconName == "arrowshape.turn.up.right" || item.iconName == "comment-trash" {
+            // 아이콘이 설정되었는지 확인
+            if iconImageView.image == nil {
+                print("⚠️ 아이콘 이미지가 nil입니다: \(item.iconName)")
+            } else {
+                print("✅ 아이콘 이미지 설정됨: \(item.iconName), 크기: \(iconImageView.image?.size ?? .zero)")
+            }
+            
             NSLayoutConstraint.activate([
                 button.heightAnchor.constraint(equalToConstant: itemHeight),
                 
                 iconImageView.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 10),
                 iconImageView.centerYAnchor.constraint(equalTo: button.centerYAnchor),
                 // 아이콘 크기는 아이콘 이름에 따라 설정
-                iconImageView.widthAnchor.constraint(equalToConstant: item.iconName == "pencil" ? 10 : item.iconName == "trash" ? 12 : 16),
-                iconImageView.heightAnchor.constraint(equalToConstant: item.iconName == "pencil" ? 10 : item.iconName == "trash" ? 11 : 16),
+                iconImageView.widthAnchor.constraint(equalToConstant: item.iconName == "pencil" ? 10 : (item.iconName == "trash" || item.iconName == "arrowshape.turn.up.right" || item.iconName == "comment-trash") ? 12 : 16),
+                iconImageView.heightAnchor.constraint(equalToConstant: item.iconName == "pencil" ? 10 : (item.iconName == "trash" || item.iconName == "arrowshape.turn.up.right" || item.iconName == "comment-trash") ? 11 : 16),
                 
                 titleLabel.leadingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: 4),
                 titleLabel.centerYAnchor.constraint(equalTo: button.centerYAnchor),
                 titleLabel.trailingAnchor.constraint(equalTo: button.trailingAnchor)
             ])
+            
+            // 레이아웃 즉시 업데이트 및 z-order 조정
+            button.setNeedsLayout()
+            button.layoutIfNeeded()
+            button.bringSubviewToFront(iconImageView)
         } else if index == 0 || index == 1 {
             // 첫 번째 아이템(닉네임)과 두 번째 아이템(로그아웃)은 아이콘이 없으므로 titleLabel의 leadingAnchor를 button의 leadingAnchor로 설정
             NSLayoutConstraint.activate([

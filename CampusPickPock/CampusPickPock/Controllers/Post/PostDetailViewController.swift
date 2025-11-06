@@ -312,6 +312,11 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     private var popoverMenuView: PopoverMenuView?
     private var popoverOverlayView: UIView?
     
+    // 댓글 커스텀 팝업 관련
+    private var commentPopoverMenuView: PopoverMenuView?
+    private var commentPopoverOverlayView: UIView?
+    private var currentCommentItem: CommentItem?
+    
     init(post: Post) {
         self.post = post
         self.postingId = post.postingId
@@ -1477,27 +1482,117 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     }
     
     private func handleCommentMenuTapped(_ commentItem: CommentItem) {
-        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        // 기존 팝업이 있으면 제거
+        hideCommentPopoverMenu()
+        
+        currentCommentItem = commentItem
+        
+        // 메뉴 아이템 생성
+        var menuItems: [MenuItem] = []
         
         // 대댓글이 아닌 경우에만 "대댓글 달기" 옵션 추가
         if commentItem.parentCommentId == nil {
-            alert.addAction(UIAlertAction(title: "대댓글 달기", style: .default) { _ in
-                self.handleReplyToComment(commentItem)
-            })
+            menuItems.append(MenuItem(title: "대댓글 달기", iconName: "arrowshape.turn.up.right"))
         }
         
-        // 삭제 버튼은 누구나 볼 수 있지만, 클릭 시 권한 체크
-        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { _ in
-            self.handleDeleteComment(commentItem)
-        })
+        // 삭제 버튼 추가 (댓글 팝업용 아이콘 이름 사용)
+        menuItems.append(MenuItem(title: "삭제", iconName: "comment-trash"))
         
-        // iPad에서 actionSheet가 크래시되지 않도록 설정
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = view
-            popover.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 0, height: 0)
+        // 팝업 크기 설정
+        let popoverWidth: CGFloat = 85
+        // 대댓글인 경우(아이템 1개) 높이 27, 댓글인 경우(아이템 2개) 높이 53
+        let popoverHeight: CGFloat = commentItem.parentCommentId == nil ? 53 : 27
+        
+        // 오버레이 뷰 생성
+        let overlayView = UIView()
+        overlayView.backgroundColor = UIColor.clear
+        overlayView.translatesAutoresizingMaskIntoConstraints = false
+        overlayView.alpha = 0
+        view.addSubview(overlayView)
+        commentPopoverOverlayView = overlayView
+        
+        // 팝업 메뉴 뷰 생성
+        let popoverView = PopoverMenuView()
+        popoverView.customBackgroundColor = UIColor(red: 206/255.0, green: 214/255.0, blue: 233/255.0, alpha: 1.0) // CED6E9
+        popoverView.customCornerRadius = 10
+        popoverView.customBorderColor = UIColor(red: 199/255.0, green: 207/255.0, blue: 225/255.0, alpha: 1.0) // C7CFE1
+        popoverView.customBorderWidth = 1.0 / UIScreen.main.scale
+        // 각 아이템 높이 계산: (전체 높이 - 구분선 높이 * 구분선 개수) / 아이템 개수
+        let separatorHeight: CGFloat = 1.0 / UIScreen.main.scale
+        let separatorCount = CGFloat(menuItems.count - 1)
+        let itemHeight = (popoverHeight - separatorHeight * separatorCount) / CGFloat(menuItems.count)
+        popoverView.customItemHeight = itemHeight
+        popoverView.customPadding = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        popoverView.delegate = self
+        popoverView.translatesAutoresizingMaskIntoConstraints = false
+        popoverView.alpha = 0
+        popoverView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+        view.addSubview(popoverView)
+        commentPopoverMenuView = popoverView
+        
+        // 팝업 메뉴 구성
+        popoverView.configure(with: menuItems)
+        
+        // 댓글 셀의 menuButton 위치 찾기
+        // tableView에서 해당 셀을 찾아야 함
+        if let indexPath = findCommentCellIndexPath(for: commentItem) {
+            if let cell = commentsTableView.cellForRow(at: indexPath) as? CommentCell {
+                let cellFrame = cell.convert(cell.bounds, to: view)
+                let menuButtonFrame = cell.menuButton.convert(cell.menuButton.bounds, to: view)
+                let popoverX = menuButtonFrame.maxX - popoverWidth
+                let popoverY = menuButtonFrame.maxY + 8
+                
+                // 제약 조건 설정
+                NSLayoutConstraint.activate([
+                    overlayView.topAnchor.constraint(equalTo: view.topAnchor),
+                    overlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                    overlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+                    overlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+                    
+                    popoverView.widthAnchor.constraint(equalToConstant: popoverWidth),
+                    popoverView.heightAnchor.constraint(equalToConstant: popoverHeight),
+                    popoverView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: popoverX),
+                    popoverView.topAnchor.constraint(equalTo: view.topAnchor, constant: popoverY)
+                ])
+            }
         }
         
-        present(alert, animated: true)
+        // 애니메이션으로 표시
+        UIView.animate(withDuration: 0.2) {
+            overlayView.alpha = 1
+            popoverView.alpha = 1
+            popoverView.transform = .identity
+        }
+        
+        // 오버레이 탭 시 팝업 닫기
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hideCommentPopoverMenu))
+        overlayView.addGestureRecognizer(tapGesture)
+    }
+    
+    private func findCommentCellIndexPath(for commentItem: CommentItem) -> IndexPath? {
+        for (index, item) in commentItems.enumerated() {
+            if item.commentId == commentItem.commentId {
+                return IndexPath(row: index, section: 0)
+            }
+        }
+        return nil
+    }
+    
+    @objc private func hideCommentPopoverMenu() {
+        guard let popoverView = commentPopoverMenuView,
+              let overlayView = commentPopoverOverlayView else { return }
+        
+        UIView.animate(withDuration: 0.2, animations: {
+            overlayView.alpha = 0
+            popoverView.alpha = 0
+            popoverView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+        }) { _ in
+            popoverView.removeFromSuperview()
+            overlayView.removeFromSuperview()
+            self.commentPopoverMenuView = nil
+            self.commentPopoverOverlayView = nil
+            self.currentCommentItem = nil
+        }
     }
     
     private func handleReplyToComment(_ commentItem: CommentItem) {
@@ -2111,7 +2206,7 @@ class CommentCell: UITableViewCell {
         return label
     }()
     
-    private let menuButton: UIButton = {
+    let menuButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(named: "DotsIcon"), for: .normal)
         button.tintColor = UIColor(red: 0x7F/255.0, green: 0x82/255.0, blue: 0x8A/255.0, alpha: 1.0)
@@ -2634,38 +2729,59 @@ extension CommentCell: UICollectionViewDataSource, UICollectionViewDelegate, UIC
 // MARK: - PopoverMenuViewDelegate
 extension PostDetailViewController: PopoverMenuViewDelegate {
     func popoverMenuView(_ menuView: PopoverMenuView, didSelectItemAt index: Int) {
-        hidePopoverMenu()
-        
-        // lost 타입인지 확인
-        let isLostType: Bool
-        if let post = post {
-            isLostType = post.type == .lost
-        } else {
-            isLostType = navTitleLabel.text == "잃어버렸어요"
-        }
-        
-        // 메뉴 아이템 인덱스에 따라 처리
-        if isLostType {
-            // lost 타입: 수정(0), 삭제(1), 줍줍 완료(2)
-            switch index {
-            case 0:
-                handleEditAction()
-            case 1:
-                handleDeleteAction()
-            case 2:
-                handleJoopjoopAction()
-            default:
-                break
+        // 댓글 팝업인지 게시글 팝업인지 구분
+        if menuView == commentPopoverMenuView {
+            // 댓글 팝업 메뉴 처리
+            hideCommentPopoverMenu()
+            
+            guard let commentItem = currentCommentItem else { return }
+            
+            // 메뉴 아이템 순서: 대댓글 달기(0, 있는 경우), 삭제(마지막)
+            let hasReplyOption = commentItem.parentCommentId == nil
+            let deleteIndex = hasReplyOption ? 1 : 0
+            
+            if index == deleteIndex {
+                // 삭제
+                handleDeleteComment(commentItem)
+            } else if index == 0 && hasReplyOption {
+                // 대댓글 달기
+                handleReplyToComment(commentItem)
             }
         } else {
-            // found 타입: 수정(0), 삭제(1)
-            switch index {
-            case 0:
-                handleEditAction()
-            case 1:
-                handleDeleteAction()
-            default:
-                break
+            // 게시글 더보기 팝업 메뉴 처리
+            hidePopoverMenu()
+            
+            // lost 타입인지 확인
+            let isLostType: Bool
+            if let post = post {
+                isLostType = post.type == .lost
+            } else {
+                isLostType = navTitleLabel.text == "잃어버렸어요"
+            }
+            
+            // 메뉴 아이템 인덱스에 따라 처리
+            if isLostType {
+                // lost 타입: 수정(0), 삭제(1), 줍줍 완료(2)
+                switch index {
+                case 0:
+                    handleEditAction()
+                case 1:
+                    handleDeleteAction()
+                case 2:
+                    handleJoopjoopAction()
+                default:
+                    break
+                }
+            } else {
+                // found 타입: 수정(0), 삭제(1)
+                switch index {
+                case 0:
+                    handleEditAction()
+                case 1:
+                    handleDeleteAction()
+                default:
+                    break
+                }
             }
         }
     }
