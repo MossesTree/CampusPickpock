@@ -112,7 +112,7 @@ class LostAndFoundViewController: UIViewController {
         
         // ⭐️ 1. 버튼의 기본 title을 비웁니다. (매우 중요!)
         // 이렇게 해야 버튼의 내부 titleLabel이 중앙에 독립적으로 렌더링되지 않습니다.
-        button.setTitle("", for: .normal)
+        button.setTitle(" ", for: .normal)
         
         if let plusIcon = UIImage(named: "PlusIcon") {
             
@@ -214,7 +214,6 @@ class LostAndFoundViewController: UIViewController {
             headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-//            headerView.heightAnchor.constraint(equalToConstant: 44),
             
             backButton.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
             backButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
