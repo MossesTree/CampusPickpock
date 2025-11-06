@@ -101,16 +101,22 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     
     private let usernameLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .primaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 15) ?? UIFont.systemFont(ofSize: 15)
+        label.textColor = UIColor(red: 98/255.0, green: 95/255.0, blue: 95/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.boldSystemFont(ofSize: 20)
-        label.textColor = .primaryTextColor
+        // Pretendard Variable SemiBold 22px
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 22) {
+            let descriptor = pretendardFont.fontDescriptor.addingAttributes([.traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.semibold]])
+            label.font = UIFont(descriptor: descriptor, size: 22)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 22, weight: .semibold)
+        }
+        label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -214,8 +220,8 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     
     private let contentLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 16)
-        label.textColor = .primaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 13) ?? UIFont.systemFont(ofSize: 13)
+        label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -231,8 +237,8 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     
     private let commentsCountLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.boldSystemFont(ofSize: 16)
-        label.textColor = .primaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 15) ?? UIFont.systemFont(ofSize: 15)
+        label.textColor = UIColor(red: 98/255.0, green: 95/255.0, blue: 95/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -265,7 +271,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     private let attachButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(named: "ImageBoxIcon"), for: .normal)
-        button.tintColor = .gray
+        button.tintColor = UIColor(red: 146/255.0, green: 168/255.0, blue: 221/255.0, alpha: 1.0)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -301,6 +307,18 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     private var comments: [Comment] = []
     private var commentItems: [CommentItem] = []
     private var isCommentPrivate = false
+    private var lockButtonInTextField: UIButton? // rightView의 잠금 버튼 참조
+    private var parentCommentIdForReply: Int? // 대댓글 작성 시 부모 댓글 ID
+    private var selectedImageIdentifiers: [String] = [] // 선택된 이미지의 identifier 저장
+    
+    // 커스텀 팝업 관련
+    private var popoverMenuView: PopoverMenuView?
+    private var popoverOverlayView: UIView?
+    
+    // 댓글 커스텀 팝업 관련
+    private var commentPopoverMenuView: PopoverMenuView?
+    private var commentPopoverOverlayView: UIView?
+    private var currentCommentItem: CommentItem?
     
     init(post: Post) {
         self.post = post
@@ -395,6 +413,21 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         commentInputView.addSubview(commentTextField)
         commentInputView.addSubview(privateButton)
         commentInputView.addSubview(sendButton)
+        
+        // 잠금 아이콘을 commentTextField의 rightView로 추가
+        let lockButton = UIButton(type: .system)
+        lockButton.setImage(UIImage(named: "UnRockIcon"), for: .normal)
+        lockButton.tintColor = UIColor(red: 0x93/255.0, green: 0x90/255.0, blue: 0x90/255.0, alpha: 1.0)
+        lockButton.frame = CGRect(x: 0, y: 0, width: 31, height: 31)
+        lockButton.addTarget(self, action: #selector(privateButtonTapped), for: .touchUpInside)
+        lockButtonInTextField = lockButton // 참조 저장
+        
+        let rightViewContainer = UIView(frame: CGRect(x: 0, y: 0, width: 35, height: 31))
+        rightViewContainer.addSubview(lockButton)
+        lockButton.center = rightViewContainer.center
+        
+        commentTextField.rightView = rightViewContainer
+        commentTextField.rightViewMode = .always
         
         // 버튼 액션 추가
         sendButton.addTarget(self, action: #selector(sendButtonTapped), for: .touchUpInside)
@@ -565,15 +598,9 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             
             commentTextField.leadingAnchor.constraint(equalTo: attachButton.trailingAnchor, constant: 12),
             commentTextField.centerYAnchor.constraint(equalTo: commentInputView.centerYAnchor),
-            commentTextField.widthAnchor.constraint(equalToConstant: 267),
+            commentTextField.trailingAnchor.constraint(equalTo: sendButton.leadingAnchor, constant: -8),
             commentTextField.heightAnchor.constraint(equalToConstant: 37),
             
-            privateButton.leadingAnchor.constraint(equalTo: commentTextField.trailingAnchor, constant: -40),
-            privateButton.centerYAnchor.constraint(equalTo: commentInputView.centerYAnchor),
-            privateButton.widthAnchor.constraint(equalToConstant: 31),
-            privateButton.heightAnchor.constraint(equalToConstant: 31),
-            
-            sendButton.leadingAnchor.constraint(equalTo: commentTextField.trailingAnchor, constant: 8),
             sendButton.trailingAnchor.constraint(equalTo: commentInputView.trailingAnchor, constant: -16),
             sendButton.centerYAnchor.constraint(equalTo: commentInputView.centerYAnchor),
             sendButton.widthAnchor.constraint(equalToConstant: 40),
@@ -582,6 +609,9 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
+        
+        // privateButton은 이제 commentTextField의 rightView로 사용되므로 숨김
+        privateButton.isHidden = true
         
         // Comments Header의 top 제약조건 저장 (기본값: headerView.bottomAnchor)
         commentsHeaderTopConstraint = commentsHeaderView.topAnchor.constraint(equalTo: headerView.bottomAnchor)
@@ -842,7 +872,20 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         usernameLabel.text = postDetail.postingWriterNickname ?? "익명"
         titleLabel.text = postDetail.postingTitle
         // categoryLabel.text = postDetail.postingCategory ?? "" // 카테고리 숨김
-        contentLabel.text = postDetail.postingContent
+        
+        // 본문 텍스트 설정 (행간 18)
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.minimumLineHeight = 18
+        paragraphStyle.maximumLineHeight = 18
+        let attributedText = NSAttributedString(
+            string: postDetail.postingContent,
+            attributes: [
+                .font: contentLabel.font ?? UIFont(name: "Pretendard Variable", size: 13) ?? UIFont.systemFont(ofSize: 13),
+                .foregroundColor: contentLabel.textColor ?? UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0),
+                .paragraphStyle: paragraphStyle
+            ]
+        )
+        contentLabel.attributedText = attributedText
         
         // 줍줍 상태에 따라 버튼 표시
         configureJoopjoopButton(isPickedUp: postDetail.isPickedUp)
@@ -1121,19 +1164,10 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     }
     
     @objc private func menuTapped() {
-        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        // 기존 팝업이 있으면 제거
+        hidePopoverMenu()
         
-        // 수정 버튼 추가 (누구나 볼 수 있지만, 클릭 시 권한 체크)
-        alert.addAction(UIAlertAction(title: "수정", style: .default) { _ in
-            self.handleEditAction()
-        })
-        
-        // 삭제 버튼 추가 (누구나 볼 수 있지만, 클릭 시 권한 체크)
-        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { _ in
-            self.handleDeleteAction()
-        })
-        
-        // lost 타입일 때만 줍줍 완료 버튼 추가
+        // lost 타입인지 확인
         let isLostType: Bool
         if let post = post {
             isLostType = post.type == .lost
@@ -1141,19 +1175,94 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             isLostType = navTitleLabel.text == "잃어버렸어요"
         }
         
+        // 메뉴 아이템 생성
+        var menuItems: [MenuItem] = [
+            MenuItem(title: "수정", iconName: "pencil"),
+            MenuItem(title: "삭제", iconName: "trash")
+        ]
+        
         if isLostType {
-            alert.addAction(UIAlertAction(title: "줍줍 완료", style: .default) { _ in
-                self.handleJoopjoopAction()
-            })
+            menuItems.append(MenuItem(title: "줍줍 완료", iconName: "checkmark.circle"))
         }
         
-        // iPad에서 actionSheet가 크래시되지 않도록 설정
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = navMoreButton
-            popover.sourceRect = navMoreButton.bounds
+        // 팝업 크기 설정
+        let popoverWidth: CGFloat = 85
+        let popoverHeight: CGFloat = isLostType ? 66 : 44
+        
+        // 오버레이 뷰 생성
+        let overlayView = UIView()
+        overlayView.backgroundColor = UIColor.clear
+        overlayView.translatesAutoresizingMaskIntoConstraints = false
+        overlayView.alpha = 0
+        view.addSubview(overlayView)
+        popoverOverlayView = overlayView
+        
+        // 팝업 메뉴 뷰 생성
+        let popoverView = PopoverMenuView()
+        popoverView.customBackgroundColor = UIColor(red: 206/255.0, green: 214/255.0, blue: 233/255.0, alpha: 1.0) // CED6E9
+        popoverView.customCornerRadius = 10
+        popoverView.customBorderColor = UIColor(red: 199/255.0, green: 207/255.0, blue: 225/255.0, alpha: 1.0) // C7CFE1
+        popoverView.customBorderWidth = 1.0 / UIScreen.main.scale
+        // 각 아이템 높이 계산: (전체 높이 - 구분선 높이 * 구분선 개수) / 아이템 개수
+        let separatorHeight: CGFloat = 1.0 / UIScreen.main.scale
+        let separatorCount = CGFloat(menuItems.count - 1)
+        let itemHeight = (popoverHeight - separatorHeight * separatorCount) / CGFloat(menuItems.count)
+        popoverView.customItemHeight = itemHeight
+        popoverView.customPadding = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        popoverView.delegate = self
+        popoverView.translatesAutoresizingMaskIntoConstraints = false
+        popoverView.alpha = 0
+        popoverView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+        view.addSubview(popoverView)
+        popoverMenuView = popoverView
+        
+        // 팝업 메뉴 구성
+        popoverView.configure(with: menuItems)
+        
+        // navMoreButton의 위치 계산
+        let buttonFrame = navMoreButton.convert(navMoreButton.bounds, to: view)
+        let popoverX = buttonFrame.maxX - popoverWidth
+        let popoverY = buttonFrame.maxY + 8
+        
+        // 제약 조건 설정
+        NSLayoutConstraint.activate([
+            overlayView.topAnchor.constraint(equalTo: view.topAnchor),
+            overlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            overlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            popoverView.widthAnchor.constraint(equalToConstant: popoverWidth),
+            popoverView.heightAnchor.constraint(equalToConstant: popoverHeight),
+            popoverView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: popoverX),
+            popoverView.topAnchor.constraint(equalTo: view.topAnchor, constant: popoverY)
+        ])
+        
+        // 애니메이션으로 표시
+        UIView.animate(withDuration: 0.2) {
+            overlayView.alpha = 1
+            popoverView.alpha = 1
+            popoverView.transform = .identity
         }
         
-        present(alert, animated: true)
+        // 오버레이 탭 시 팝업 닫기
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hidePopoverMenu))
+        overlayView.addGestureRecognizer(tapGesture)
+    }
+    
+    @objc private func hidePopoverMenu() {
+        guard let popoverView = popoverMenuView,
+              let overlayView = popoverOverlayView else { return }
+        
+        UIView.animate(withDuration: 0.2, animations: {
+            overlayView.alpha = 0
+            popoverView.alpha = 0
+            popoverView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+        }) { _ in
+            popoverView.removeFromSuperview()
+            overlayView.removeFromSuperview()
+            self.popoverMenuView = nil
+            self.popoverOverlayView = nil
+        }
     }
     
     private func handleEditAction() {
@@ -1388,61 +1497,137 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     }
     
     private func handleCommentMenuTapped(_ commentItem: CommentItem) {
-        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        // 기존 팝업이 있으면 제거
+        hideCommentPopoverMenu()
+        
+        currentCommentItem = commentItem
+        
+        // 메뉴 아이템 생성
+        var menuItems: [MenuItem] = []
         
         // 대댓글이 아닌 경우에만 "대댓글 달기" 옵션 추가
         if commentItem.parentCommentId == nil {
-            alert.addAction(UIAlertAction(title: "대댓글 달기", style: .default) { _ in
-                self.handleReplyToComment(commentItem)
-            })
+            menuItems.append(MenuItem(title: "대댓글 달기", iconName: "arrowshape.turn.up.right"))
         }
         
-        // 수정 버튼은 누구나 볼 수 있지만, 클릭 시 권한 체크
-        alert.addAction(UIAlertAction(title: "수정", style: .default) { _ in
-            self.handleEditComment(commentItem)
-        })
+        // 삭제 버튼 추가 (댓글 팝업용 아이콘 이름 사용)
+        menuItems.append(MenuItem(title: "삭제", iconName: "comment-trash"))
         
-        // 삭제 버튼은 누구나 볼 수 있지만, 클릭 시 권한 체크
-        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { _ in
-            self.handleDeleteComment(commentItem)
-        })
+        // 팝업 크기 설정
+        let popoverWidth: CGFloat = 85
+        // 대댓글인 경우(아이템 1개) 높이 27, 댓글인 경우(아이템 2개) 높이 53
+        let popoverHeight: CGFloat = commentItem.parentCommentId == nil ? 53 : 27
         
-        // iPad에서 actionSheet가 크래시되지 않도록 설정
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = view
-            popover.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 0, height: 0)
+        // 오버레이 뷰 생성
+        let overlayView = UIView()
+        overlayView.backgroundColor = UIColor.clear
+        overlayView.translatesAutoresizingMaskIntoConstraints = false
+        overlayView.alpha = 0
+        view.addSubview(overlayView)
+        commentPopoverOverlayView = overlayView
+        
+        // 팝업 메뉴 뷰 생성
+        let popoverView = PopoverMenuView()
+        popoverView.customBackgroundColor = UIColor(red: 206/255.0, green: 214/255.0, blue: 233/255.0, alpha: 1.0) // CED6E9
+        popoverView.customCornerRadius = 10
+        popoverView.customBorderColor = UIColor(red: 199/255.0, green: 207/255.0, blue: 225/255.0, alpha: 1.0) // C7CFE1
+        popoverView.customBorderWidth = 1.0 / UIScreen.main.scale
+        // 각 아이템 높이 계산: (전체 높이 - 구분선 높이 * 구분선 개수) / 아이템 개수
+        let separatorHeight: CGFloat = 1.0 / UIScreen.main.scale
+        let separatorCount = CGFloat(menuItems.count - 1)
+        let itemHeight = (popoverHeight - separatorHeight * separatorCount) / CGFloat(menuItems.count)
+        popoverView.customItemHeight = itemHeight
+        popoverView.customPadding = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        popoverView.delegate = self
+        popoverView.translatesAutoresizingMaskIntoConstraints = false
+        popoverView.alpha = 0
+        popoverView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+        view.addSubview(popoverView)
+        commentPopoverMenuView = popoverView
+        
+        // 팝업 메뉴 구성
+        popoverView.configure(with: menuItems)
+        
+        // 댓글 셀의 menuButton 위치 찾기
+        // tableView에서 해당 셀을 찾아야 함
+        if let indexPath = findCommentCellIndexPath(for: commentItem) {
+            if let cell = commentsTableView.cellForRow(at: indexPath) as? CommentCell {
+                let cellFrame = cell.convert(cell.bounds, to: view)
+                let menuButtonFrame = cell.menuButton.convert(cell.menuButton.bounds, to: view)
+                let popoverX = menuButtonFrame.maxX - popoverWidth
+                let popoverY = menuButtonFrame.maxY + 8
+                
+                // 제약 조건 설정
+                NSLayoutConstraint.activate([
+                    overlayView.topAnchor.constraint(equalTo: view.topAnchor),
+                    overlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                    overlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+                    overlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+                    
+                    popoverView.widthAnchor.constraint(equalToConstant: popoverWidth),
+                    popoverView.heightAnchor.constraint(equalToConstant: popoverHeight),
+                    popoverView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: popoverX),
+                    popoverView.topAnchor.constraint(equalTo: view.topAnchor, constant: popoverY)
+                ])
+            }
         }
         
-        present(alert, animated: true)
+        // 애니메이션으로 표시
+        UIView.animate(withDuration: 0.2) {
+            overlayView.alpha = 1
+            popoverView.alpha = 1
+            popoverView.transform = .identity
+        }
+        
+        // 오버레이 탭 시 팝업 닫기
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hideCommentPopoverMenu))
+        overlayView.addGestureRecognizer(tapGesture)
+    }
+    
+    private func findCommentCellIndexPath(for commentItem: CommentItem) -> IndexPath? {
+        for (index, item) in commentItems.enumerated() {
+            if item.commentId == commentItem.commentId {
+                return IndexPath(row: index, section: 0)
+            }
+        }
+        return nil
+    }
+    
+    @objc private func hideCommentPopoverMenu() {
+        guard let popoverView = commentPopoverMenuView,
+              let overlayView = commentPopoverOverlayView else { return }
+        
+        UIView.animate(withDuration: 0.2, animations: {
+            overlayView.alpha = 0
+            popoverView.alpha = 0
+            popoverView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+        }) { _ in
+            popoverView.removeFromSuperview()
+            overlayView.removeFromSuperview()
+            self.commentPopoverMenuView = nil
+            self.commentPopoverOverlayView = nil
+            self.currentCommentItem = nil
+        }
     }
     
     private func handleReplyToComment(_ commentItem: CommentItem) {
         print("📝 대댓글 작성 시작: 부모 댓글 ID \(commentItem.commentId)")
         
-        let alert = UIAlertController(title: "대댓글 작성", message: "\(commentItem.commentWriterNickName ?? "익명")님의 댓글에 답글을 작성합니다.", preferredStyle: .alert)
+        // 부모 댓글 ID 저장
+        parentCommentIdForReply = commentItem.commentId
         
-        alert.addTextField { textField in
-            textField.placeholder = "대댓글을 입력하세요..."
-            textField.text = ""
-        }
+        // 댓글 작성 폼 활성화 및 포커스
+        commentTextField.isEnabled = true
+        commentTextField.becomeFirstResponder()
         
-        let writeAction = UIAlertAction(title: "작성", style: .default) { _ in
-            guard let textField = alert.textFields?.first,
-                  let content = textField.text,
-                  !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                print("❌ 대댓글 내용이 비어있음")
-                return
-            }
-            
-            self.performReplyToComment(parentCommentId: commentItem.commentId, content: content)
-        }
-        
-        let cancelAction = UIAlertAction(title: "취소", style: .cancel)
-        
-        alert.addAction(writeAction)
-        alert.addAction(cancelAction)
-        
-        present(alert, animated: true)
+        // 플레이스홀더 업데이트
+        commentTextField.attributedPlaceholder = NSAttributedString(
+            string: "\(commentItem.commentWriterNickName ?? "익명")님에게 답글 작성...",
+            attributes: [
+                NSAttributedString.Key.foregroundColor: UIColor(red: 0x97/255.0, green: 0x97/255.0, blue: 0x97/255.0, alpha: 1.0),
+                NSAttributedString.Key.font: UIFont(name: "Pretendard Variable", size: 15) ?? UIFont.systemFont(ofSize: 15)
+            ]
+        )
     }
     
     private func performReplyToComment(parentCommentId: Int, content: String) {
@@ -1743,8 +1928,11 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
     private func createCommentWithImages(imageUrls: [String], commentText: String) {
         guard let postingId = self.postingId else { return }
         
+        // 대댓글인지 일반 댓글인지 확인
+        let parentCommentId = parentCommentIdForReply ?? 0
+        
         let commentRequest = CreateCommentRequest(
-            parentCommentId: 0, // API 스펙에 따라 일반 댓글은 0
+            parentCommentId: parentCommentId, // 대댓글인 경우 parentCommentIdForReply 사용, 아니면 0
             isCommentSecret: isCommentPrivate,
             commentContent: commentText.trimmingCharacters(in: .whitespacesAndNewlines),
             commentImageUrls: imageUrls.isEmpty ? nil : imageUrls
@@ -1764,9 +1952,23 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     // 댓글 입력 필드 초기화
                     self?.commentTextField.text = ""
                     self?.isCommentPrivate = false
-                    self?.privateButton.tintColor = .gray
+                    self?.lockButtonInTextField?.tintColor = UIColor(red: 0x93/255.0, green: 0x90/255.0, blue: 0x90/255.0, alpha: 1.0)
+                    self?.lockButtonInTextField?.setImage(UIImage(named: "UnRockIcon"), for: .normal)
                     self?.commentImages.removeAll()
+                    self?.selectedImageIdentifiers.removeAll()
                     self?.updateAttachButtonAppearance()
+                    
+                    // 부모 댓글 ID 초기화 (대댓글 작성 모드 해제)
+                    self?.parentCommentIdForReply = nil
+                    
+                    // 플레이스홀더 원래대로 복원
+                    self?.commentTextField.attributedPlaceholder = NSAttributedString(
+                        string: "댓글을 입력하세요",
+                        attributes: [
+                            NSAttributedString.Key.foregroundColor: UIColor(red: 0x97/255.0, green: 0x97/255.0, blue: 0x97/255.0, alpha: 1.0),
+                            NSAttributedString.Key.font: UIFont(name: "Pretendard Variable", size: 15) ?? UIFont.systemFont(ofSize: 15)
+                        ]
+                    )
                     
                     // 댓글 목록 새로고침
                     self?.loadComments()
@@ -1820,9 +2022,11 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
         isCommentPrivate.toggle()
         
         if isCommentPrivate {
-            privateButton.setImage(UIImage(named: "RockIcon"), for: .normal)
+            lockButtonInTextField?.setImage(UIImage(named: "RockIcon"), for: .normal)
+            lockButtonInTextField?.tintColor = UIColor(red: 0x93/255.0, green: 0x90/255.0, blue: 0x90/255.0, alpha: 1.0)
         } else {
-            privateButton.setImage(UIImage(named: "UnRockIcon"), for: .normal)
+            lockButtonInTextField?.setImage(UIImage(named: "UnRockIcon"), for: .normal)
+            lockButtonInTextField?.tintColor = UIColor(red: 0x93/255.0, green: 0x90/255.0, blue: 0x90/255.0, alpha: 1.0)
         }
         
         print("🔒 비밀 댓글 설정: \(isCommentPrivate)")
@@ -1831,37 +2035,15 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
     @objc private func attachButtonTapped() {
         print("📷 댓글 사진 첨부 버튼 클릭")
         
-        let alert = UIAlertController(title: "사진 첨부", message: "사진을 선택하세요", preferredStyle: .actionSheet)
-        
-        // 카메라 옵션
-        if UIImagePickerController.isSourceTypeAvailable(.camera) {
-            alert.addAction(UIAlertAction(title: "카메라", style: .default) { _ in
-                self.presentImagePicker(sourceType: .camera)
-            })
-        }
-        
-        // 사진 라이브러리 옵션
-        alert.addAction(UIAlertAction(title: "사진 라이브러리", style: .default) { _ in
-            self.presentImagePicker(sourceType: .photoLibrary)
-        })
-        
-        // 선택된 이미지가 있으면 제거 옵션
+        // 사진이 이미 첨부된 상태면 기존 사진 초기화
         if !commentImages.isEmpty {
-            alert.addAction(UIAlertAction(title: "첨부된 사진 제거", style: .destructive) { _ in
-                self.commentImages.removeAll()
-                self.updateAttachButtonAppearance()
-            })
+            commentImages.removeAll()
+            selectedImageIdentifiers.removeAll()
+            updateAttachButtonAppearance()
         }
         
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        
-        // iPad에서 actionSheet가 크래시되지 않도록 설정
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = attachButton
-            popover.sourceRect = attachButton.bounds
-        }
-        
-        present(alert, animated: true)
+        // 바로 사진 라이브러리로 이동
+        presentImagePicker(sourceType: .photoLibrary)
     }
     
     private func presentImagePicker(sourceType: UIImagePickerController.SourceType) {
@@ -1870,6 +2052,15 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
             var config = PHPickerConfiguration()
             config.selectionLimit = 5 // 최대 5장까지 선택 가능
             config.filter = .images
+            
+            // iOS 17+ 에서만 selection 속성 사용 가능
+            // 주의: 이 기능은 iOS 17+에서만 작동하며, 타입 호환성 문제로 인해 현재 주석 처리됨
+            // if #available(iOS 17.0, *) {
+            //     if !selectedImageIdentifiers.isEmpty {
+            //         // PHPickerConfiguration.selection은 PHPickerConfiguration.Selection 타입이 필요함
+            //         // 현재는 이 기능을 사용하지 않음
+            //     }
+            // }
             
             let picker = PHPickerViewController(configuration: config)
             picker.delegate = self
@@ -1886,11 +2077,12 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
     
     private func updateAttachButtonAppearance() {
         if commentImages.isEmpty {
-            attachButton.tintColor = .gray
-            attachButton.setImage(UIImage(systemName: "photo.on.rectangle"), for: .normal)
+            attachButton.tintColor = UIColor(red: 146/255.0, green: 168/255.0, blue: 221/255.0, alpha: 1.0)
+            attachButton.setImage(UIImage(named: "ImageBoxIcon"), for: .normal)
         } else {
-            attachButton.tintColor = .systemBlue
-            attachButton.setImage(UIImage(systemName: "photo.on.rectangle.fill"), for: .normal)
+            // 전송 버튼과 같은 색상으로 변경
+            attachButton.tintColor = UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0)
+            attachButton.setImage(UIImage(named: "ImageBoxIcon"), for: .normal)
         }
     }
 }
@@ -1930,9 +2122,18 @@ extension PostDetailViewController {
         
         print("📷 선택된 이미지 개수: \(results.count)")
         
+        // 기존 이미지 배열 초기화
+        commentImages.removeAll()
+        selectedImageIdentifiers.removeAll()
+        
         let group = DispatchGroup()
         
         for (index, result) in results.enumerated() {
+            // identifier 저장
+            if let assetIdentifier = result.assetIdentifier {
+                selectedImageIdentifiers.append(assetIdentifier)
+            }
+            
             group.enter()
             
             result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] object, error in
@@ -1948,9 +2149,9 @@ extension PostDetailViewController {
             }
         }
         
-        group.notify(queue: .main) {
-            print("📷 모든 이미지 로드 완료: \(self.commentImages.count)개")
-            self.updateAttachButtonAppearance()
+        group.notify(queue: .main) { [weak self] in
+            print("📷 모든 이미지 로드 완료: \(self?.commentImages.count ?? 0)개")
+            self?.updateAttachButtonAppearance()
         }
     }
 }
@@ -1978,16 +2179,16 @@ class CommentCell: UITableViewCell {
     
     private let usernameLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .primaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 13) ?? UIFont.systemFont(ofSize: 13)
+        label.textColor = UIColor(red: 98/255.0, green: 95/255.0, blue: 95/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
     private let timeLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 12)
-        label.textColor = .secondaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 10) ?? UIFont.systemFont(ofSize: 10)
+        label.textColor = UIColor(red: 98/255.0, green: 95/255.0, blue: 95/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -2020,14 +2221,14 @@ class CommentCell: UITableViewCell {
     
     private let contentLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .primaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 13) ?? UIFont.systemFont(ofSize: 13)
+        label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
-    private let menuButton: UIButton = {
+    let menuButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(named: "DotsIcon"), for: .normal)
         button.tintColor = UIColor(red: 0x7F/255.0, green: 0x82/255.0, blue: 0x8A/255.0, alpha: 1.0)
@@ -2058,6 +2259,8 @@ class CommentCell: UITableViewCell {
     private var contentLabelBottomConstraint: NSLayoutConstraint?
     private var contentLabelLeadingConstraint: NSLayoutConstraint?
     private var collectionViewLeadingConstraint: NSLayoutConstraint?
+    private var replyIndicatorViewTopConstraint: NSLayoutConstraint?
+    private var replyIndicatorViewCenterYConstraint: NSLayoutConstraint?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -2105,7 +2308,6 @@ class CommentCell: UITableViewCell {
             containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
             
             replyIndicatorView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            replyIndicatorView.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor),
             replyIndicatorView.widthAnchor.constraint(equalToConstant: 30),
             replyIndicatorView.heightAnchor.constraint(equalToConstant: 20),
             
@@ -2119,17 +2321,17 @@ class CommentCell: UITableViewCell {
             profileImageView.heightAnchor.constraint(equalToConstant: 20),
             
             usernameLabel.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 8),
-            usernameLabel.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor),
+            usernameLabel.topAnchor.constraint(equalTo: profileImageView.topAnchor),
             
-            timeLabel.leadingAnchor.constraint(equalTo: usernameLabel.trailingAnchor, constant: 8),
-            timeLabel.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor),
+            timeLabel.leadingAnchor.constraint(equalTo: usernameLabel.leadingAnchor),
+            timeLabel.topAnchor.constraint(equalTo: usernameLabel.bottomAnchor, constant: 4),
             
-            privateIconImageView.leadingAnchor.constraint(equalTo: timeLabel.trailingAnchor, constant: 4),
-            privateIconImageView.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor),
+            privateIconImageView.leadingAnchor.constraint(equalTo: usernameLabel.trailingAnchor, constant: 4),
+            privateIconImageView.centerYAnchor.constraint(equalTo: usernameLabel.centerYAnchor),
             privateIconImageView.widthAnchor.constraint(equalToConstant: 12),
             privateIconImageView.heightAnchor.constraint(equalToConstant: 12),
             
-            contentLabel.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 8),
+            contentLabel.topAnchor.constraint(equalTo: timeLabel.bottomAnchor, constant: 8),
             contentLabel.trailingAnchor.constraint(equalTo: menuButton.leadingAnchor, constant: -8),
             
             commentImagesCollectionView.topAnchor.constraint(equalTo: contentLabel.bottomAnchor, constant: 8),
@@ -2160,6 +2362,10 @@ class CommentCell: UITableViewCell {
         // profileImageView의 leading 제약조건 초기화 (기본값: 원댓글)
         profileLeadingConstraint = profileImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor)
         profileLeadingConstraint?.isActive = true
+        
+        // replyIndicatorView의 제약조건 초기화 (기본값: centerY)
+        replyIndicatorViewCenterYConstraint = replyIndicatorView.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor)
+        replyIndicatorViewTopConstraint = replyIndicatorView.topAnchor.constraint(equalTo: containerView.topAnchor)
     }
     
     func configure(with comment: Comment) {
@@ -2244,6 +2450,10 @@ class CommentCell: UITableViewCell {
         profileLeadingConstraint = profileImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor)
         profileLeadingConstraint?.isActive = true
         
+        // replyIndicatorView 제약조건 비활성화
+        replyIndicatorViewTopConstraint?.isActive = false
+        replyIndicatorViewCenterYConstraint?.isActive = false
+        
         // contentLabel의 leading 제약조건도 업데이트 (usernameLabel과 같은 위치)
         contentLabelLeadingConstraint?.isActive = false
         contentLabelLeadingConstraint = contentLabel.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 8)
@@ -2261,6 +2471,10 @@ class CommentCell: UITableViewCell {
         profileLeadingConstraint?.isActive = false
         profileLeadingConstraint = profileImageView.leadingAnchor.constraint(equalTo: replyIndicatorView.trailingAnchor, constant: 10)
         profileLeadingConstraint?.isActive = true
+        
+        // replyIndicatorView를 containerView.topAnchor에 맞춤 (원댓글 본문 아래에 오도록)
+        replyIndicatorViewCenterYConstraint?.isActive = false
+        replyIndicatorViewTopConstraint?.isActive = true
         
         // contentLabel의 leading 제약조건도 업데이트 (usernameLabel과 같은 위치)
         contentLabelLeadingConstraint?.isActive = false
@@ -2531,5 +2745,66 @@ extension CommentCell: UICollectionViewDataSource, UICollectionViewDelegate, UIC
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         return CGSize(width: 80, height: 80)
+    }
+}
+
+// MARK: - PopoverMenuViewDelegate
+extension PostDetailViewController: PopoverMenuViewDelegate {
+    func popoverMenuView(_ menuView: PopoverMenuView, didSelectItemAt index: Int) {
+        // 댓글 팝업인지 게시글 팝업인지 구분
+        if menuView == commentPopoverMenuView {
+            // 댓글 팝업 메뉴 처리
+            hideCommentPopoverMenu()
+            
+            guard let commentItem = currentCommentItem else { return }
+            
+            // 메뉴 아이템 순서: 대댓글 달기(0, 있는 경우), 삭제(마지막)
+            let hasReplyOption = commentItem.parentCommentId == nil
+            let deleteIndex = hasReplyOption ? 1 : 0
+            
+            if index == deleteIndex {
+                // 삭제
+                handleDeleteComment(commentItem)
+            } else if index == 0 && hasReplyOption {
+                // 대댓글 달기
+                handleReplyToComment(commentItem)
+            }
+        } else {
+            // 게시글 더보기 팝업 메뉴 처리
+            hidePopoverMenu()
+            
+            // lost 타입인지 확인
+            let isLostType: Bool
+            if let post = post {
+                isLostType = post.type == .lost
+            } else {
+                isLostType = navTitleLabel.text == "잃어버렸어요"
+            }
+            
+            // 메뉴 아이템 인덱스에 따라 처리
+            if isLostType {
+                // lost 타입: 수정(0), 삭제(1), 줍줍 완료(2)
+                switch index {
+                case 0:
+                    handleEditAction()
+                case 1:
+                    handleDeleteAction()
+                case 2:
+                    handleJoopjoopAction()
+                default:
+                    break
+                }
+            } else {
+                // found 타입: 수정(0), 삭제(1)
+                switch index {
+                case 0:
+                    handleEditAction()
+                case 1:
+                    handleDeleteAction()
+                default:
+                    break
+                }
+            }
+        }
     }
 }
