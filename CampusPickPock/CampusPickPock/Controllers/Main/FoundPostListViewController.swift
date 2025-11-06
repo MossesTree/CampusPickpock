@@ -167,13 +167,13 @@ class FoundPostListViewController: UIViewController {
     private func setupConstraints() {
         NSLayoutConstraint.activate([
             // Custom navigation header
-            customNavHeader.topAnchor.constraint(equalTo: view.topAnchor),
+            customNavHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             customNavHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             customNavHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            customNavHeader.heightAnchor.constraint(equalToConstant: 100),
+            customNavHeader.heightAnchor.constraint(equalToConstant: 44),
             
-            backButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 10),
-            backButton.topAnchor.constraint(equalTo: customNavHeader.topAnchor, constant: 70),
+            backButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 16),
+            backButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
             backButton.widthAnchor.constraint(equalToConstant: 48),
             backButton.heightAnchor.constraint(equalToConstant: 48),
             
@@ -181,10 +181,10 @@ class FoundPostListViewController: UIViewController {
             titleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
             
             subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 3),
-            subtitleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
+            subtitleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
             // Category Section
-            categoryScrollView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 18),
+            categoryScrollView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 12),
             categoryScrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             categoryScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             categoryScrollView.heightAnchor.constraint(equalToConstant: 40),
@@ -332,7 +332,8 @@ extension FoundPostListViewController: UITableViewDelegate, UITableViewDataSourc
         )
         
         let isFirst = (indexPath.row == 0)
-        cell.configure(with: post, isFirst: isFirst)
+        let isLast = (indexPath.row == filteredPostingItems.count - 1)
+        cell.configure(with: post, isFirst: isFirst, isLast: isLast)
         return cell
     }
     
@@ -480,7 +481,8 @@ class FoundPostCell: UITableViewCell {
             label.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
         }
         label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
-        label.numberOfLines = 2
+        label.numberOfLines = 1
+        label.lineBreakMode = .byTruncatingTail
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -556,6 +558,7 @@ class FoundPostCell: UITableViewCell {
     }()
     
     private var isFirstCell = false
+    private var isLastCell = false
     private var dividerLineTopConstraint: NSLayoutConstraint?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -613,12 +616,12 @@ class FoundPostCell: UITableViewCell {
             titleLabel.trailingAnchor.constraint(equalTo: pickedUpButton.leadingAnchor, constant: -8),
             titleLabel.centerYAnchor.constraint(equalTo: pickedUpButton.centerYAnchor),
             
-            pickedUpButton.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 23),
+            pickedUpButton.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 20),
             pickedUpButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             pickedUpButton.widthAnchor.constraint(equalToConstant: 75),
             pickedUpButton.heightAnchor.constraint(equalToConstant: 24),
             
-            clockIcon.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6),
+            clockIcon.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
             clockIcon.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             clockIcon.widthAnchor.constraint(equalToConstant: 16),
             clockIcon.heightAnchor.constraint(equalToConstant: 16),
@@ -626,7 +629,7 @@ class FoundPostCell: UITableViewCell {
             locationTimeLabel.centerYAnchor.constraint(equalTo: clockIcon.centerYAnchor),
             locationTimeLabel.leadingAnchor.constraint(equalTo: clockIcon.trailingAnchor, constant: 5),
             
-            descriptionLabel.topAnchor.constraint(equalTo: locationTimeLabel.bottomAnchor, constant: 6),
+            descriptionLabel.topAnchor.constraint(equalTo: locationTimeLabel.bottomAnchor, constant: 8),
             descriptionLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             descriptionLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             
@@ -647,8 +650,9 @@ class FoundPostCell: UITableViewCell {
         NSLayoutConstraint.activate(constraints)
     }
     
-    func configure(with post: Post, isFirst: Bool = false) {
+    func configure(with post: Post, isFirst: Bool = false, isLast: Bool = false) {
         self.isFirstCell = isFirst
+        self.isLastCell = isLast
         
         usernameLabel.text = post.authorName
         titleLabel.text = post.title
@@ -674,15 +678,14 @@ class FoundPostCell: UITableViewCell {
             configureJoopjoopButton(isPickedUp: post.isPickedUp)
         }
         
-        // 구분선 위치 설정
-        if !isFirstCell {
-            dividerLine.isHidden = false
-            // 프로필아이콘으로부터 20 위쪽에 선 위치 설정
-            dividerLineTopConstraint?.isActive = false
-            dividerLineTopConstraint = dividerLine.topAnchor.constraint(equalTo: profileImageView.topAnchor, constant: -20)
-            dividerLineTopConstraint?.isActive = true
-        } else {
+        // 구분선 위치 설정 - 마지막 셀이 아닐 때만 댓글 아이콘 아래 15pt 위치에 표시
+        if isLastCell {
             dividerLine.isHidden = true
+        } else {
+            dividerLine.isHidden = false
+            dividerLineTopConstraint?.isActive = false
+            dividerLineTopConstraint = dividerLine.topAnchor.constraint(equalTo: commentIcon.bottomAnchor, constant: 15)
+            dividerLineTopConstraint?.isActive = true
         }
         
         print("📅 Found 포스팅 시간 정보:")

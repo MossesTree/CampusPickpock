@@ -118,7 +118,15 @@ class PostCreateViewController: UIViewController {
     private let locationButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("위치 추가", for: .normal)
-        button.setImage(UIImage(systemName: "location.fill"), for: .normal)
+        // WritingLocation 이미지를 14*19 사이즈로 리사이즈
+        if let locationIcon = UIImage(named: "WritingLocation") {
+            let size = CGSize(width: 14, height: 19)
+            UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+            locationIcon.draw(in: CGRect(origin: .zero, size: size))
+            let resizedIcon = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            button.setImage(resizedIcon?.withRenderingMode(.alwaysOriginal), for: .normal)
+        }
         button.tintColor = UIColor(red: 100/255.0, green: 102/255.0, blue: 106/255.0, alpha: 1.0)
         // Pretendard Variable Regular 13px
         if let pretendardFont = UIFont(name: "Pretendard Variable", size: 13) {
@@ -126,7 +134,7 @@ class PostCreateViewController: UIViewController {
         } else {
             button.titleLabel?.font = UIFont.systemFont(ofSize: 13)
         }
-        button.setTitleColor(UIColor(red: 100/255.0, green: 102/255.0, blue: 106/255.0, alpha: 1.0), for: .normal)
+        button.setTitleColor(UIColor(red: 134/255.0, green: 136/255.0, blue: 140/255.0, alpha: 1.0), for: .normal)
         // 버튼 내부 패딩 제거하여 아이콘이 정확히 23 위치에 오도록
         button.contentEdgeInsets = UIEdgeInsets.zero
         // 이미지가 버튼의 왼쪽 끝에 정확히 위치하도록 (UIButton의 기본 패딩 보정)
@@ -156,9 +164,9 @@ class PostCreateViewController: UIViewController {
             string: "위치 추가",
             attributes: [
                 .font: button.titleLabel?.font ?? UIFont.systemFont(ofSize: 13),
-                .foregroundColor: UIColor(red: 100/255.0, green: 102/255.0, blue: 106/255.0, alpha: 1.0),
+                .foregroundColor: UIColor(red: 134/255.0, green: 136/255.0, blue: 140/255.0, alpha: 1.0),
                 .underlineStyle: NSUnderlineStyle.single.rawValue,
-                .underlineColor: UIColor(red: 100/255.0, green: 102/255.0, blue: 106/255.0, alpha: 1.0),
+                .underlineColor: UIColor(red: 134/255.0, green: 136/255.0, blue: 140/255.0, alpha: 1.0),
                 .paragraphStyle: paragraphStyle
             ]
         )
@@ -169,8 +177,8 @@ class PostCreateViewController: UIViewController {
             options: [.usesLineFragmentOrigin, .usesFontLeading],
             context: nil
         ).size
-        // 이미지 크기(약 20) + 간격(5) + 텍스트 크기
-        let minWidth = 20 + 5 + textSize.width + 10  // 여유 공간 추가
+        // 이미지 크기(14) + 간격(5) + 텍스트 크기
+        let minWidth = 14 + 5 + textSize.width + 10  // 여유 공간 추가
         button.widthAnchor.constraint(greaterThanOrEqualToConstant: minWidth).isActive = true
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
@@ -178,8 +186,20 @@ class PostCreateViewController: UIViewController {
     
     private let storageCheckbox: UIButton = {
         let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "square"), for: .normal)
-        button.tintColor = .gray
+        // WritingCheckbox 이미지를 13*13 사이즈로 리사이즈
+        if let checkboxIcon = UIImage(named: "WritingCheckbox") {
+            let size = CGSize(width: 13, height: 13)
+            UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+            checkboxIcon.draw(in: CGRect(origin: .zero, size: size))
+            let resizedIcon = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            button.setImage(resizedIcon?.withRenderingMode(.alwaysOriginal), for: .normal)
+        }
+        // 버튼의 contentMode 설정하여 아이콘이 중앙에 오도록
+        button.imageView?.contentMode = .center
+        // 버튼의 이미지 엣지 인셋 제거
+        button.imageEdgeInsets = .zero
+        button.contentEdgeInsets = .zero
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -193,7 +213,7 @@ class PostCreateViewController: UIViewController {
         } else {
             label.font = UIFont.systemFont(ofSize: 13)
         }
-        let textColor = UIColor(red: 100/255.0, green: 102/255.0, blue: 106/255.0, alpha: 1.0)
+        let textColor = UIColor(red: 134/255.0, green: 136/255.0, blue: 140/255.0, alpha: 1.0)
         let attributedText = NSAttributedString(
             string: "분실물 보관함에 넣어놨어요",
             attributes: [
@@ -672,6 +692,8 @@ class PostCreateViewController: UIViewController {
             
             storageCheckbox.topAnchor.constraint(equalTo: locationButton.bottomAnchor, constant: 16),
             storageCheckbox.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 23),
+            storageCheckbox.widthAnchor.constraint(equalToConstant: 13),
+            storageCheckbox.heightAnchor.constraint(equalToConstant: 13),
             
             storageLabel.leadingAnchor.constraint(equalTo: storageCheckbox.trailingAnchor, constant: 5),
             storageLabel.centerYAnchor.constraint(equalTo: storageCheckbox.centerYAnchor),
@@ -868,7 +890,7 @@ class PostCreateViewController: UIViewController {
     }
     
     private func updateLocationButtonTitle(_ title: String) {
-        let textColor = UIColor(red: 100/255.0, green: 102/255.0, blue: 106/255.0, alpha: 1.0)
+        let textColor = UIColor(red: 134/255.0, green: 136/255.0, blue: 140/255.0, alpha: 1.0)
         let font = locationButton.titleLabel?.font ?? UIFont.systemFont(ofSize: 13)
         // 텍스트가 전체 표시되도록 paragraphStyle 설정
         let paragraphStyle = NSMutableParagraphStyle()
@@ -899,7 +921,7 @@ class PostCreateViewController: UIViewController {
             context: nil
         ).size
         // 기존 너비 제약을 찾아서 업데이트하거나 새로 추가
-        let minWidth = 20 + 5 + textSize.width + 10  // 이미지 크기(약 20) + 간격(5) + 텍스트 크기 + 여유 공간
+        let minWidth = 14 + 5 + textSize.width + 10  // 이미지 크기(14) + 간격(5) + 텍스트 크기 + 여유 공간
         // 기존 widthAnchor 제약을 찾아서 업데이트
         for constraint in locationButton.constraints {
             if constraint.firstAttribute == .width && constraint.relation == .greaterThanOrEqual {
@@ -929,9 +951,27 @@ class PostCreateViewController: UIViewController {
     
     @objc private func storageCheckboxTapped() {
         isStorageChecked.toggle()
-        let imageName = isStorageChecked ? "checkmark.square.fill" : "square"
-        storageCheckbox.setImage(UIImage(systemName: imageName), for: .normal)
-        storageCheckbox.tintColor = isStorageChecked ? UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0) : .gray
+        if isStorageChecked {
+            // 체크된 상태: checkmark.square.fill을 13.5 point 사이즈로 설정 (비율 유지)
+            let config = UIImage.SymbolConfiguration(pointSize: 13.5, weight: .regular, scale: .medium)
+            let checkmarkIcon = UIImage(systemName: "checkmark.square.fill", withConfiguration: config)
+            storageCheckbox.setImage(checkmarkIcon, for: .normal)
+            storageCheckbox.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+        } else {
+            // 체크되지 않은 상태: WritingCheckbox 이미지 사용
+            if let checkboxIcon = UIImage(named: "WritingCheckbox") {
+                let size = CGSize(width: 13, height: 13)
+                UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+                checkboxIcon.draw(in: CGRect(origin: .zero, size: size))
+                let resizedIcon = UIGraphicsGetImageFromCurrentImageContext()
+                UIGraphicsEndImageContext()
+                storageCheckbox.setImage(resizedIcon?.withRenderingMode(.alwaysOriginal), for: .normal)
+            }
+        }
+        // 아이콘 변경 시에도 인셋과 크기 유지
+        storageCheckbox.imageEdgeInsets = .zero
+        storageCheckbox.contentEdgeInsets = .zero
+        storageCheckbox.imageView?.contentMode = .center
     }
     
     @objc private func uploadTapped() {
@@ -1287,7 +1327,7 @@ class PostCreateViewController: UIViewController {
         
         // 선택된 버튼 표시
         sender.backgroundColor = UIColor(red: 74/255.0, green: 128/255.0, blue: 240/255.0, alpha: 1.0)
-        sender.setTitleColor(.white, for: .normal)
+        sender.setTitleColor(UIColor(red: 247/255.0, green: 247/255.0, blue: 247/255.0, alpha: 1.0), for: .normal)
         
         // 선택된 카테고리 저장
         selectedCategory = sender.title(for: .normal)
@@ -1384,13 +1424,29 @@ class PostCreateViewController: UIViewController {
             if postType == .found {
                 if let isPlacedInStorage = postDetail.isPlacedInStorage, isPlacedInStorage {
                     isStorageChecked = true
-                    storageCheckbox.setImage(UIImage(systemName: "checkmark.square.fill"), for: .normal)
+                    // 체크된 상태: checkmark.square.fill을 13.5 point 사이즈로 설정 (비율 유지)
+                    let config = UIImage.SymbolConfiguration(pointSize: 13.5, weight: .regular, scale: .medium)
+                    let checkmarkIcon = UIImage(systemName: "checkmark.square.fill", withConfiguration: config)
+                    storageCheckbox.setImage(checkmarkIcon, for: .normal)
                     storageCheckbox.tintColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+                    storageCheckbox.imageEdgeInsets = .zero
+                    storageCheckbox.contentEdgeInsets = .zero
+                    storageCheckbox.imageView?.contentMode = .center
                     print("✅ 분실물 보관함 체크박스 설정 완료")
                 } else {
                     isStorageChecked = false
-                    storageCheckbox.setImage(UIImage(systemName: "square"), for: .normal)
-                    storageCheckbox.tintColor = .gray
+                    // 체크되지 않은 상태: WritingCheckbox 이미지 사용
+                    if let checkboxIcon = UIImage(named: "WritingCheckbox") {
+                        let size = CGSize(width: 13, height: 13)
+                        UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+                        checkboxIcon.draw(in: CGRect(origin: .zero, size: size))
+                        let resizedIcon = UIGraphicsGetImageFromCurrentImageContext()
+                        UIGraphicsEndImageContext()
+                        storageCheckbox.setImage(resizedIcon?.withRenderingMode(.alwaysOriginal), for: .normal)
+                    }
+                    storageCheckbox.imageEdgeInsets = .zero
+                    storageCheckbox.contentEdgeInsets = .zero
+                    storageCheckbox.imageView?.contentMode = .center
                     print("⚠️ 분실물 보관함 정보 없음 또는 false")
                 }
             }
@@ -1500,7 +1556,7 @@ class PostCreateViewController: UIViewController {
                 for arrangedSubview in stackView.arrangedSubviews {
                     if let button = arrangedSubview as? UIButton, button.title(for: .normal) == category {
                         button.backgroundColor = UIColor(red: 74/255.0, green: 128/255.0, blue: 240/255.0, alpha: 1.0)
-                        button.setTitleColor(.white, for: .normal)
+                        button.setTitleColor(UIColor(red: 247/255.0, green: 247/255.0, blue: 247/255.0, alpha: 1.0), for: .normal)
                         return
                     }
                 }
