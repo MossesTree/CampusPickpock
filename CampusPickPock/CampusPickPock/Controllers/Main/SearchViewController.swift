@@ -83,12 +83,12 @@ class SearchViewController: UIViewController {
         if let searchIconImage = UIImage(named: "SearchIcon") {
             let searchIcon = UIImageView(image: searchIconImage)
             searchIcon.contentMode = .scaleAspectFit
-            searchIcon.frame = CGRect(x: 0, y: 0, width: 20, height: 20)
-            
+        searchIcon.frame = CGRect(x: 0, y: 0, width: 20, height: 20)
+        
             let iconContainer = UIView(frame: CGRect(x: 0, y: 0, width: 35, height: 20))
-            iconContainer.addSubview(searchIcon)
-            searchIcon.center = iconContainer.center
-            
+        iconContainer.addSubview(searchIcon)
+        searchIcon.center = iconContainer.center
+        
             textField.rightView = iconContainer
         }
         
@@ -204,14 +204,14 @@ class SearchViewController: UIViewController {
             customHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             customHeader.bottomAnchor.constraint(equalTo: headerDividerLine.bottomAnchor),
             
-            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
-            backButton.topAnchor.constraint(equalTo: view.topAnchor, constant: 60),
+            backButton.leadingAnchor.constraint(equalTo: customHeader.leadingAnchor, constant: 16),
+            backButton.centerYAnchor.constraint(equalTo: customHeader.topAnchor, constant: 22),
             backButton.widthAnchor.constraint(equalToConstant: 48),
             backButton.heightAnchor.constraint(equalToConstant: 48),
             
-            searchTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 55),
-            searchTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            searchTextField.topAnchor.constraint(equalTo: view.topAnchor, constant: 62),
+            searchTextField.leadingAnchor.constraint(equalTo: backButton.trailingAnchor, constant: 0),
+            searchTextField.widthAnchor.constraint(equalToConstant: 296),
+            searchTextField.centerYAnchor.constraint(equalTo: backButton.centerYAnchor),
             searchTextField.heightAnchor.constraint(equalToConstant: 40),
             
             segmentedControl.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 40),

@@ -335,13 +335,9 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        // 화면이 다시 나타날 때 (수정 완료 후 돌아왔을 때) 데이터 새로고침
-        // 하지만 이미 데이터가 있으면 백그라운드에서만 업데이트
-        if postingId != nil && postDetail != nil {
-            // 백그라운드에서 조용히 업데이트 (UI 깜빡임 없음)
-            loadPostDetailInBackground()
-        } else if postingId != nil {
-            // 처음 로드할 때만 로딩 인디케이터 표시
+        // 처음 로드할 때만 서버 통신
+        // 이미 데이터가 있으면 서버 통신하지 않음 (수정 완료 후 돌아왔을 때 불필요한 통신 방지)
+        if postingId != nil && postDetail == nil {
             loadPostDetail()
         }
     }
