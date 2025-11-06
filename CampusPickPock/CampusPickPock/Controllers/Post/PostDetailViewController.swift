@@ -1311,9 +1311,9 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     }
     
     private func handleJoopjoopAction() {
-        // 권한 체크
-        guard let currentUser = DataManager.shared.currentUser else {
-            let alert = UIAlertController(title: "오류", message: "현재 사용자 정보를 가져올 수 없습니다.", preferredStyle: .alert)
+        // 로그인 체크
+        guard let token = DataManager.shared.getAccessToken(), !token.isEmpty else {
+            let alert = UIAlertController(title: "로그인 필요", message: "줍줍 기능을 사용하려면 로그인이 필요합니다.", preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "확인", style: .default))
             present(alert, animated: true)
             return
@@ -1321,17 +1321,6 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         
         guard let currentPostDetail = self.postDetail else {
             let alert = UIAlertController(title: "오류", message: "게시글 정보를 찾을 수 없습니다.", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "확인", style: .default))
-            present(alert, animated: true)
-            return
-        }
-        
-        let authorNickname = currentPostDetail.postingWriterNickname ?? ""
-        let currentUserNickname = currentUser.name
-        
-        // 본인 게시글인지 확인
-        if authorNickname != currentUserNickname {
-            let alert = UIAlertController(title: "접근 제한", message: "본인 게시글만 줍줍 상태를 변경할 수 있습니다.", preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "확인", style: .default))
             present(alert, animated: true)
             return

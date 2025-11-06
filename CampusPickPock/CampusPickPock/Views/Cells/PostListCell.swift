@@ -26,8 +26,13 @@ class PostListCell: UITableViewCell {
     
     private let usernameLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .primaryTextColor
+        // Pretendard Variable Regular 15px (17px에서 2px 감소)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 15) {
+            label.font = UIFont(descriptor: pretendardFont.fontDescriptor, size: 15)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 15)
+        }
+        label.textColor = UIColor(red: 98/255.0, green: 95/255.0, blue: 95/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -38,14 +43,25 @@ class PostListCell: UITableViewCell {
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 8
         imageView.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
+        // 테두리 추가: rgba(199, 207, 225, 1) 색상의 1px 테두리
+        imageView.layer.borderWidth = 1.0 / UIScreen.main.scale
+        imageView.layer.borderColor = UIColor(red: 199/255.0, green: 207/255.0, blue: 225/255.0, alpha: 1.0).cgColor
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.boldSystemFont(ofSize: 16)
-        label.textColor = .primaryTextColor
+        // Pretendard Variable SemiBold 18px (20px에서 2px 감소)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 18) {
+            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
+                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.semibold.rawValue]
+            ])
+            label.font = UIFont(descriptor: fontDescriptor, size: 18)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
+        }
+        label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 2
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -71,6 +87,9 @@ class PostListCell: UITableViewCell {
         let button = UIButton(type: .system)
         button.backgroundColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0)
         button.clipsToBounds = true
+        // 테두리 추가: rgba(199, 207, 225, 1) 색상의 1px 테두리
+        button.layer.borderWidth = 1.0 / UIScreen.main.scale
+        button.layer.borderColor = UIColor(red: 199/255.0, green: 207/255.0, blue: 225/255.0, alpha: 1.0).cgColor
         button.titleLabel?.font = UIFont(name: "Pretendard Variable", size: 13) ?? UIFont.systemFont(ofSize: 13, weight: .medium)
         button.setTitleColor(UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0), for: .normal)
         button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: 4)
@@ -82,9 +101,17 @@ class PostListCell: UITableViewCell {
     
     private let descriptionLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .primaryTextColor
+        // Pretendard Variable Regular 14px (16px에서 2px 감소)
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 14) {
+            label.font = UIFont(descriptor: pretendardFont.fontDescriptor, size: 14)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 14)
+        }
+        label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 3
+        label.lineBreakMode = .byTruncatingTail
+        label.adjustsFontSizeToFitWidth = false
+        label.minimumScaleFactor = 1.0  // 폰트 크기 자동 조정 방지
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -116,6 +143,7 @@ class PostListCell: UITableViewCell {
     private var isFirstCell = false
     private var dividerLineTopConstraint: NSLayoutConstraint?
     private var itemImageViewTopConstraint: NSLayoutConstraint?
+    private var descriptionLabelTopConstraint: NSLayoutConstraint?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -145,6 +173,7 @@ class PostListCell: UITableViewCell {
         
         dividerLineTopConstraint = dividerLine.topAnchor.constraint(equalTo: containerView.topAnchor)
         itemImageViewTopConstraint = itemImageView.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 12)
+        descriptionLabelTopConstraint = descriptionLabel.topAnchor.constraint(equalTo: locationTimeLabel.bottomAnchor, constant: 6)
         
         var constraints = [
             containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
@@ -168,24 +197,23 @@ class PostListCell: UITableViewCell {
             itemImageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             itemImageView.heightAnchor.constraint(equalToConstant: 200),
             
-            titleLabel.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 12),
             titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             titleLabel.trailingAnchor.constraint(equalTo: pickedUpButton.leadingAnchor, constant: -8),
+            titleLabel.centerYAnchor.constraint(equalTo: pickedUpButton.centerYAnchor),
             
-            pickedUpButton.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 12),
+            pickedUpButton.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 23),
             pickedUpButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             pickedUpButton.widthAnchor.constraint(equalToConstant: 75),
             pickedUpButton.heightAnchor.constraint(equalToConstant: 24),
             
-            clockIcon.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            clockIcon.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6),
             clockIcon.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             clockIcon.widthAnchor.constraint(equalToConstant: 16),
             clockIcon.heightAnchor.constraint(equalToConstant: 16),
             
-            locationTimeLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            locationTimeLabel.centerYAnchor.constraint(equalTo: clockIcon.centerYAnchor),
             locationTimeLabel.leadingAnchor.constraint(equalTo: clockIcon.trailingAnchor, constant: 5),
             
-            descriptionLabel.topAnchor.constraint(equalTo: locationTimeLabel.bottomAnchor, constant: 8),
             descriptionLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             descriptionLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             
@@ -207,10 +235,14 @@ class PostListCell: UITableViewCell {
             constraints.append(itemImageViewTopConstraint)
         }
         
+        if let descriptionLabelTopConstraint = descriptionLabelTopConstraint {
+            constraints.append(descriptionLabelTopConstraint)
+        }
+        
         NSLayoutConstraint.activate(constraints)
     }
     
-    func configure(with post: Post, isFirst: Bool = false, showProfile: Bool = true) {
+    func configure(with post: Post, isFirst: Bool = false, showProfile: Bool = true, hidePickedUpButton: Bool = false) {
         self.isFirstCell = isFirst
         
         // 프로필 표시 여부에 따라 UI 업데이트
@@ -225,9 +257,9 @@ class PostListCell: UITableViewCell {
             itemImageViewTopConstraint?.isActive = true
         } else {
             // 프로필이 없을 때는 이미지가 containerView.topAnchor에서 시작
-            // 프로필이 있을 때와 동일한 위치(16 + 24 + 12 = 52)로 맞춤
+            // 첫 번째 셀일 때 헤더 라인과 사진 사이 간격을 33pt로 설정 (containerView 8pt + itemImageView 25pt)
             itemImageViewTopConstraint?.isActive = false
-            itemImageViewTopConstraint = itemImageView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 52)
+            itemImageViewTopConstraint = itemImageView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 25)
             itemImageViewTopConstraint?.isActive = true
         }
         
@@ -239,6 +271,17 @@ class PostListCell: UITableViewCell {
         } else {
             locationTimeLabel.text = formatRelativeTime(post.createdAt)
         }
+        
+        // 프로필 표시 여부에 따라 본문 간격 조정
+        descriptionLabelTopConstraint?.isActive = false
+        if showProfile {
+            // 프로필이 있을 때는 bottomAnchor를 사용하여 6pt 간격 (댓글 단 글, Lost/Found 리스트)
+            descriptionLabelTopConstraint = descriptionLabel.topAnchor.constraint(equalTo: locationTimeLabel.bottomAnchor, constant: 6)
+        } else {
+            // 내가 쓴 글일 때는 firstBaseline을 사용하여 텍스트 기준선으로 정렬 (간격 0)
+            descriptionLabelTopConstraint = descriptionLabel.firstBaselineAnchor.constraint(equalTo: locationTimeLabel.lastBaselineAnchor, constant: 0)
+        }
+        descriptionLabelTopConstraint?.isActive = true
         
         descriptionLabel.text = post.content
         commentCountLabel.text = "\(post.commentCount)"
@@ -253,10 +296,15 @@ class PostListCell: UITableViewCell {
             itemImageView.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.0)
         }
         
-        // isPickedUp 상태에 따라 버튼 표시 (found 타입일 때는 숨김)
-        if post.type == .found {
+        // isPickedUp 상태에 따라 버튼 표시
+        // Found 타입일 때는 항상 숨김
+        // hidePickedUpButton이 true일 때도 숨김
+        // Lost 타입이고 hidePickedUpButton이 false일 때만 표시
+        if post.type == .found || hidePickedUpButton {
             pickedUpButton.isHidden = true
         } else {
+            // Lost 타입이고 hidePickedUpButton이 false일 때만 표시
+            pickedUpButton.isHidden = false
             configureJoopjoopButton(isPickedUp: post.isPickedUp)
         }
         

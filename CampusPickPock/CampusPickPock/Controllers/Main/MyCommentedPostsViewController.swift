@@ -19,8 +19,18 @@ class MyCommentedPostsViewController: UIViewController {
     
     private let backButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "arrow.left"), for: .normal)
-        button.tintColor = UIColor(red: 0x51/255.0, green: 0x5B/255.0, blue: 0x70/255.0, alpha: 1.0)
+        // DefaultBackIcon을 48x48 크기로 설정
+        if let backIcon = UIImage(named: "DefaultBackIcon") {
+            let size = CGSize(width: 48, height: 48)
+            UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+            backIcon.draw(in: CGRect(origin: .zero, size: size))
+            let resizedIcon = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            // 원본 색상을 유지하기 위해 renderingMode 설정
+            button.setImage(resizedIcon?.withRenderingMode(.alwaysOriginal), for: .normal)
+        }
+        // 색상 명시적으로 설정 (rgba(19, 45, 100, 1))
+        button.tintColor = UIColor(red: 19/255.0, green: 45/255.0, blue: 100/255.0, alpha: 1.0)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -151,8 +161,8 @@ class MyCommentedPostsViewController: UIViewController {
             
             backButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 16),
             backButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
-            backButton.widthAnchor.constraint(equalToConstant: 24),
-            backButton.heightAnchor.constraint(equalToConstant: 24),
+            backButton.widthAnchor.constraint(equalToConstant: 48),
+            backButton.heightAnchor.constraint(equalToConstant: 48),
             
             navTitleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
             navTitleLabel.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
@@ -226,7 +236,16 @@ class MyCommentedPostsViewController: UIViewController {
                     
                     // PostingItem을 Post로 변환
                     self?.posts = commentedPostings.map { postingItem in
-                        Post(
+                        // postingType을 기준으로 타입 판단 (대소문자 구분 없이)
+                        let postingType = postingItem.postingType?.uppercased() ?? ""
+                        let postType: PostType = postingType == "LOST" ? .lost : .found
+                        
+                        print("💬 댓글 단 글 타입 변환:")
+                        print("   - postingId: \(postingItem.postingId)")
+                        print("   - postingType: '\(postingItem.postingType ?? "nil")'")
+                        print("   - 변환된 타입: \(postType)")
+                        
+                        return Post(
                             id: String(postingItem.postingId),
                             postingId: postingItem.postingId,
                             title: postingItem.postingTitle,
@@ -239,7 +258,7 @@ class MyCommentedPostsViewController: UIViewController {
                             isHidden: false,
                             createdAt: self?.parseDate(postingItem.postingCreatedAt) ?? Date(),
                             commentCount: postingItem.commentCount,
-                            type: postingItem.postingCategory == "LOST" ? .lost : .found,
+                            type: postType,
                             isPickedUp: postingItem.isPickedUp
                         )
                     }
@@ -295,7 +314,9 @@ extension MyCommentedPostsViewController: UITableViewDelegate, UITableViewDataSo
         let post = posts[indexPath.row]
         let isFirst = indexPath.row == 0
         // 댓글 단 글이므로 프로필 표시함
-        cell.configure(with: post, isFirst: isFirst, showProfile: true)
+        // Found 타입일 때는 줍줍 버튼 숨김, Lost 타입일 때는 줍줍 버튼 표시
+        let hidePickedUpButton = post.type == .found
+        cell.configure(with: post, isFirst: isFirst, showProfile: true, hidePickedUpButton: hidePickedUpButton)
         return cell
     }
     
