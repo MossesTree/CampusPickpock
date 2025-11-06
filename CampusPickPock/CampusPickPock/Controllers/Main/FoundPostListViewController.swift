@@ -481,7 +481,8 @@ class FoundPostCell: UITableViewCell {
             label.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
         }
         label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
-        label.numberOfLines = 2
+        label.numberOfLines = 1
+        label.lineBreakMode = .byTruncatingTail
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -628,7 +629,7 @@ class FoundPostCell: UITableViewCell {
             locationTimeLabel.centerYAnchor.constraint(equalTo: clockIcon.centerYAnchor),
             locationTimeLabel.leadingAnchor.constraint(equalTo: clockIcon.trailingAnchor, constant: 5),
             
-            descriptionLabel.topAnchor.constraint(equalTo: locationTimeLabel.bottomAnchor, constant: 6),
+            descriptionLabel.topAnchor.constraint(equalTo: locationTimeLabel.bottomAnchor, constant: 8),
             descriptionLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             descriptionLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             

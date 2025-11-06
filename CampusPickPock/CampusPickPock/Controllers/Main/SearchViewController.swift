@@ -83,12 +83,12 @@ class SearchViewController: UIViewController {
         if let searchIconImage = UIImage(named: "SearchIcon") {
             let searchIcon = UIImageView(image: searchIconImage)
             searchIcon.contentMode = .scaleAspectFit
-            searchIcon.frame = CGRect(x: 0, y: 0, width: 20, height: 20)
-            
+        searchIcon.frame = CGRect(x: 0, y: 0, width: 20, height: 20)
+        
             let iconContainer = UIView(frame: CGRect(x: 0, y: 0, width: 35, height: 20))
-            iconContainer.addSubview(searchIcon)
-            searchIcon.center = iconContainer.center
-            
+        iconContainer.addSubview(searchIcon)
+        searchIcon.center = iconContainer.center
+        
             textField.rightView = iconContainer
         }
         
@@ -375,8 +375,7 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
         let cell = tableView.dequeueReusableCell(withIdentifier: "PostListCell", for: indexPath) as! PostListCell
         let post = searchResults[indexPath.row]
         let isFirst = indexPath.row == 0
-        let isLast = indexPath.row == searchResults.count - 1
-        cell.configure(with: post, isFirst: isFirst, isLast: isLast)
+        cell.configure(with: post, isFirst: isFirst)
         return cell
     }
     
