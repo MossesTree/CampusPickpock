@@ -15,6 +15,7 @@ class SplashAnimationViewController: UIViewController {
         label.font = UIFont.pretendardBold(size: 34)
         label.textColor = .primaryTextColor
         label.textAlignment = .center
+        label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()

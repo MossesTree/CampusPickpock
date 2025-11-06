@@ -40,7 +40,7 @@ class LostAndFoundViewController: UIViewController {
     // MARK: - Header Section
     private let headerView: UIView = {
         let view = UIView()
-        view.backgroundColor = .backgroundColor
+        view.backgroundColor = .clear
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -48,8 +48,8 @@ class LostAndFoundViewController: UIViewController {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "우리 학교 분실물 보관함"
-        label.font = UIFont.boldSystemFont(ofSize: 20)
-        label.textColor = .primaryTextColor
+        label.font = UIFont.pretendardBold(size: 22)
+        label.textColor = UIColor(red: 0.19, green: 0.45, blue: 1.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -57,7 +57,7 @@ class LostAndFoundViewController: UIViewController {
     private let subtitleLabel: UILabel = {
         let label = UILabel()
         label.text = "학교 분실물 보관함에 있는 물건을 손쉽게 찾아보세요"
-        label.font = UIFont.systemFont(ofSize: 14)
+        label.font = UIFont.pretendardMedium(size: 13)
         label.textColor = .secondaryTextColor
         label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -101,20 +101,64 @@ class LostAndFoundViewController: UIViewController {
         return collectionView
     }()
     
-    // MARK: - Add Button
+    // MARK: - Add Button=
     private let addButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("추가하기", for: .normal)
-        button.setImage(UIImage(systemName: "plus"), for: .normal)
-        button.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
-        button.setTitleColor(.white, for: .normal)
-        button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
-        button.layer.cornerRadius = 25
-        button.layer.shadowColor = UIColor.black.cgColor
-        button.layer.shadowOffset = CGSize(width: 0, height: 2)
-        button.layer.shadowOpacity = 0.1
-        button.layer.shadowRadius = 4
+        let button = UIButton(type: .custom)
         button.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 버튼 배경색 및 형태 설정
+        button.backgroundColor = UIColor(red: 0x6A/255.0, green: 0x8D/255.0, blue: 0xEB/255.0, alpha: 1.0)
+        button.layer.cornerRadius = 25
+        
+        // ⭐️ 1. 버튼의 기본 title을 비웁니다. (매우 중요!)
+        // 이렇게 해야 버튼의 내부 titleLabel이 중앙에 독립적으로 렌더링되지 않습니다.
+        button.setTitle("", for: .normal)
+        
+        if let plusIcon = UIImage(named: "PlusIcon") {
+            
+            // 2. 아이콘 ImageView 설정
+            let iconImageView = UIImageView(image: plusIcon)
+            iconImageView.contentMode = .scaleAspectFit
+            iconImageView.tintColor = .black
+            
+            // 3. ⭐️ StackView에 들어갈 커스텀 UILabel 생성
+            let customTitleLabel = UILabel()
+            customTitleLabel.text = "추가하기"
+            customTitleLabel.textColor = .black
+            customTitleLabel.font = UIFont.pretendardMedium(size: 16)
+            
+            // 4. 수평 Stack View 생성 및 설정
+            let contentStackView = UIStackView(arrangedSubviews: [iconImageView, customTitleLabel])
+            contentStackView.axis = .horizontal
+            contentStackView.spacing = 8 // 아이콘과 텍스트 사이의 간격
+            contentStackView.alignment = .center // 수직 중앙 정렬
+            contentStackView.translatesAutoresizingMaskIntoConstraints = false
+            
+            // 5. Stack View를 버튼에 추가
+            button.addSubview(contentStackView)
+            
+            // 6. 제약조건 설정
+            NSLayoutConstraint.activate([
+                // 아이콘 크기 제약
+                iconImageView.widthAnchor.constraint(equalToConstant: 18),
+                iconImageView.heightAnchor.constraint(equalToConstant: 18),
+                
+                // ⭐️ Stack View (아이콘 + 텍스트 그룹)를 버튼의 정중앙에 배치
+                contentStackView.centerXAnchor.constraint(equalTo: button.centerXAnchor),
+                contentStackView.centerYAnchor.constraint(equalTo: button.centerYAnchor)
+            ])
+        } else {
+            // PlusIcon이 없을 경우 fallback (시스템 아이콘 사용)
+            let plusImage = UIImage(systemName: "plus")
+            button.setImage(plusImage, for: .normal)
+            button.tintColor = .black
+            button.setTitle("추가하기", for: .normal) // fallback 시 텍스트 다시 설정
+            // 이 경우 image/title 간격 조정이 필요합니다.
+            let spacing: CGFloat = 8
+            button.titleEdgeInsets = UIEdgeInsets(top: 0, left: spacing, bottom: 0, right: -spacing)
+            button.imageEdgeInsets = UIEdgeInsets(top: 0, left: -spacing, bottom: 0, right: spacing)
+        }
+        
         return button
     }()
     
@@ -142,15 +186,13 @@ class LostAndFoundViewController: UIViewController {
         navigationController?.setNavigationBarHidden(true, animated: false)
         
         // Add custom header
-        view.addSubview(customNavHeader)
-        customNavHeader.addSubview(backButton)
+        view.addSubview(headerView)
+        headerView.addSubview(backButton)
+        headerView.addSubview(titleLabel)
+        headerView.addSubview(subtitleLabel)
         
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
-        
-        contentView.addSubview(headerView)
-        headerView.addSubview(titleLabel)
-        headerView.addSubview(subtitleLabel)
         
         contentView.addSubview(categoryScrollView)
         categoryScrollView.addSubview(categoryStackView)
@@ -169,17 +211,26 @@ class LostAndFoundViewController: UIViewController {
     private func setupConstraints() {
         NSLayoutConstraint.activate([
             // Custom navigation header
-            customNavHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            customNavHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            customNavHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            customNavHeader.heightAnchor.constraint(equalToConstant: 44),
+            headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+//            headerView.heightAnchor.constraint(equalToConstant: 44),
             
-            backButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 16),
-            backButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
+            backButton.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
+            backButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
             backButton.widthAnchor.constraint(equalToConstant: 24),
             backButton.heightAnchor.constraint(equalToConstant: 24),
             
-            scrollView.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
+            titleLabel.centerYAnchor.constraint(equalTo: backButton.centerYAnchor),
+            titleLabel.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
+//            titleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
+            
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
+            subtitleLabel.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
+//            subtitleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
+            subtitleLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -20),
+            
+            scrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: addButton.topAnchor, constant: -16),
@@ -190,22 +241,13 @@ class LostAndFoundViewController: UIViewController {
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             
-            // Header Section
-            headerView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            headerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            headerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            
-            titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 20),
-            titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
-            
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
-            subtitleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
-            subtitleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
-            subtitleLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -20),
+////            // Header Section
+//            headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+//            headerView.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor),
+//            headerView.trailingAnchor.constraint(equalTo: customNavHeader.trailingAnchor),
             
             // Category Section
-            categoryScrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 16),
+            categoryScrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 10),
             categoryScrollView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             categoryScrollView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             categoryScrollView.heightAnchor.constraint(equalToConstant: 40),
@@ -231,7 +273,8 @@ class LostAndFoundViewController: UIViewController {
             // Add Button
             addButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             addButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            addButton.widthAnchor.constraint(equalToConstant: 120),
+            addButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
+            addButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
             addButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
@@ -354,61 +397,42 @@ class LostAndFoundViewController: UIViewController {
     }
     
     private func loadItems() {
-        print("🏠 분실물 보관함 데이터 로드 시작 - 페이지: \(currentPage), 페이지 크기: \(pageSize)")
-        
+        // 초기 로딩 (첫 페이지 로드 시에만 사용)
+        guard currentPage == 0 else { return }
+
+        print("🏠 분실물 보관함 데이터 로드 시작 - 초기 페이지: \(currentPage)")
         isLoading = true
         
-        APIService.shared.getStorageList(page: currentPage, pageSize: pageSize) { [weak self] result in
+        APIService.shared.getStorageList(page: 0, pageSize: pageSize) { [weak self] result in
             DispatchQueue.main.async {
                 self?.isLoading = false
                 
                 switch result {
                 case .success(let storageItems):
-                    print("✅ 분실물 보관함 데이터 로드 성공: \(storageItems.count)개 항목")
-                    
-                    if storageItems.isEmpty && self?.currentPage == 0 {
-                        print("📭 분실물 보관함이 비어있습니다")
-                        self?.showEmptyState()
-                        return
+                    // 첫 페이지 데이터 처리
+                    self?.storageItems = storageItems
+                    self?.items = storageItems.map { storageItem in
+                        LostAndFoundItem(
+                            id: String(storageItem.postingId),
+                            name: storageItem.postingCategory ?? "분실물",
+                            imageUrl: storageItem.postingImageUrl,
+                            registrationDate: self?.formatDate(storageItem.postingCreatedAt) ?? ""
+                        )
                     }
-                    
-                    if self?.currentPage == 0 {
-                        // 첫 페이지 로드 시 기존 데이터 교체
-                        self?.storageItems = storageItems
-                        self?.items = storageItems.map { storageItem in
-                            LostAndFoundItem(
-                                id: String(storageItem.postingId),
-                                name: storageItem.postingCategory ?? "분실물",
-                                imageUrl: storageItem.postingImageUrl,
-                                registrationDate: self?.formatDate(storageItem.postingCreatedAt) ?? ""
-                            )
-                        }
-                    } else {
-                        // 추가 페이지 로드 시 데이터 추가
-                        self?.storageItems.append(contentsOf: storageItems)
-                        let newItems = storageItems.map { storageItem in
-                            LostAndFoundItem(
-                                id: String(storageItem.postingId),
-                                name: storageItem.postingCategory ?? "분실물",
-                                imageUrl: storageItem.postingImageUrl,
-                                registrationDate: self?.formatDate(storageItem.postingCreatedAt) ?? ""
-                            )
-                        }
-                        self?.items.append(contentsOf: newItems)
-                    }
-                    
                     self?.filterItems()
+                    
+                    if storageItems.isEmpty {
+                        self?.showEmptyState()
+                    }
                     
                 case .failure(let error):
                     print("❌ 분실물 보관함 데이터 로드 실패: \(error.localizedDescription)")
-                    
-                    // 오류 시 샘플 데이터 표시
                     self?.loadSampleData()
                 }
             }
         }
     }
-    
+
     private func loadSampleData() {
         // 샘플 데이터 로드 (API 실패 시)
         items = [
@@ -449,6 +473,33 @@ class LostAndFoundViewController: UIViewController {
             emptyLabel.centerXAnchor.constraint(equalTo: itemsCollectionView.centerXAnchor),
             emptyLabel.centerYAnchor.constraint(equalTo: itemsCollectionView.centerYAnchor)
         ])
+    }
+    private func appendNewItems(_ newStorageItems: [StorageItem]) {
+        guard !newStorageItems.isEmpty else { return }
+        
+        let startIndex = self.storageItems.count
+        
+        // 1. 데이터 소스 업데이트
+        self.storageItems.append(contentsOf: newStorageItems)
+        
+        let newLostAndFoundItems = newStorageItems.map { storageItem in
+            LostAndFoundItem(
+                id: String(storageItem.postingId),
+                name: storageItem.postingCategory ?? "분실물",
+                imageUrl: storageItem.postingImageUrl,
+                registrationDate: self.formatDate(storageItem.postingCreatedAt)
+            )
+        }
+        self.items.append(contentsOf: newLostAndFoundItems)
+        self.filterItems() // 필터링된 배열도 업데이트
+
+        // 2. Collection View 업데이트: Batch Updates 사용
+        let endIndex = self.filteredItems.count
+        let indexPaths = (startIndex..<endIndex).map { IndexPath(item: $0, section: 0) }
+
+        itemsCollectionView.performBatchUpdates({
+            itemsCollectionView.insertItems(at: indexPaths)
+        }, completion: nil)
     }
 }
 
@@ -501,7 +552,7 @@ extension LostAndFoundViewController: UICollectionViewDelegate, UICollectionView
 extension LostAndFoundViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let width = (collectionView.frame.width - 44) / 2 // 2열 그리드
-        return CGSize(width: width, height: width + 80) // 이미지 + 텍스트 공간
+        return CGSize(width: width, height: width) // 이미지 + 텍스트 공간
     }
 }
 
@@ -518,7 +569,6 @@ class LostAndFoundItemCell: UICollectionViewCell {
     
     private let containerView: UIView = {
         let view = UIView()
-        view.backgroundColor = .white
         view.layer.cornerRadius = 12
         view.layer.shadowColor = UIColor.black.cgColor
         view.layer.shadowOffset = CGSize(width: 0, height: 2)

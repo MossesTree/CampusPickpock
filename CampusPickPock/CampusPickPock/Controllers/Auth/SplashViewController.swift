@@ -21,15 +21,7 @@ class SplashViewController: UIViewController {
     private let subtitleLabel: UILabel = {
         let label = UILabel()
         label.text = "내 손 안의 분실물 보관함"
-        label.font = UIFont(name: "Pretendard Variable",size: 20)
-        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 20) {
-            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
-                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.semibold]
-            ])
-            label.font = UIFont(descriptor: fontDescriptor, size: 20)
-        } else {
-            label.font = UIFont.systemFont(ofSize: 20, weight: .semibold)
-        }
+        label.font = UIFont.pretendardSemibold(size: 20)
         label.textColor = UIColor.primaryColor
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -39,14 +31,7 @@ class SplashViewController: UIViewController {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "캠퍼스 줍줍"
-        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 40) {
-            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
-                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.bold]
-            ])
-            label.font = UIFont(descriptor: fontDescriptor, size: 40)
-        } else {
-            label.font = UIFont.systemFont(ofSize: 40, weight: .bold)
-        }
+        label.font = UIFont.pretendardBold(size: 40)
         label.textColor = UIColor.primaryColor // #4267F6
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
