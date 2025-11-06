@@ -202,12 +202,12 @@ class PostListCell: UITableViewCell {
             titleLabel.trailingAnchor.constraint(equalTo: pickedUpButton.leadingAnchor, constant: -8),
             titleLabel.centerYAnchor.constraint(equalTo: pickedUpButton.centerYAnchor),
             
-            pickedUpButton.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 23),
+            pickedUpButton.topAnchor.constraint(equalTo: itemImageView.bottomAnchor, constant: 20),
             pickedUpButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             pickedUpButton.widthAnchor.constraint(equalToConstant: 75),
             pickedUpButton.heightAnchor.constraint(equalToConstant: 24),
             
-            clockIcon.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            clockIcon.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
             clockIcon.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             clockIcon.widthAnchor.constraint(equalToConstant: 16),
             clockIcon.heightAnchor.constraint(equalToConstant: 16),
