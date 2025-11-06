@@ -167,13 +167,13 @@ class FoundPostListViewController: UIViewController {
     private func setupConstraints() {
         NSLayoutConstraint.activate([
             // Custom navigation header
-            customNavHeader.topAnchor.constraint(equalTo: view.topAnchor),
+            customNavHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             customNavHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             customNavHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            customNavHeader.heightAnchor.constraint(equalToConstant: 100),
+            customNavHeader.heightAnchor.constraint(equalToConstant: 44),
             
-            backButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 10),
-            backButton.topAnchor.constraint(equalTo: customNavHeader.topAnchor, constant: 70),
+            backButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 16),
+            backButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
             backButton.widthAnchor.constraint(equalToConstant: 48),
             backButton.heightAnchor.constraint(equalToConstant: 48),
             
@@ -181,10 +181,10 @@ class FoundPostListViewController: UIViewController {
             titleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
             
             subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 3),
-            subtitleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
+            subtitleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
             // Category Section
-            categoryScrollView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 18),
+            categoryScrollView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 12),
             categoryScrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             categoryScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             categoryScrollView.heightAnchor.constraint(equalToConstant: 40),
