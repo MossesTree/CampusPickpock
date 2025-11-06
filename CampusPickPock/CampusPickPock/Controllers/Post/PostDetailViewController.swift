@@ -101,16 +101,22 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     
     private let usernameLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .primaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 15) ?? UIFont.systemFont(ofSize: 15)
+        label.textColor = UIColor(red: 98/255.0, green: 95/255.0, blue: 95/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.boldSystemFont(ofSize: 20)
-        label.textColor = .primaryTextColor
+        // Pretendard Variable SemiBold 22px
+        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 22) {
+            let descriptor = pretendardFont.fontDescriptor.addingAttributes([.traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.semibold]])
+            label.font = UIFont(descriptor: descriptor, size: 22)
+        } else {
+            label.font = UIFont.systemFont(ofSize: 22, weight: .semibold)
+        }
+        label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -214,8 +220,8 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     
     private let contentLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 16)
-        label.textColor = .primaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 13) ?? UIFont.systemFont(ofSize: 13)
+        label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -231,8 +237,8 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     
     private let commentsCountLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.boldSystemFont(ofSize: 16)
-        label.textColor = .primaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 15) ?? UIFont.systemFont(ofSize: 15)
+        label.textColor = UIColor(red: 98/255.0, green: 95/255.0, blue: 95/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -842,7 +848,20 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         usernameLabel.text = postDetail.postingWriterNickname ?? "익명"
         titleLabel.text = postDetail.postingTitle
         // categoryLabel.text = postDetail.postingCategory ?? "" // 카테고리 숨김
-        contentLabel.text = postDetail.postingContent
+        
+        // 본문 텍스트 설정 (행간 18)
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.minimumLineHeight = 18
+        paragraphStyle.maximumLineHeight = 18
+        let attributedText = NSAttributedString(
+            string: postDetail.postingContent,
+            attributes: [
+                .font: contentLabel.font ?? UIFont(name: "Pretendard Variable", size: 13) ?? UIFont.systemFont(ofSize: 13),
+                .foregroundColor: contentLabel.textColor ?? UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0),
+                .paragraphStyle: paragraphStyle
+            ]
+        )
+        contentLabel.attributedText = attributedText
         
         // 줍줍 상태에 따라 버튼 표시
         configureJoopjoopButton(isPickedUp: postDetail.isPickedUp)
@@ -1978,16 +1997,16 @@ class CommentCell: UITableViewCell {
     
     private let usernameLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .primaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 13) ?? UIFont.systemFont(ofSize: 13)
+        label.textColor = UIColor(red: 98/255.0, green: 95/255.0, blue: 95/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
     private let timeLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 12)
-        label.textColor = .secondaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 10) ?? UIFont.systemFont(ofSize: 10)
+        label.textColor = UIColor(red: 98/255.0, green: 95/255.0, blue: 95/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -2020,8 +2039,8 @@ class CommentCell: UITableViewCell {
     
     private let contentLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .primaryTextColor
+        label.font = UIFont(name: "Pretendard Variable", size: 13) ?? UIFont.systemFont(ofSize: 13)
+        label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -2058,6 +2077,8 @@ class CommentCell: UITableViewCell {
     private var contentLabelBottomConstraint: NSLayoutConstraint?
     private var contentLabelLeadingConstraint: NSLayoutConstraint?
     private var collectionViewLeadingConstraint: NSLayoutConstraint?
+    private var replyIndicatorViewTopConstraint: NSLayoutConstraint?
+    private var replyIndicatorViewCenterYConstraint: NSLayoutConstraint?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -2105,7 +2126,6 @@ class CommentCell: UITableViewCell {
             containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
             
             replyIndicatorView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            replyIndicatorView.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor),
             replyIndicatorView.widthAnchor.constraint(equalToConstant: 30),
             replyIndicatorView.heightAnchor.constraint(equalToConstant: 20),
             
@@ -2119,17 +2139,17 @@ class CommentCell: UITableViewCell {
             profileImageView.heightAnchor.constraint(equalToConstant: 20),
             
             usernameLabel.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 8),
-            usernameLabel.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor),
+            usernameLabel.topAnchor.constraint(equalTo: profileImageView.topAnchor),
             
-            timeLabel.leadingAnchor.constraint(equalTo: usernameLabel.trailingAnchor, constant: 8),
-            timeLabel.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor),
+            timeLabel.leadingAnchor.constraint(equalTo: usernameLabel.leadingAnchor),
+            timeLabel.topAnchor.constraint(equalTo: usernameLabel.bottomAnchor, constant: 4),
             
-            privateIconImageView.leadingAnchor.constraint(equalTo: timeLabel.trailingAnchor, constant: 4),
-            privateIconImageView.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor),
+            privateIconImageView.leadingAnchor.constraint(equalTo: usernameLabel.trailingAnchor, constant: 4),
+            privateIconImageView.centerYAnchor.constraint(equalTo: usernameLabel.centerYAnchor),
             privateIconImageView.widthAnchor.constraint(equalToConstant: 12),
             privateIconImageView.heightAnchor.constraint(equalToConstant: 12),
             
-            contentLabel.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 8),
+            contentLabel.topAnchor.constraint(equalTo: timeLabel.bottomAnchor, constant: 8),
             contentLabel.trailingAnchor.constraint(equalTo: menuButton.leadingAnchor, constant: -8),
             
             commentImagesCollectionView.topAnchor.constraint(equalTo: contentLabel.bottomAnchor, constant: 8),
@@ -2160,6 +2180,10 @@ class CommentCell: UITableViewCell {
         // profileImageView의 leading 제약조건 초기화 (기본값: 원댓글)
         profileLeadingConstraint = profileImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor)
         profileLeadingConstraint?.isActive = true
+        
+        // replyIndicatorView의 제약조건 초기화 (기본값: centerY)
+        replyIndicatorViewCenterYConstraint = replyIndicatorView.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor)
+        replyIndicatorViewTopConstraint = replyIndicatorView.topAnchor.constraint(equalTo: containerView.topAnchor)
     }
     
     func configure(with comment: Comment) {
@@ -2244,6 +2268,10 @@ class CommentCell: UITableViewCell {
         profileLeadingConstraint = profileImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor)
         profileLeadingConstraint?.isActive = true
         
+        // replyIndicatorView 제약조건 비활성화
+        replyIndicatorViewTopConstraint?.isActive = false
+        replyIndicatorViewCenterYConstraint?.isActive = false
+        
         // contentLabel의 leading 제약조건도 업데이트 (usernameLabel과 같은 위치)
         contentLabelLeadingConstraint?.isActive = false
         contentLabelLeadingConstraint = contentLabel.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 8)
@@ -2261,6 +2289,10 @@ class CommentCell: UITableViewCell {
         profileLeadingConstraint?.isActive = false
         profileLeadingConstraint = profileImageView.leadingAnchor.constraint(equalTo: replyIndicatorView.trailingAnchor, constant: 10)
         profileLeadingConstraint?.isActive = true
+        
+        // replyIndicatorView를 containerView.topAnchor에 맞춤 (원댓글 본문 아래에 오도록)
+        replyIndicatorViewCenterYConstraint?.isActive = false
+        replyIndicatorViewTopConstraint?.isActive = true
         
         // contentLabel의 leading 제약조건도 업데이트 (usernameLabel과 같은 위치)
         contentLabelLeadingConstraint?.isActive = false
