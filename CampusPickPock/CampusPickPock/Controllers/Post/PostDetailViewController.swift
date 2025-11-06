@@ -309,6 +309,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     private var isCommentPrivate = false
     private var lockButtonInTextField: UIButton? // rightView의 잠금 버튼 참조
     private var parentCommentIdForReply: Int? // 대댓글 작성 시 부모 댓글 ID
+    private var selectedImageIdentifiers: [String] = [] // 선택된 이미지의 identifier 저장
     
     // 커스텀 팝업 관련
     private var popoverMenuView: PopoverMenuView?
@@ -1954,6 +1955,7 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     self?.lockButtonInTextField?.tintColor = UIColor(red: 0x93/255.0, green: 0x90/255.0, blue: 0x90/255.0, alpha: 1.0)
                     self?.lockButtonInTextField?.setImage(UIImage(named: "UnRockIcon"), for: .normal)
                     self?.commentImages.removeAll()
+                    self?.selectedImageIdentifiers.removeAll()
                     self?.updateAttachButtonAppearance()
                     
                     // 부모 댓글 ID 초기화 (대댓글 작성 모드 해제)
@@ -2033,37 +2035,15 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
     @objc private func attachButtonTapped() {
         print("📷 댓글 사진 첨부 버튼 클릭")
         
-        let alert = UIAlertController(title: "사진 첨부", message: "사진을 선택하세요", preferredStyle: .actionSheet)
-        
-        // 카메라 옵션
-        if UIImagePickerController.isSourceTypeAvailable(.camera) {
-            alert.addAction(UIAlertAction(title: "카메라", style: .default) { _ in
-                self.presentImagePicker(sourceType: .camera)
-            })
-        }
-        
-        // 사진 라이브러리 옵션
-        alert.addAction(UIAlertAction(title: "사진 라이브러리", style: .default) { _ in
-            self.presentImagePicker(sourceType: .photoLibrary)
-        })
-        
-        // 선택된 이미지가 있으면 제거 옵션
+        // 사진이 이미 첨부된 상태면 기존 사진 초기화
         if !commentImages.isEmpty {
-            alert.addAction(UIAlertAction(title: "첨부된 사진 제거", style: .destructive) { _ in
-                self.commentImages.removeAll()
-                self.updateAttachButtonAppearance()
-            })
+            commentImages.removeAll()
+            selectedImageIdentifiers.removeAll()
+            updateAttachButtonAppearance()
         }
         
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        
-        // iPad에서 actionSheet가 크래시되지 않도록 설정
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = attachButton
-            popover.sourceRect = attachButton.bounds
-        }
-        
-        present(alert, animated: true)
+        // 바로 사진 라이브러리로 이동
+        presentImagePicker(sourceType: .photoLibrary)
     }
     
     private func presentImagePicker(sourceType: UIImagePickerController.SourceType) {
@@ -2072,6 +2052,15 @@ extension PostDetailViewController: UITableViewDelegate, UITableViewDataSource {
             var config = PHPickerConfiguration()
             config.selectionLimit = 5 // 최대 5장까지 선택 가능
             config.filter = .images
+            
+            // iOS 17+ 에서만 selection 속성 사용 가능
+            // 주의: 이 기능은 iOS 17+에서만 작동하며, 타입 호환성 문제로 인해 현재 주석 처리됨
+            // if #available(iOS 17.0, *) {
+            //     if !selectedImageIdentifiers.isEmpty {
+            //         // PHPickerConfiguration.selection은 PHPickerConfiguration.Selection 타입이 필요함
+            //         // 현재는 이 기능을 사용하지 않음
+            //     }
+            // }
             
             let picker = PHPickerViewController(configuration: config)
             picker.delegate = self
@@ -2132,9 +2121,18 @@ extension PostDetailViewController {
         
         print("📷 선택된 이미지 개수: \(results.count)")
         
+        // 기존 이미지 배열 초기화
+        commentImages.removeAll()
+        selectedImageIdentifiers.removeAll()
+        
         let group = DispatchGroup()
         
         for (index, result) in results.enumerated() {
+            // identifier 저장
+            if let assetIdentifier = result.assetIdentifier {
+                selectedImageIdentifiers.append(assetIdentifier)
+            }
+            
             group.enter()
             
             result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] object, error in
@@ -2150,9 +2148,9 @@ extension PostDetailViewController {
             }
         }
         
-        group.notify(queue: .main) {
-            print("📷 모든 이미지 로드 완료: \(self.commentImages.count)개")
-            self.updateAttachButtonAppearance()
+        group.notify(queue: .main) { [weak self] in
+            print("📷 모든 이미지 로드 완료: \(self?.commentImages.count ?? 0)개")
+            self?.updateAttachButtonAppearance()
         }
     }
 }
