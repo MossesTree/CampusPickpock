@@ -1486,11 +1486,6 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             })
         }
         
-        // 수정 버튼은 누구나 볼 수 있지만, 클릭 시 권한 체크
-        alert.addAction(UIAlertAction(title: "수정", style: .default) { _ in
-            self.handleEditComment(commentItem)
-        })
-        
         // 삭제 버튼은 누구나 볼 수 있지만, 클릭 시 권한 체크
         alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { _ in
             self.handleDeleteComment(commentItem)
