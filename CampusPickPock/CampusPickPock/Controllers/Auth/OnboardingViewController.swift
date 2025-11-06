@@ -17,55 +17,46 @@ class OnboardingViewController: UIViewController {
         return scrollView
     }()
     
-    private let pageControl: UIPageControl = {
-        let pageControl = UIPageControl()
-        pageControl.numberOfPages = 2
-        pageControl.currentPage = 0
-        pageControl.pageIndicatorTintColor = .lightGray
-        pageControl.currentPageIndicatorTintColor = .primaryColor
-        pageControl.translatesAutoresizingMaskIntoConstraints = false
-        return pageControl
-    }()
     
     private let skipButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("건너뛰기", for: .normal)
         button.setTitleColor(.secondaryTextColor, for: .normal)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 16)
+        button.titleLabel?.font = UIFont.pretendardSemibold(size: 16)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
     
     private let nextButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("다음", for: .normal)
-        button.setTitleColor(.primaryColor, for: .normal)
-        button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
+        button.setTitle("다음으로", for: .normal)
+        button.backgroundColor = .primaryColor
+        button.setTitleColor(.white, for: .normal)
+        button.titleLabel?.font = UIFont.pretendardSemibold(size: 18)
+        button.layer.cornerRadius = 10
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
     
     private let startButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("시작하기", for: .normal)
+        button.setTitle("다음으로", for: .normal)
         button.backgroundColor = .primaryColor
         button.setTitleColor(.white, for: .normal)
-        button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
-        button.layer.cornerRadius = 25
+        button.titleLabel?.font = UIFont.pretendardSemibold(size: 18)
+        button.layer.cornerRadius = 10
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
     
     private let onboardingPages = [
         OnboardingPage(
-            title: "캠퍼스에서 잃어버린 물건을\n쉽게 찾아보세요",
-            subtitle: "분실물을 등록하고 찾아보는\n간편한 서비스입니다",
-            imageName: "magnifyingglass"
+            subtitle: "어? 내 물건 어디갔지 ?\n이란 질문 한번쯤 하신 기억이\n있지 않으신가요?",
+            imageName: "SplashIcon"
         ),
         OnboardingPage(
-            title: "실시간 알림으로\n빠르게 소통하세요",
-            subtitle: "댓글과 알림을 통해\n빠르게 소통할 수 있습니다",
-            imageName: "bell"
+            subtitle: "학교 안 잃어버린 모든 물건들,\n이젠 캠퍼스 줍줍에서 찾아보세요",
+            imageName: "SplashIcon"
         )
     ]
     
@@ -80,7 +71,6 @@ class OnboardingViewController: UIViewController {
         view.backgroundColor = .backgroundColor
         
         view.addSubview(scrollView)
-        view.addSubview(pageControl)
         view.addSubview(skipButton)
         view.addSubview(nextButton)
         view.addSubview(startButton)
@@ -88,26 +78,26 @@ class OnboardingViewController: UIViewController {
         startButton.isHidden = true
         
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: pageControl.topAnchor, constant: -20),
-            
-            pageControl.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            pageControl.bottomAnchor.constraint(equalTo: skipButton.topAnchor, constant: -20),
-            
-            skipButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            skipButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            skipButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            skipButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             skipButton.heightAnchor.constraint(equalToConstant: 50),
             
-            nextButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            nextButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            nextButton.heightAnchor.constraint(equalToConstant: 50),
+            scrollView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            scrollView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            scrollView.topAnchor.constraint(equalTo: skipButton.bottomAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            
+            
+            nextButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            nextButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -76),
+            nextButton.widthAnchor.constraint(equalToConstant: 340),
+            nextButton.heightAnchor.constraint(equalToConstant: 65),
             
             startButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            startButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            startButton.widthAnchor.constraint(equalToConstant: 200),
-            startButton.heightAnchor.constraint(equalToConstant: 50)
+            startButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -76),
+            startButton.widthAnchor.constraint(equalToConstant: 340),
+            startButton.heightAnchor.constraint(equalToConstant: 65)
         ])
     }
     
@@ -116,8 +106,10 @@ class OnboardingViewController: UIViewController {
         
         for (index, page) in onboardingPages.enumerated() {
             let pageView = createPageView(for: page)
+            
             pageView.frame = CGRect(x: view.bounds.width * CGFloat(index), y: 0, width: view.bounds.width, height: scrollView.bounds.height)
             scrollView.addSubview(pageView)
+            
         }
     }
     
@@ -125,45 +117,36 @@ class OnboardingViewController: UIViewController {
         let containerView = UIView()
         
         let imageView = UIImageView()
-        imageView.image = UIImage(systemName: page.imageName)
+        imageView.image = UIImage(named: "\(page.imageName)")
         imageView.tintColor = .primaryColor
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         
-        let titleLabel = UILabel()
-        titleLabel.text = page.title
-        titleLabel.font = UIFont.boldSystemFont(ofSize: 24)
-        titleLabel.textColor = .primaryTextColor
-        titleLabel.textAlignment = .center
-        titleLabel.numberOfLines = 0
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
         let subtitleLabel = UILabel()
         subtitleLabel.text = page.subtitle
-        subtitleLabel.font = UIFont.systemFont(ofSize: 16)
-        subtitleLabel.textColor = .secondaryTextColor
+        subtitleLabel.font = UIFont.pretendardSemibold(size: 16)
+        subtitleLabel.textColor = .primaryColor
         subtitleLabel.textAlignment = .center
         subtitleLabel.numberOfLines = 0
         subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
         
         containerView.addSubview(imageView)
-        containerView.addSubview(titleLabel)
         containerView.addSubview(subtitleLabel)
+        
         
         NSLayoutConstraint.activate([
             imageView.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
-            imageView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 100),
+            imageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor, constant: 200),
+            //            imageView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 120),
             imageView.widthAnchor.constraint(equalToConstant: 120),
             imageView.heightAnchor.constraint(equalToConstant: 120),
             
-            titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 40),
-            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-            
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
+            subtitleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 20),
             subtitleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             subtitleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20)
         ])
+        
         
         return containerView
     }
@@ -204,7 +187,7 @@ class OnboardingViewController: UIViewController {
 extension OnboardingViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         let pageIndex = round(scrollView.contentOffset.x / view.bounds.width)
-        pageControl.currentPage = Int(pageIndex)
+        //        pageControl.currentPage = Int(pageIndex)
         
         let isLastPage = Int(pageIndex) == onboardingPages.count - 1
         nextButton.isHidden = isLastPage
@@ -213,7 +196,6 @@ extension OnboardingViewController: UIScrollViewDelegate {
 }
 
 struct OnboardingPage {
-    let title: String
     let subtitle: String
     let imageName: String
 }

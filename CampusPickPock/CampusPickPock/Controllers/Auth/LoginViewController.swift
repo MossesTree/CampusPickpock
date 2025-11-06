@@ -21,7 +21,7 @@ class LoginViewController: UIViewController {
     private let studentIdLabel: UILabel = {
         let label = UILabel()
         label.text = "학번"
-        label.font = UIFont.systemFont(ofSize: 14)
+        label.font = UIFont.pretendardSemibold(size: 15)
         label.textColor = .primaryTextColor
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -32,7 +32,7 @@ class LoginViewController: UIViewController {
         textField.placeholder = "학번"
         textField.borderStyle = .none
         textField.keyboardType = .numberPad
-        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.font = UIFont.pretendardMedium(size: 20)
         textField.textColor = .primaryTextColor
         textField.attributedPlaceholder = NSAttributedString(
             string: "학번",
@@ -44,7 +44,7 @@ class LoginViewController: UIViewController {
     
     private let studentIdUnderline: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0)
+        view.backgroundColor = .primaryColor
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -52,7 +52,7 @@ class LoginViewController: UIViewController {
     private let passwordLabel: UILabel = {
         let label = UILabel()
         label.text = "비밀번호"
-        label.font = UIFont.systemFont(ofSize: 14)
+        label.font = UIFont.pretendardBold(size: 15)
         label.textColor = .primaryTextColor
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -63,7 +63,7 @@ class LoginViewController: UIViewController {
         textField.placeholder = "비밀번호"
         textField.borderStyle = .none
         textField.isSecureTextEntry = true
-        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.font = UIFont.pretendardMedium(size: 20)
         textField.textColor = .primaryTextColor
         textField.attributedPlaceholder = NSAttributedString(
             string: "비밀번호",
@@ -75,7 +75,7 @@ class LoginViewController: UIViewController {
     
     private let passwordUnderline: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0)
+        view.backgroundColor = .primaryColor
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -85,8 +85,8 @@ class LoginViewController: UIViewController {
         button.setTitle("로그인", for: .normal)
         button.backgroundColor = .primaryColor
         button.setTitleColor(.white, for: .normal)
-        button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 18)
-        button.layer.cornerRadius = 27 // 높이(54)의 절반으로 완전히 둥글게
+        button.titleLabel?.font = UIFont.pretendardBold(size: 18)
+        button.layer.cornerRadius = 12 // 높이(54)의 절반으로 완전히 둥글게
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -104,26 +104,26 @@ class LoginViewController: UIViewController {
     private let autoLoginLabel: UILabel = {
         let label = UILabel()
         label.text = "자동 로그인하기"
-        label.font = UIFont.systemFont(ofSize: 14)
+        label.font = UIFont.pretendardMedium(size: 13)
         label.textColor = .primaryTextColor
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
-    private let findPasswordButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("비밀번호 찾기", for: .normal)
-        button.setTitleColor(.secondaryTextColor, for: .normal)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
+//    private let findPasswordButton: UIButton = {
+//        let button = UIButton(type: .system)
+//        button.setTitle("비밀번호 찾기", for: .normal)
+//        button.setTitleColor(.secondaryTextColor, for: .normal)
+//        button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
+//        button.translatesAutoresizingMaskIntoConstraints = false
+//        return button
+//    }()
     
     private let signUpButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("회원가입", for: .normal)
         button.setTitleColor(.secondaryTextColor, for: .normal)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 16)
+        button.titleLabel?.font = UIFont.pretendardSemibold(size: 16)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -146,16 +146,16 @@ class LoginViewController: UIViewController {
         view.addSubview(passwordUnderline)
         view.addSubview(autoLoginCheckbox)
         view.addSubview(autoLoginLabel)
-        view.addSubview(findPasswordButton)
+//        view.addSubview(findPasswordButton)
         view.addSubview(loginButton)
         view.addSubview(signUpButton)
         
         NSLayoutConstraint.activate([
             // 로고 - 상단 중앙
-            logoImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 80),
+            logoImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 60),
             logoImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            logoImageView.widthAnchor.constraint(equalToConstant: 80),
-            logoImageView.heightAnchor.constraint(equalToConstant: 68),
+            logoImageView.widthAnchor.constraint(equalToConstant: 92),
+            logoImageView.heightAnchor.constraint(equalToConstant: 78),
             
             // 학번 입력 필드
             studentIdLabel.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: 60),
@@ -170,7 +170,7 @@ class LoginViewController: UIViewController {
             studentIdUnderline.topAnchor.constraint(equalTo: studentIdTextField.bottomAnchor, constant: 4),
             studentIdUnderline.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
             studentIdUnderline.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-            studentIdUnderline.heightAnchor.constraint(equalToConstant: 1),
+            studentIdUnderline.heightAnchor.constraint(equalToConstant: 2),
             
             // 비밀번호 입력 필드
             passwordLabel.topAnchor.constraint(equalTo: studentIdUnderline.bottomAnchor, constant: 24),
@@ -196,14 +196,14 @@ class LoginViewController: UIViewController {
             autoLoginLabel.leadingAnchor.constraint(equalTo: autoLoginCheckbox.trailingAnchor, constant: 8),
             autoLoginLabel.centerYAnchor.constraint(equalTo: autoLoginCheckbox.centerYAnchor),
             
-            findPasswordButton.centerYAnchor.constraint(equalTo: autoLoginCheckbox.centerYAnchor),
-            findPasswordButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+//            findPasswordButton.centerYAnchor.constraint(equalTo: autoLoginCheckbox.centerYAnchor),
+//            findPasswordButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
             
             // 로그인 버튼
-            loginButton.topAnchor.constraint(equalTo: autoLoginCheckbox.bottomAnchor, constant: 48),
+            loginButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -76),
             loginButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
             loginButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-            loginButton.heightAnchor.constraint(equalToConstant: 54),
+            loginButton.heightAnchor.constraint(equalToConstant: 65),
             
             // 회원가입 링크
             signUpButton.topAnchor.constraint(equalTo: loginButton.bottomAnchor, constant: 16),
@@ -215,17 +215,17 @@ class LoginViewController: UIViewController {
         loginButton.addTarget(self, action: #selector(loginTapped), for: .touchUpInside)
         signUpButton.addTarget(self, action: #selector(signUpTapped), for: .touchUpInside)
         autoLoginCheckbox.addTarget(self, action: #selector(autoLoginCheckboxTapped), for: .touchUpInside)
-        findPasswordButton.addTarget(self, action: #selector(findPasswordTapped), for: .touchUpInside)
+//        findPasswordButton.addTarget(self, action: #selector(findPasswordTapped), for: .touchUpInside)
     }
     
     @objc private func autoLoginCheckboxTapped() {
         autoLoginCheckbox.isSelected.toggle()
     }
     
-    @objc private func findPasswordTapped() {
-        // TODO: 비밀번호 찾기 기능 구현
-        showAlert(message: "비밀번호 찾기 기능은 준비 중입니다.")
-    }
+//    @objc private func findPasswordTapped() {
+//        // TODO: 비밀번호 찾기 기능 구현
+//        showAlert(message: "비밀번호 찾기 기능은 준비 중입니다.")
+//    }
     
     @objc private func loginTapped() {
         guard let studentId = studentIdTextField.text, !studentId.isEmpty,

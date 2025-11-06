@@ -48,9 +48,8 @@ class LostAndFoundViewController: UIViewController {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "우리 학교 분실물 보관함"
-        label.font = UIFont.boldSystemFont(ofSize: 24)
-        label.textColor = .primaryColor
-        label.textAlignment = .center
+        label.font = UIFont.boldSystemFont(ofSize: 20)
+        label.textColor = .primaryTextColor
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -59,8 +58,7 @@ class LostAndFoundViewController: UIViewController {
         let label = UILabel()
         label.text = "학교 분실물 보관함에 있는 물건을 손쉽게 찾아보세요"
         label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .primaryColor
-        label.textAlignment = .center
+        label.textColor = .secondaryTextColor
         label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -106,11 +104,16 @@ class LostAndFoundViewController: UIViewController {
     // MARK: - Add Button
     private let addButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("+ 추가하기", for: .normal)
+        button.setTitle("추가하기", for: .normal)
+        button.setImage(UIImage(systemName: "plus"), for: .normal)
         button.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
         button.setTitleColor(.white, for: .normal)
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
-        button.layer.cornerRadius = 12
+        button.layer.cornerRadius = 25
+        button.layer.shadowColor = UIColor.black.cgColor
+        button.layer.shadowOffset = CGSize(width: 0, height: 2)
+        button.layer.shadowOpacity = 0.1
+        button.layer.shadowRadius = 4
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -193,14 +196,12 @@ class LostAndFoundViewController: UIViewController {
             headerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             
             titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 20),
-            titleLabel.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
-            titleLabel.leadingAnchor.constraint(greaterThanOrEqualTo: headerView.leadingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: headerView.trailingAnchor, constant: -20),
+            titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
+            titleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
             
             subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
-            subtitleLabel.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
-            subtitleLabel.leadingAnchor.constraint(greaterThanOrEqualTo: headerView.leadingAnchor, constant: 20),
-            subtitleLabel.trailingAnchor.constraint(lessThanOrEqualTo: headerView.trailingAnchor, constant: -20),
+            subtitleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
+            subtitleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
             subtitleLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -20),
             
             // Category Section
@@ -230,9 +231,8 @@ class LostAndFoundViewController: UIViewController {
             // Add Button
             addButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             addButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            addButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            addButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-            addButton.heightAnchor.constraint(equalToConstant: 54)
+            addButton.widthAnchor.constraint(equalToConstant: 120),
+            addButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
     
@@ -247,7 +247,7 @@ class LostAndFoundViewController: UIViewController {
     }
     
     private func setupCategoryButtons() {
-        let categories = ["전체", "전자 제품", "카드/지갑", "의류·잡화", "학용품", "생활용품", "기타"]
+        let categories = ["전체", "전자제품", "지갑·카드", "의류·잡화", "학용품", "생활용품", "기타"]
         
         for (index, category) in categories.enumerated() {
             let button = UIButton(type: .system)
@@ -257,25 +257,20 @@ class LostAndFoundViewController: UIViewController {
             button.translatesAutoresizingMaskIntoConstraints = false
             
             if index == 0 {
-                // 첫 번째 버튼은 선택된 상태로 설정 (파란색 배경, 흰색 텍스트)
+                // 첫 번째 버튼은 선택된 상태로 설정
                 button.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
                 button.setTitleColor(.white, for: .normal)
             } else {
-                // 미선택 상태 (흰색/밝은 회색 배경, 파란색 테두리와 텍스트)
-                button.backgroundColor = .white
+                button.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
                 button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
-                button.layer.borderWidth = 1
-                button.layer.borderColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0).cgColor
             }
-            
-            // 버튼 패딩 설정
-            button.contentEdgeInsets = UIEdgeInsets(top: 8, left: 16, bottom: 8, right: 16)
             
             button.addTarget(self, action: #selector(categoryTapped(_:)), for: .touchUpInside)
             button.tag = index
             
             categoryStackView.addArrangedSubview(button)
             
+            button.widthAnchor.constraint(equalToConstant: 80).isActive = true
             button.heightAnchor.constraint(equalToConstant: 40).isActive = true
         }
     }
@@ -287,23 +282,20 @@ class LostAndFoundViewController: UIViewController {
     }
     
     @objc private func categoryTapped(_ sender: UIButton) {
-        // 모든 버튼을 기본 상태로 변경 (미선택 상태)
+        // 모든 버튼을 기본 상태로 변경
         for subview in categoryStackView.arrangedSubviews {
             if let button = subview as? UIButton {
-                button.backgroundColor = .white
-                button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
-                button.layer.borderWidth = 1
-                button.layer.borderColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0).cgColor
+                button.backgroundColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0)
+                button.setTitleColor(UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0), for: .normal)
             }
         }
         
-        // 선택된 버튼을 활성 상태로 변경 (파란색 배경, 흰색 텍스트)
-        sender.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
+        // 선택된 버튼을 활성 상태로 변경
+        sender.backgroundColor = UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0)
         sender.setTitleColor(.white, for: .normal)
-        sender.layer.borderWidth = 0
         
         // 카테고리 업데이트
-        let categories = ["전체", "전자 제품", "카드/지갑", "의류·잡화", "학용품", "생활용품", "기타"]
+        let categories = ["전체", "전자제품", "지갑·카드", "의류·잡화", "학용품", "생활용품", "기타"]
         selectedCategory = categories[sender.tag]
         
         filterItems()
@@ -314,10 +306,10 @@ class LostAndFoundViewController: UIViewController {
             filteredItems = items
             filteredStorageItems = storageItems
         } else {
-            // 카테고리 매핑 (이미지에 맞게 수정)
+            // 카테고리 매핑
             let categoryMap: [String: [String]] = [
-                "전자 제품": ["전자제품", "전자 제품"],
-                "카드/지갑": ["지갑·카드", "지갑 및 카드", "카드/지갑"],
+                "전자제품": ["전자제품"],
+                "지갑·카드": ["지갑·카드", "지갑 및 카드"],
                 "의류·잡화": ["의류·잡화", "의류 및 잡화"],
                 "학용품": ["학용품"],
                 "생활용품": ["생활용품"],
@@ -538,7 +530,7 @@ class LostAndFoundItemCell: UICollectionViewCell {
     
     private let itemImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFill
+        imageView.contentMode = .scaleAspectFit
         imageView.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
         imageView.layer.cornerRadius = 8
         imageView.clipsToBounds = true
@@ -546,45 +538,6 @@ class LostAndFoundItemCell: UICollectionViewCell {
         return imageView
     }()
     
-    // 옵션 메뉴 버튼 (오른쪽 상단)
-    private let optionsButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "ellipsis.vertical"), for: .normal)
-        button.tintColor = .white
-        button.backgroundColor = UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 0.5)
-        button.layer.cornerRadius = 15
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
-    
-    // 삭제 버튼 오버레이 (중앙)
-    private let deleteOverlayView: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 0.8)
-        view.layer.cornerRadius = 8
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
-    
-    private let deleteIconImageView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "trash")
-        imageView.tintColor = .white
-        imageView.contentMode = .scaleAspectFit
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        return imageView
-    }()
-    
-    private let deleteLabel: UILabel = {
-        let label = UILabel()
-        label.text = "삭제"
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .white
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    
-    // 등록일 오버레이 (왼쪽 하단)
     private let dateOverlayView: UIView = {
         let view = UIView()
         view.backgroundColor = UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 0.8)
@@ -625,14 +578,7 @@ class LostAndFoundItemCell: UICollectionViewCell {
     private func setupUI() {
         contentView.addSubview(containerView)
         containerView.addSubview(itemImageView)
-        
-        // 오버레이들을 이미지뷰 위에 추가
-        itemImageView.addSubview(optionsButton)
-        itemImageView.addSubview(deleteOverlayView)
-        itemImageView.addSubview(dateOverlayView)
-        
-        deleteOverlayView.addSubview(deleteIconImageView)
-        deleteOverlayView.addSubview(deleteLabel)
+        containerView.addSubview(dateOverlayView)
         
         dateOverlayView.addSubview(clockIconImageView)
         dateOverlayView.addSubview(dateLabel)
@@ -648,32 +594,10 @@ class LostAndFoundItemCell: UICollectionViewCell {
             itemImageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -8),
             itemImageView.heightAnchor.constraint(equalTo: itemImageView.widthAnchor),
             
-            // 옵션 버튼 (오른쪽 상단)
-            optionsButton.topAnchor.constraint(equalTo: itemImageView.topAnchor, constant: 8),
-            optionsButton.trailingAnchor.constraint(equalTo: itemImageView.trailingAnchor, constant: -8),
-            optionsButton.widthAnchor.constraint(equalToConstant: 30),
-            optionsButton.heightAnchor.constraint(equalToConstant: 30),
-            
-            // 삭제 오버레이 (중앙)
-            deleteOverlayView.centerXAnchor.constraint(equalTo: itemImageView.centerXAnchor),
-            deleteOverlayView.centerYAnchor.constraint(equalTo: itemImageView.centerYAnchor),
-            deleteOverlayView.widthAnchor.constraint(equalToConstant: 70),
-            deleteOverlayView.heightAnchor.constraint(equalToConstant: 32),
-            
-            deleteIconImageView.leadingAnchor.constraint(equalTo: deleteOverlayView.leadingAnchor, constant: 12),
-            deleteIconImageView.centerYAnchor.constraint(equalTo: deleteOverlayView.centerYAnchor),
-            deleteIconImageView.widthAnchor.constraint(equalToConstant: 16),
-            deleteIconImageView.heightAnchor.constraint(equalToConstant: 16),
-            
-            deleteLabel.leadingAnchor.constraint(equalTo: deleteIconImageView.trailingAnchor, constant: 4),
-            deleteLabel.centerYAnchor.constraint(equalTo: deleteOverlayView.centerYAnchor),
-            deleteLabel.trailingAnchor.constraint(equalTo: deleteOverlayView.trailingAnchor, constant: -12),
-            
-            // 등록일 오버레이 (왼쪽 하단)
             dateOverlayView.leadingAnchor.constraint(equalTo: itemImageView.leadingAnchor),
-            dateOverlayView.trailingAnchor.constraint(lessThanOrEqualTo: itemImageView.trailingAnchor),
+            dateOverlayView.trailingAnchor.constraint(equalTo: itemImageView.trailingAnchor),
             dateOverlayView.bottomAnchor.constraint(equalTo: itemImageView.bottomAnchor),
-            dateOverlayView.heightAnchor.constraint(equalToConstant: 30),
+            dateOverlayView.heightAnchor.constraint(equalToConstant: 35),
             
             clockIconImageView.leadingAnchor.constraint(equalTo: dateOverlayView.leadingAnchor, constant: 8),
             clockIconImageView.centerYAnchor.constraint(equalTo: dateOverlayView.centerYAnchor),

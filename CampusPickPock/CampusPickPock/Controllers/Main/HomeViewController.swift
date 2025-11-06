@@ -551,7 +551,7 @@ class HomeViewController: UIViewController {
             bottomBarLabel.centerXAnchor.constraint(equalTo: bottomBar.centerXAnchor),
             bottomBarLabel.centerYAnchor.constraint(equalTo: bottomBar.centerYAnchor),
             
-            bottomBarIcon.trailingAnchor.constraint(equalTo: bottomBar.trailingAnchor, constant: -20),
+            bottomBarIcon.leadingAnchor.constraint(equalTo: bottomBar.trailingAnchor, constant: 20),
             bottomBarIcon.centerYAnchor.constraint(equalTo: bottomBar.centerYAnchor),
             bottomBarIcon.widthAnchor.constraint(equalToConstant: 20),
             bottomBarIcon.heightAnchor.constraint(equalToConstant: 20),
