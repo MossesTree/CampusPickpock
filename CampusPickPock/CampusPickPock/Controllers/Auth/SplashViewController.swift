@@ -21,7 +21,7 @@ class SplashViewController: UIViewController {
     private let subtitleLabel: UILabel = {
         let label = UILabel()
         label.text = "내 손 안의 분실물 보관함"
-        label.font = UIFont(name: "Pretendard Variable",size: 20)
+        label.font = UIFont.pretendardSemibold(size: 20)
         label.textColor = UIColor.primaryColor
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -31,7 +31,7 @@ class SplashViewController: UIViewController {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "캠퍼스 줍줍"
-        label.font = UIFont(name: "Pretendard Variable",size: 40)
+        label.font = UIFont.pretendardBold(size: 40)
         label.textColor = UIColor.primaryColor // #4267F6
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false

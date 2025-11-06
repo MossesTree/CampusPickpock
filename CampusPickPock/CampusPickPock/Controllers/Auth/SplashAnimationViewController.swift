@@ -11,10 +11,11 @@ class SplashAnimationViewController: UIViewController {
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "캠퍼스 줍줍에서 발견하세요"
-        label.font = UIFont.boldSystemFont(ofSize: 24)
+        label.text = "캠퍼스 줍줍에서\n발견하세요"
+        label.font = UIFont.pretendardBold(size: 34)
         label.textColor = .primaryTextColor
         label.textAlignment = .center
+        label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -98,14 +99,50 @@ class SplashAnimationViewController: UIViewController {
         }
     }
     
+//    private func createPostCardsFromAPI() {
+//        // API에서 받은 데이터로 카드 생성 (최대 3개)
+//        let maxCards = min(splashPostings.count, 3)
+//        
+//        for index in 0..<maxCards {
+//            let posting = splashPostings[index]
+//            let cardView = PostCardView()
+//            
+//            // API 데이터를 PostCardData로 변환
+//            let postData = PostCardData(
+//                username: posting.postingWriterNickname,
+//                primaryMessage: posting.postingTitle,
+//                secondaryMessage: posting.postingContent,
+//                detailMessage: posting.postingContent.count > 50 ? String(posting.postingContent.prefix(50)) + "..." : posting.postingContent
+//            )
+//            
+//            cardView.configure(with: postData)
+//            cardView.translatesAutoresizingMaskIntoConstraints = false
+//            cardView.alpha = 0
+//            cardView.transform = CGAffineTransform(translationX: 0, y: 50)
+//            
+//            cardContainerView.addSubview(cardView)
+//            postCards.append(cardView)
+//            
+//            NSLayoutConstraint.activate([
+//                cardView.leadingAnchor.constraint(equalTo: cardContainerView.leadingAnchor),
+//                cardView.trailingAnchor.constraint(equalTo: cardContainerView.trailingAnchor),
+//                cardView.heightAnchor.constraint(equalToConstant: 120),
+//                cardView.topAnchor.constraint(equalTo: cardContainerView.topAnchor, constant: CGFloat(index * 100))
+//            ])
+//        }
+//    }
     private func createPostCardsFromAPI() {
+        // 카드가 겹치는 정도를 정의합니다. (음수 값으로 설정)
+        // 예: -40pt를 주면 이전 카드의 하단 40pt가 다음 카드로 인해 덮이게 됩니다.
+        let overlapOffset: CGFloat = -5.0
+        
         // API에서 받은 데이터로 카드 생성 (최대 3개)
         let maxCards = min(splashPostings.count, 3)
-        
+            
         for index in 0..<maxCards {
             let posting = splashPostings[index]
             let cardView = PostCardView()
-            
+                
             // API 데이터를 PostCardData로 변환
             let postData = PostCardData(
                 username: posting.postingWriterNickname,
@@ -113,21 +150,41 @@ class SplashAnimationViewController: UIViewController {
                 secondaryMessage: posting.postingContent,
                 detailMessage: posting.postingContent.count > 50 ? String(posting.postingContent.prefix(50)) + "..." : posting.postingContent
             )
-            
+                
             cardView.configure(with: postData)
             cardView.translatesAutoresizingMaskIntoConstraints = false
-            cardView.alpha = 0
-            cardView.transform = CGAffineTransform(translationX: 0, y: 50)
             
+            // --- 애니메이션 초기 상태 설정 (시작 지점) ---
+            cardView.alpha = 0
+            // 최종 겹치는 위치보다 Y축으로 50pt 아래에서 시작하도록 설정
+            cardView.transform = CGAffineTransform(translationX: 0, y: 50)
+                
             cardContainerView.addSubview(cardView)
             postCards.append(cardView)
-            
+                
+            // --- 겹침 레이아웃 설정 (최종 위치) ---
             NSLayoutConstraint.activate([
                 cardView.leadingAnchor.constraint(equalTo: cardContainerView.leadingAnchor),
                 cardView.trailingAnchor.constraint(equalTo: cardContainerView.trailingAnchor),
                 cardView.heightAnchor.constraint(equalToConstant: 120),
-                cardView.topAnchor.constraint(equalTo: cardContainerView.topAnchor, constant: CGFloat(index * 130))
             ])
+            
+            if index == 0 {
+                // 첫 번째 카드: 컨테이너의 상단에 고정
+                cardView.topAnchor.constraint(equalTo: cardContainerView.topAnchor).isActive = true
+            } else {
+                // 나머지 카드: 직전 카드의 하단에 연결하고, 'overlapOffset'만큼 겹치게 만듭니다.
+                let previousCard = postCards[index - 1]
+                cardView.topAnchor.constraint(equalTo: previousCard.bottomAnchor, constant: overlapOffset).isActive = true
+            }
+        }
+        
+        // MARK: - Z-Order 재정렬 (아래로 들어가듯이 겹치게 만드는 핵심)
+        // 인덱스를 역순(maxCards-1 -> 0)으로 순회하며 뷰를 앞쪽으로 가져옵니다.
+        // 이렇게 하면 Index 0번 카드가 가장 마지막에 toFront되어 시각적으로 가장 위에 놓이게 됩니다.
+        for index in stride(from: maxCards - 1, through: 0, by: -1) {
+            let card = postCards[index]
+            cardContainerView.bringSubviewToFront(card)
         }
     }
     

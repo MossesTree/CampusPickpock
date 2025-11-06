@@ -13,8 +13,36 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // 폰트 로드 및 디버깅
+        loadCustomFonts()
         return true
+    }
+    
+    // MARK: - Font Loading
+    private func loadCustomFonts() {
+        // 등록된 폰트 이름 확인 (디버깅용)
+        print("📝 등록된 모든 폰트 패밀리:")
+        let allFonts = UIFont.familyNames.sorted()
+        for familyName in allFonts {
+            if familyName.lowercased().contains("pretendard") {
+                let fonts = UIFont.fontNames(forFamilyName: familyName)
+                print("  ✅ Family: \(familyName)")
+                for fontName in fonts {
+                    print("    - \(fontName)")
+                }
+            }
+        }
+        
+        // Pretendard 폰트 이름 직접 확인
+        let possibleNames = ["Pretendard Variable", "PretendardVariable", "Pretendard-Variable"]
+        print("\n📝 Pretendard 폰트 이름 확인:")
+        for name in possibleNames {
+            if let font = UIFont(name: name, size: 17) {
+                print("  ✅ 사용 가능: '\(name)' - 실제 폰트 이름: \(font.fontName)")
+            } else {
+                print("  ❌ 사용 불가: '\(name)'")
+            }
+        }
     }
 
     // MARK: UISceneSession Lifecycle

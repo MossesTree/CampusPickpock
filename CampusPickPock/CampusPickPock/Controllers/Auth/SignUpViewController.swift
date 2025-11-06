@@ -25,7 +25,7 @@ class SignUpViewController: UIViewController {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "회원가입"
-        label.font = UIFont.boldSystemFont(ofSize: 28)
+        label.font = UIFont.pretendardBold(size: 28)
         label.textColor = .primaryColor
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -36,7 +36,7 @@ class SignUpViewController: UIViewController {
     private let nameLabel: UILabel = {
         let label = UILabel()
         label.text = "이름"
-        label.font = UIFont.systemFont(ofSize: 14)
+        label.font = UIFont.pretendardSemibold(size: 15)
         label.textColor = .primaryTextColor
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -50,7 +50,7 @@ class SignUpViewController: UIViewController {
         textField.layer.cornerRadius = 8
         textField.layer.borderWidth = 1
         textField.layer.borderColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0).cgColor
-        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.font = UIFont.pretendardMedium(size: 15)
         textField.textColor = .primaryTextColor
         textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 0))
         textField.leftViewMode = .always
@@ -66,7 +66,7 @@ class SignUpViewController: UIViewController {
     private let studentIdLabel: UILabel = {
         let label = UILabel()
         label.text = "학번"
-        label.font = UIFont.systemFont(ofSize: 14)
+        label.font = UIFont.pretendardSemibold(size: 15)
         label.textColor = .primaryTextColor
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -81,7 +81,7 @@ class SignUpViewController: UIViewController {
         textField.layer.borderWidth = 1
         textField.layer.borderColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0).cgColor
         textField.keyboardType = .numberPad
-        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.font = UIFont.pretendardMedium(size: 15)
         textField.textColor = .primaryTextColor
         textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 0))
         textField.leftViewMode = .always
@@ -97,7 +97,7 @@ class SignUpViewController: UIViewController {
     private let birthDateLabel: UILabel = {
         let label = UILabel()
         label.text = "생년월일"
-        label.font = UIFont.systemFont(ofSize: 14)
+        label.font = UIFont.pretendardSemibold(size: 15)
         label.textColor = .primaryTextColor
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -111,7 +111,7 @@ class SignUpViewController: UIViewController {
         textField.layer.cornerRadius = 8
         textField.layer.borderWidth = 1
         textField.layer.borderColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0).cgColor
-        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.font = UIFont.pretendardMedium(size: 15)
         textField.textColor = .primaryTextColor
         textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 0))
         textField.leftViewMode = .always
@@ -127,7 +127,7 @@ class SignUpViewController: UIViewController {
     private let nicknameLabel: UILabel = {
         let label = UILabel()
         label.text = "닉네임"
-        label.font = UIFont.systemFont(ofSize: 14)
+        label.font = UIFont.pretendardSemibold(size: 15)
         label.textColor = .primaryTextColor
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -141,7 +141,7 @@ class SignUpViewController: UIViewController {
         textField.layer.cornerRadius = 8
         textField.layer.borderWidth = 1
         textField.layer.borderColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0).cgColor
-        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.font = UIFont.pretendardMedium(size: 15)
         textField.textColor = .primaryTextColor
         textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 0))
         textField.leftViewMode = .always
@@ -157,7 +157,7 @@ class SignUpViewController: UIViewController {
     private let passwordLabel: UILabel = {
         let label = UILabel()
         label.text = "비밀번호"
-        label.font = UIFont.systemFont(ofSize: 14)
+        label.font = UIFont.pretendardSemibold(size: 15)
         label.textColor = .primaryTextColor
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -172,7 +172,7 @@ class SignUpViewController: UIViewController {
         textField.layer.borderWidth = 1
         textField.layer.borderColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0).cgColor
         textField.isSecureTextEntry = true
-        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.font = UIFont.pretendardMedium(size: 15)
         textField.textColor = .primaryTextColor
         textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 0))
         textField.leftViewMode = .always
@@ -194,7 +194,7 @@ class SignUpViewController: UIViewController {
         textField.layer.borderWidth = 1
         textField.layer.borderColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0).cgColor
         textField.isSecureTextEntry = true
-        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.font = UIFont.pretendardMedium(size: 15)
         textField.textColor = .primaryTextColor
         textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 0))
         textField.leftViewMode = .always
@@ -210,7 +210,7 @@ class SignUpViewController: UIViewController {
     private let passwordGuideLabel: UILabel = {
         let label = UILabel()
         label.text = "영문 대문자와 소문자, 숫자, 특수문자 중 2가지 이상을 조합하여 6-20자로 입력해주세요."
-        label.font = UIFont.systemFont(ofSize: 12)
+        label.font = UIFont.pretendardMedium(size: 12)
         label.textColor = .secondaryTextColor
         label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -222,8 +222,8 @@ class SignUpViewController: UIViewController {
         button.setTitle("회원가입 하기", for: .normal)
         button.backgroundColor = .primaryColor
         button.setTitleColor(.white, for: .normal)
-        button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 18)
-        button.layer.cornerRadius = 27 // 높이(54)의 절반
+        button.titleLabel?.font = UIFont.pretendardBold(size: 18)
+        button.layer.cornerRadius = 10 // 높이(54)의 절반
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -342,7 +342,7 @@ class SignUpViewController: UIViewController {
             signUpButton.topAnchor.constraint(equalTo: passwordGuideLabel.bottomAnchor, constant: 32),
             signUpButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
             signUpButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
-            signUpButton.heightAnchor.constraint(equalToConstant: 54),
+            signUpButton.heightAnchor.constraint(equalToConstant: 65),
             signUpButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -40)
         ])
     }
