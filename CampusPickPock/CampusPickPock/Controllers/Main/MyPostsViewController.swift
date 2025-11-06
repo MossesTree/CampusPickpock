@@ -298,10 +298,11 @@ extension MyPostsViewController: UITableViewDelegate, UITableViewDataSource {
         let cell = tableView.dequeueReusableCell(withIdentifier: "PostListCell", for: indexPath) as! PostListCell
         let post = posts[indexPath.row]
         let isFirst = indexPath.row == 0
+        let isLast = indexPath.row == posts.count - 1
         // 내가 쓴 글이므로 프로필 표시 안 함
         // Found 타입일 때는 줍줍 버튼 숨김, Lost 타입일 때는 줍줍 버튼 표시
         let hidePickedUpButton = post.type == .found
-        cell.configure(with: post, isFirst: isFirst, showProfile: false, hidePickedUpButton: hidePickedUpButton)
+        cell.configure(with: post, isFirst: isFirst, isLast: isLast, showProfile: false, hidePickedUpButton: hidePickedUpButton)
         return cell
     }
     

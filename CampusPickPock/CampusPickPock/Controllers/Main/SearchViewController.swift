@@ -375,7 +375,8 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
         let cell = tableView.dequeueReusableCell(withIdentifier: "PostListCell", for: indexPath) as! PostListCell
         let post = searchResults[indexPath.row]
         let isFirst = indexPath.row == 0
-        cell.configure(with: post, isFirst: isFirst)
+        let isLast = indexPath.row == searchResults.count - 1
+        cell.configure(with: post, isFirst: isFirst, isLast: isLast)
         return cell
     }
     

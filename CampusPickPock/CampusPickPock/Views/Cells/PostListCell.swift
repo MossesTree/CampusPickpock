@@ -141,6 +141,7 @@ class PostListCell: UITableViewCell {
     }()
     
     private var isFirstCell = false
+    private var isLastCell = false
     private var dividerLineTopConstraint: NSLayoutConstraint?
     private var itemImageViewTopConstraint: NSLayoutConstraint?
     private var descriptionLabelTopConstraint: NSLayoutConstraint?
@@ -242,8 +243,9 @@ class PostListCell: UITableViewCell {
         NSLayoutConstraint.activate(constraints)
     }
     
-    func configure(with post: Post, isFirst: Bool = false, showProfile: Bool = true, hidePickedUpButton: Bool = false) {
+    func configure(with post: Post, isFirst: Bool = false, isLast: Bool = false, showProfile: Bool = true, hidePickedUpButton: Bool = false) {
         self.isFirstCell = isFirst
+        self.isLastCell = isLast
         
         // 프로필 표시 여부에 따라 UI 업데이트
         profileImageView.isHidden = !showProfile
@@ -308,19 +310,14 @@ class PostListCell: UITableViewCell {
             configureJoopjoopButton(isPickedUp: post.isPickedUp)
         }
         
-        // 구분선 위치 설정
-        if !isFirstCell {
-            dividerLine.isHidden = false
-            // 프로필이 있을 때는 프로필아이콘으로부터, 없을 때는 containerView.topAnchor로부터 20 위쪽에 선 위치 설정
-            dividerLineTopConstraint?.isActive = false
-            if showProfile {
-                dividerLineTopConstraint = dividerLine.topAnchor.constraint(equalTo: profileImageView.topAnchor, constant: -20)
-            } else {
-                dividerLineTopConstraint = dividerLine.topAnchor.constraint(equalTo: containerView.topAnchor, constant: -20)
-            }
-            dividerLineTopConstraint?.isActive = true
-        } else {
+        // 구분선 위치 설정 - 마지막 셀이 아닐 때만 댓글 아이콘 아래 15pt 위치에 표시
+        if isLastCell {
             dividerLine.isHidden = true
+        } else {
+            dividerLine.isHidden = false
+            dividerLineTopConstraint?.isActive = false
+            dividerLineTopConstraint = dividerLine.topAnchor.constraint(equalTo: commentIcon.bottomAnchor, constant: 15)
+            dividerLineTopConstraint?.isActive = true
         }
         
         print("📅 PostListCell 포스팅 시간 정보:")

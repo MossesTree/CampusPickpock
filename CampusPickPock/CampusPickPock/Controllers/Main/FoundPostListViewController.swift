@@ -332,7 +332,8 @@ extension FoundPostListViewController: UITableViewDelegate, UITableViewDataSourc
         )
         
         let isFirst = (indexPath.row == 0)
-        cell.configure(with: post, isFirst: isFirst)
+        let isLast = (indexPath.row == filteredPostingItems.count - 1)
+        cell.configure(with: post, isFirst: isFirst, isLast: isLast)
         return cell
     }
     
@@ -556,6 +557,7 @@ class FoundPostCell: UITableViewCell {
     }()
     
     private var isFirstCell = false
+    private var isLastCell = false
     private var dividerLineTopConstraint: NSLayoutConstraint?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -647,8 +649,9 @@ class FoundPostCell: UITableViewCell {
         NSLayoutConstraint.activate(constraints)
     }
     
-    func configure(with post: Post, isFirst: Bool = false) {
+    func configure(with post: Post, isFirst: Bool = false, isLast: Bool = false) {
         self.isFirstCell = isFirst
+        self.isLastCell = isLast
         
         usernameLabel.text = post.authorName
         titleLabel.text = post.title
@@ -674,15 +677,14 @@ class FoundPostCell: UITableViewCell {
             configureJoopjoopButton(isPickedUp: post.isPickedUp)
         }
         
-        // 구분선 위치 설정
-        if !isFirstCell {
-            dividerLine.isHidden = false
-            // 프로필아이콘으로부터 20 위쪽에 선 위치 설정
-            dividerLineTopConstraint?.isActive = false
-            dividerLineTopConstraint = dividerLine.topAnchor.constraint(equalTo: profileImageView.topAnchor, constant: -20)
-            dividerLineTopConstraint?.isActive = true
-        } else {
+        // 구분선 위치 설정 - 마지막 셀이 아닐 때만 댓글 아이콘 아래 15pt 위치에 표시
+        if isLastCell {
             dividerLine.isHidden = true
+        } else {
+            dividerLine.isHidden = false
+            dividerLineTopConstraint?.isActive = false
+            dividerLineTopConstraint = dividerLine.topAnchor.constraint(equalTo: commentIcon.bottomAnchor, constant: 15)
+            dividerLineTopConstraint?.isActive = true
         }
         
         print("📅 Found 포스팅 시간 정보:")

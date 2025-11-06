@@ -328,7 +328,8 @@ extension LostPostListViewController: UITableViewDelegate, UITableViewDataSource
         )
         
         let isFirst = (indexPath.row == 0)
-        cell.configure(with: post, isFirst: isFirst)
+        let isLast = (indexPath.row == filteredPostingItems.count - 1)
+        cell.configure(with: post, isFirst: isFirst, isLast: isLast)
         return cell
     }
     
