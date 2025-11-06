@@ -1459,15 +1459,50 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         
         print("🎯 게시글 상세 화면 줍줍 버튼 클릭: postingId = \(postingId)")
         
-        // 확인 다이얼로그
-        let confirmAlert = UIAlertController(title: "줍줍 확인", message: "이 분실물을 찾으셨나요?", preferredStyle: .alert)
+        // 커스텀 줍줍 알림 팝업 표시
+        showJoopjoopAlert(postingId: postingId)
+    }
+    
+    private var joopjoopAlertView: JoopjoopAlertView?
+    private var pendingJoopjoopPostingId: Int?
+    
+    private func showJoopjoopAlert(postingId: Int) {
+        // 기존 팝업이 있으면 제거
+        joopjoopAlertView?.removeFromSuperview()
         
-        confirmAlert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        confirmAlert.addAction(UIAlertAction(title: "줍줍", style: .default) { _ in
-            self.performJoopjoop(postingId: postingId)
-        })
+        pendingJoopjoopPostingId = postingId
         
-        present(confirmAlert, animated: true)
+        let alertView = JoopjoopAlertView()
+        alertView.delegate = self
+        alertView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(alertView)
+        
+        NSLayoutConstraint.activate([
+            alertView.topAnchor.constraint(equalTo: view.topAnchor),
+            alertView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            alertView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            alertView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        
+        joopjoopAlertView = alertView
+        
+        // 애니메이션
+        alertView.alpha = 0
+        UIView.animate(withDuration: 0.3) {
+            alertView.alpha = 1
+        }
+    }
+    
+    private func hideJoopjoopAlert() {
+        guard let alertView = joopjoopAlertView else { return }
+        
+        UIView.animate(withDuration: 0.3, animations: {
+            alertView.alpha = 0
+        }) { _ in
+            alertView.removeFromSuperview()
+            self.joopjoopAlertView = nil
+            self.pendingJoopjoopPostingId = nil
+        }
     }
     
     private func performJoopjoop(postingId: Int) {
@@ -2816,5 +2851,23 @@ extension PostDetailViewController: PopoverMenuViewDelegate {
                 }
             }
         }
+    }
+}
+
+// MARK: - JoopjoopAlertViewDelegate
+extension PostDetailViewController: JoopjoopAlertViewDelegate {
+    func joopjoopAlertViewDidTapSend(_ alertView: JoopjoopAlertView) {
+        hideJoopjoopAlert()
+        
+        guard let postingId = pendingJoopjoopPostingId else {
+            print("❌ postingId가 없습니다.")
+            return
+        }
+        
+        performJoopjoop(postingId: postingId)
+    }
+    
+    func joopjoopAlertViewDidTapClose(_ alertView: JoopjoopAlertView) {
+        hideJoopjoopAlert()
     }
 }
