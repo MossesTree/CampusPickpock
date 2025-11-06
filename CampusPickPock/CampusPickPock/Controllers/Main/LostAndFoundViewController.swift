@@ -19,8 +19,20 @@ class LostAndFoundViewController: UIViewController {
     
     private let backButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "arrow.left"), for: .normal)
-        button.tintColor = UIColor(red: 0x51/255.0, green: 0x5B/255.0, blue: 0x70/255.0, alpha: 1.0)
+        // DefaultBackIcon을 48x48 크기로 설정 (LostPostListViewController와 동일)
+        if let backIcon = UIImage(named: "DefaultBackIcon") {
+            let size = CGSize(width: 48, height: 48)
+            UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+            backIcon.draw(in: CGRect(origin: .zero, size: size))
+            let resizedIcon = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            // 원본 색상을 유지하기 위해 renderingMode 설정
+            button.setImage(resizedIcon?.withRenderingMode(.alwaysOriginal), for: .normal)
+        } else {
+            button.setImage(UIImage(systemName: "arrow.left"), for: .normal)
+        }
+        // 색상 명시적으로 설정 (rgba(19, 45, 100, 1))
+        button.tintColor = UIColor(red: 19/255.0, green: 45/255.0, blue: 100/255.0, alpha: 1.0)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -33,14 +45,6 @@ class LostAndFoundViewController: UIViewController {
     
     private let contentView: UIView = {
         let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
-    
-    // MARK: - Header Section
-    private let headerView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .clear
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -185,11 +189,11 @@ class LostAndFoundViewController: UIViewController {
         // Hide default navigation bar
         navigationController?.setNavigationBarHidden(true, animated: false)
         
-        // Add custom header
-        view.addSubview(headerView)
-        headerView.addSubview(backButton)
-        headerView.addSubview(titleLabel)
-        headerView.addSubview(subtitleLabel)
+        // Add custom header (LostPostListViewController와 동일한 구조)
+        view.addSubview(customNavHeader)
+        customNavHeader.addSubview(backButton)
+        customNavHeader.addSubview(titleLabel)
+        customNavHeader.addSubview(subtitleLabel)
         
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
@@ -210,26 +214,24 @@ class LostAndFoundViewController: UIViewController {
     
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            // Custom navigation header
-            headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            // Custom navigation header (LostPostListViewController와 동일한 레이아웃)
+            customNavHeader.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            customNavHeader.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            customNavHeader.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            customNavHeader.heightAnchor.constraint(equalToConstant: 44),
             
-            backButton.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
-            backButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
-            backButton.widthAnchor.constraint(equalToConstant: 24),
-            backButton.heightAnchor.constraint(equalToConstant: 24),
+            backButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 16),
+            backButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
+            backButton.widthAnchor.constraint(equalToConstant: 48),
+            backButton.heightAnchor.constraint(equalToConstant: 48),
             
             titleLabel.centerYAnchor.constraint(equalTo: backButton.centerYAnchor),
-            titleLabel.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
-//            titleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
+            titleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
             
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
-            subtitleLabel.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
-//            subtitleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
-            subtitleLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -20),
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 3),
+            subtitleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
-            scrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
+            scrollView.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: addButton.topAnchor, constant: -16),
@@ -240,13 +242,8 @@ class LostAndFoundViewController: UIViewController {
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             
-////            // Header Section
-//            headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-//            headerView.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor),
-//            headerView.trailingAnchor.constraint(equalTo: customNavHeader.trailingAnchor),
-            
-            // Category Section
-            categoryScrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 10),
+            // Category Section (LostPostListViewController와 동일: subtitleLabel.bottom + 12)
+            categoryScrollView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 12),
             categoryScrollView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             categoryScrollView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             categoryScrollView.heightAnchor.constraint(equalToConstant: 40),

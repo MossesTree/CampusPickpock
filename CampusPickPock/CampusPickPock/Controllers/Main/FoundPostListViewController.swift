@@ -42,11 +42,7 @@ class FoundPostListViewController: UIViewController {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "주인을 찾아요"
-        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 20) {
-            label.font = UIFont(descriptor: pretendardFont.fontDescriptor.withSymbolicTraits(.traitBold) ?? pretendardFont.fontDescriptor, size: 20)
-        } else {
-            label.font = .boldSystemFont(ofSize: 20)
-        }
+        label.font = UIFont.pretendardBold(size: 20)
         label.textColor = UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0)
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -56,7 +52,7 @@ class FoundPostListViewController: UIViewController {
     private let subtitleLabel: UILabel = {
         let label = UILabel()
         label.text = "캠퍼스 줍줍과 함께 찾아보세요"
-        label.font = UIFont(name: "Pretendard Variable", size: 13) ?? .systemFont(ofSize: 13, weight: .medium)
+        label.font = UIFont.pretendardMedium(size: 13)
         label.textColor = UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0)
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -220,7 +216,7 @@ class FoundPostListViewController: UIViewController {
         for (index, category) in categories.enumerated() {
             let button = UIButton(type: .system)
             button.setTitle(category, for: .normal)
-            button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
+            button.titleLabel?.font = UIFont.pretendardMedium(size: 15)
             button.layer.cornerRadius = 10
             button.translatesAutoresizingMaskIntoConstraints = false
             
@@ -461,14 +457,7 @@ class FoundPostCell: UITableViewCell {
     private let titleLabel: UILabel = {
         let label = UILabel()
         // Pretendard Variable SemiBold 18px (20px에서 2px 감소)
-        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 18) {
-            let fontDescriptor = pretendardFont.fontDescriptor.addingAttributes([
-                .traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.semibold.rawValue]
-            ])
-            label.font = UIFont(descriptor: fontDescriptor, size: 18)
-        } else {
-            label.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
-        }
+        label.font = UIFont.pretendardSemibold(size: 18)
         label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 1
         label.lineBreakMode = .byTruncatingTail
@@ -496,7 +485,7 @@ class FoundPostCell: UITableViewCell {
         let button = UIButton(type: .system)
         button.backgroundColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0)
         button.clipsToBounds = true
-        button.titleLabel?.font = UIFont(name: "Pretendard Variable", size: 13) ?? UIFont.systemFont(ofSize: 13, weight: .medium)
+        button.titleLabel?.font = UIFont.pretendardMedium(size: 14)
         button.setTitleColor(UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0), for: .normal)
         button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: 4)
         button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 4, bottom: 0, right: 8)
@@ -508,11 +497,7 @@ class FoundPostCell: UITableViewCell {
     private let descriptionLabel: UILabel = {
         let label = UILabel()
         // Pretendard Variable Regular 14px (16px에서 2px 감소)
-        if let pretendardFont = UIFont(name: "Pretendard Variable", size: 14) {
-            label.font = UIFont(descriptor: pretendardFont.fontDescriptor, size: 14)
-        } else {
-            label.font = UIFont.systemFont(ofSize: 14)
-        }
+        label.font = UIFont.pretendardMedium(size: 14)
         label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 3
         label.lineBreakMode = .byTruncatingTail
@@ -533,7 +518,7 @@ class FoundPostCell: UITableViewCell {
     
     private let commentCountLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont(name: "Pretendard Variable", size: 17) ?? .systemFont(ofSize: 17)
+        label.font = UIFont.pretendardMedium(size: 17)
         label.textColor = UIColor(red: 0x62/255.0, green: 0x5F/255.0, blue: 0x5F/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
