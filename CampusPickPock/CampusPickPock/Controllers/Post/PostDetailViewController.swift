@@ -308,6 +308,10 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     private var commentItems: [CommentItem] = []
     private var isCommentPrivate = false
     
+    // 커스텀 팝업 관련
+    private var popoverMenuView: PopoverMenuView?
+    private var popoverOverlayView: UIView?
+    
     init(post: Post) {
         self.post = post
         self.postingId = post.postingId
@@ -1140,19 +1144,10 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
     }
     
     @objc private func menuTapped() {
-        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        // 기존 팝업이 있으면 제거
+        hidePopoverMenu()
         
-        // 수정 버튼 추가 (누구나 볼 수 있지만, 클릭 시 권한 체크)
-        alert.addAction(UIAlertAction(title: "수정", style: .default) { _ in
-            self.handleEditAction()
-        })
-        
-        // 삭제 버튼 추가 (누구나 볼 수 있지만, 클릭 시 권한 체크)
-        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { _ in
-            self.handleDeleteAction()
-        })
-        
-        // lost 타입일 때만 줍줍 완료 버튼 추가
+        // lost 타입인지 확인
         let isLostType: Bool
         if let post = post {
             isLostType = post.type == .lost
@@ -1160,19 +1155,94 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             isLostType = navTitleLabel.text == "잃어버렸어요"
         }
         
+        // 메뉴 아이템 생성
+        var menuItems: [MenuItem] = [
+            MenuItem(title: "수정", iconName: "pencil"),
+            MenuItem(title: "삭제", iconName: "trash")
+        ]
+        
         if isLostType {
-            alert.addAction(UIAlertAction(title: "줍줍 완료", style: .default) { _ in
-                self.handleJoopjoopAction()
-            })
+            menuItems.append(MenuItem(title: "줍줍 완료", iconName: "checkmark.circle"))
         }
         
-        // iPad에서 actionSheet가 크래시되지 않도록 설정
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = navMoreButton
-            popover.sourceRect = navMoreButton.bounds
+        // 팝업 크기 설정
+        let popoverWidth: CGFloat = 85
+        let popoverHeight: CGFloat = isLostType ? 66 : 44
+        
+        // 오버레이 뷰 생성
+        let overlayView = UIView()
+        overlayView.backgroundColor = UIColor.clear
+        overlayView.translatesAutoresizingMaskIntoConstraints = false
+        overlayView.alpha = 0
+        view.addSubview(overlayView)
+        popoverOverlayView = overlayView
+        
+        // 팝업 메뉴 뷰 생성
+        let popoverView = PopoverMenuView()
+        popoverView.customBackgroundColor = UIColor(red: 206/255.0, green: 214/255.0, blue: 233/255.0, alpha: 1.0) // CED6E9
+        popoverView.customCornerRadius = 10
+        popoverView.customBorderColor = UIColor(red: 199/255.0, green: 207/255.0, blue: 225/255.0, alpha: 1.0) // C7CFE1
+        popoverView.customBorderWidth = 1.0 / UIScreen.main.scale
+        // 각 아이템 높이 계산: (전체 높이 - 구분선 높이 * 구분선 개수) / 아이템 개수
+        let separatorHeight: CGFloat = 1.0 / UIScreen.main.scale
+        let separatorCount = CGFloat(menuItems.count - 1)
+        let itemHeight = (popoverHeight - separatorHeight * separatorCount) / CGFloat(menuItems.count)
+        popoverView.customItemHeight = itemHeight
+        popoverView.customPadding = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        popoverView.delegate = self
+        popoverView.translatesAutoresizingMaskIntoConstraints = false
+        popoverView.alpha = 0
+        popoverView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+        view.addSubview(popoverView)
+        popoverMenuView = popoverView
+        
+        // 팝업 메뉴 구성
+        popoverView.configure(with: menuItems)
+        
+        // navMoreButton의 위치 계산
+        let buttonFrame = navMoreButton.convert(navMoreButton.bounds, to: view)
+        let popoverX = buttonFrame.maxX - popoverWidth
+        let popoverY = buttonFrame.maxY + 8
+        
+        // 제약 조건 설정
+        NSLayoutConstraint.activate([
+            overlayView.topAnchor.constraint(equalTo: view.topAnchor),
+            overlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            overlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            popoverView.widthAnchor.constraint(equalToConstant: popoverWidth),
+            popoverView.heightAnchor.constraint(equalToConstant: popoverHeight),
+            popoverView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: popoverX),
+            popoverView.topAnchor.constraint(equalTo: view.topAnchor, constant: popoverY)
+        ])
+        
+        // 애니메이션으로 표시
+        UIView.animate(withDuration: 0.2) {
+            overlayView.alpha = 1
+            popoverView.alpha = 1
+            popoverView.transform = .identity
         }
         
-        present(alert, animated: true)
+        // 오버레이 탭 시 팝업 닫기
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hidePopoverMenu))
+        overlayView.addGestureRecognizer(tapGesture)
+    }
+    
+    @objc private func hidePopoverMenu() {
+        guard let popoverView = popoverMenuView,
+              let overlayView = popoverOverlayView else { return }
+        
+        UIView.animate(withDuration: 0.2, animations: {
+            overlayView.alpha = 0
+            popoverView.alpha = 0
+            popoverView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+        }) { _ in
+            popoverView.removeFromSuperview()
+            overlayView.removeFromSuperview()
+            self.popoverMenuView = nil
+            self.popoverOverlayView = nil
+        }
     }
     
     private func handleEditAction() {
@@ -2563,5 +2633,45 @@ extension CommentCell: UICollectionViewDataSource, UICollectionViewDelegate, UIC
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         return CGSize(width: 80, height: 80)
+    }
+}
+
+// MARK: - PopoverMenuViewDelegate
+extension PostDetailViewController: PopoverMenuViewDelegate {
+    func popoverMenuView(_ menuView: PopoverMenuView, didSelectItemAt index: Int) {
+        hidePopoverMenu()
+        
+        // lost 타입인지 확인
+        let isLostType: Bool
+        if let post = post {
+            isLostType = post.type == .lost
+        } else {
+            isLostType = navTitleLabel.text == "잃어버렸어요"
+        }
+        
+        // 메뉴 아이템 인덱스에 따라 처리
+        if isLostType {
+            // lost 타입: 수정(0), 삭제(1), 줍줍 완료(2)
+            switch index {
+            case 0:
+                handleEditAction()
+            case 1:
+                handleDeleteAction()
+            case 2:
+                handleJoopjoopAction()
+            default:
+                break
+            }
+        } else {
+            // found 타입: 수정(0), 삭제(1)
+            switch index {
+            case 0:
+                handleEditAction()
+            case 1:
+                handleDeleteAction()
+            default:
+                break
+            }
+        }
     }
 }
