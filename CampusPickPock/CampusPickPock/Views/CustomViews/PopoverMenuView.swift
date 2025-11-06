@@ -178,6 +178,9 @@ class PopoverMenuView: UIView {
         button.tag = index
         button.backgroundColor = .clear
         button.addTarget(self, action: #selector(itemButtonTapped(_:)), for: .touchUpInside)
+        // UIButton의 기본 imageView를 명시적으로 비활성화
+        button.setImage(nil, for: .normal)
+        button.imageView?.isHidden = true
         
         let iconImageView = UIImageView()
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
@@ -185,6 +188,7 @@ class PopoverMenuView: UIView {
         iconImageView.isHidden = false
         iconImageView.clipsToBounds = true
         iconImageView.backgroundColor = .clear
+        iconImageView.isUserInteractionEnabled = false
         // 커스텀 아이콘 설정
         // 상세페이지 더보기 메뉴 아이콘
         if item.iconName == "pencil" {
@@ -311,6 +315,9 @@ class PopoverMenuView: UIView {
         button.addSubview(iconImageView)
         button.addSubview(titleLabel)
         
+        // titleLabel도 터치를 차단하지 않도록 설정
+        titleLabel.isUserInteractionEnabled = false
+        
         // 커스텀 높이가 설정되어 있으면 사용, 아니면 기본값 44
         let itemHeight = customItemHeight ?? 44
         // 모든 버튼 높이를 동일하게 설정
@@ -339,10 +346,22 @@ class PopoverMenuView: UIView {
                 titleLabel.trailingAnchor.constraint(equalTo: button.trailingAnchor)
             ])
             
+            // 아이콘 이미지뷰가 제대로 표시되도록 확인
+            iconImageView.alpha = 1.0
+            iconImageView.isHidden = false
+            
             // 레이아웃 즉시 업데이트 및 z-order 조정
             button.setNeedsLayout()
             button.layoutIfNeeded()
             button.bringSubviewToFront(iconImageView)
+            
+            // 디버깅: 아이콘 이미지뷰의 프레임 확인
+            DispatchQueue.main.async {
+                print("🔍 아이콘 이미지뷰 프레임: \(iconImageView.frame)")
+                print("🔍 버튼 프레임: \(button.frame)")
+                print("🔍 아이콘 이미지뷰 isHidden: \(iconImageView.isHidden)")
+                print("🔍 아이콘 이미지뷰 alpha: \(iconImageView.alpha)")
+            }
         } else if index == 0 || index == 1 {
             // 첫 번째 아이템(닉네임)과 두 번째 아이템(로그아웃)은 아이콘이 없으므로 titleLabel의 leadingAnchor를 button의 leadingAnchor로 설정
             NSLayoutConstraint.activate([
