@@ -63,6 +63,7 @@ class PostListCell: UITableViewCell {
         }
         label.textColor = UIColor(red: 78/255.0, green: 78/255.0, blue: 78/255.0, alpha: 1.0)
         label.numberOfLines = 2
+        label.lineBreakMode = .byTruncatingTail
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -242,7 +243,7 @@ class PostListCell: UITableViewCell {
         NSLayoutConstraint.activate(constraints)
     }
     
-    func configure(with post: Post, isFirst: Bool = false, showProfile: Bool = true, hidePickedUpButton: Bool = false) {
+    func configure(with post: Post, isFirst: Bool = false, showProfile: Bool = true, hidePickedUpButton: Bool = false, isSearchMode: Bool = false) {
         self.isFirstCell = isFirst
         
         // 프로필 표시 여부에 따라 UI 업데이트
@@ -261,6 +262,24 @@ class PostListCell: UITableViewCell {
             itemImageViewTopConstraint?.isActive = false
             itemImageViewTopConstraint = itemImageView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 25)
             itemImageViewTopConstraint?.isActive = true
+        }
+        
+        // 검색 모드일 때 제목과 본문을 한 줄로 제한
+        if isSearchMode {
+            titleLabel.numberOfLines = 1
+            titleLabel.lineBreakMode = .byTruncatingTail
+            descriptionLabel.numberOfLines = 1
+            descriptionLabel.lineBreakMode = .byTruncatingTail
+        } else {
+            titleLabel.numberOfLines = 2
+            titleLabel.lineBreakMode = .byTruncatingTail
+            // showProfile에 따라 본문 줄 수 설정
+            if showProfile {
+                descriptionLabel.numberOfLines = 3
+            } else {
+                descriptionLabel.numberOfLines = 1
+            }
+            descriptionLabel.lineBreakMode = .byTruncatingTail
         }
         
         titleLabel.text = post.title

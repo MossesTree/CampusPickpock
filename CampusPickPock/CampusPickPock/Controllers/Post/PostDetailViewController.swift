@@ -53,8 +53,18 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
 
     private let navBackButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "arrow.left"), for: .normal)
-        button.tintColor = UIColor(red: 0x51/255.0, green: 0x5B/255.0, blue: 0x70/255.0, alpha: 1.0)
+        // DefaultBackIcon을 48x48 크기로 설정
+        if let backIcon = UIImage(named: "DefaultBackIcon") {
+            let size = CGSize(width: 48, height: 48)
+            UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+            backIcon.draw(in: CGRect(origin: .zero, size: size))
+            let resizedIcon = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            // 원본 색상을 유지하기 위해 renderingMode 설정
+            button.setImage(resizedIcon?.withRenderingMode(.alwaysOriginal), for: .normal)
+        }
+        // 색상 명시적으로 설정 (rgba(19, 45, 100, 1))
+        button.tintColor = UIColor(red: 19/255.0, green: 45/255.0, blue: 100/255.0, alpha: 1.0)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -482,8 +492,8 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             
             navBackButton.leadingAnchor.constraint(equalTo: customNavHeader.leadingAnchor, constant: 16),
             navBackButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
-            navBackButton.widthAnchor.constraint(equalToConstant: 44),
-            navBackButton.heightAnchor.constraint(equalToConstant: 44),
+            navBackButton.widthAnchor.constraint(equalToConstant: 48),
+            navBackButton.heightAnchor.constraint(equalToConstant: 48),
             
             navTitleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
             navTitleLabel.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
@@ -1449,15 +1459,50 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
         
         print("🎯 게시글 상세 화면 줍줍 버튼 클릭: postingId = \(postingId)")
         
-        // 확인 다이얼로그
-        let confirmAlert = UIAlertController(title: "줍줍 확인", message: "이 분실물을 찾으셨나요?", preferredStyle: .alert)
+        // 커스텀 줍줍 알림 팝업 표시
+        showJoopjoopAlert(postingId: postingId)
+    }
+    
+    private var joopjoopAlertView: JoopjoopAlertView?
+    private var pendingJoopjoopPostingId: Int?
+    
+    private func showJoopjoopAlert(postingId: Int) {
+        // 기존 팝업이 있으면 제거
+        joopjoopAlertView?.removeFromSuperview()
         
-        confirmAlert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        confirmAlert.addAction(UIAlertAction(title: "줍줍", style: .default) { _ in
-            self.performJoopjoop(postingId: postingId)
-        })
+        pendingJoopjoopPostingId = postingId
         
-        present(confirmAlert, animated: true)
+        let alertView = JoopjoopAlertView()
+        alertView.delegate = self
+        alertView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(alertView)
+        
+        NSLayoutConstraint.activate([
+            alertView.topAnchor.constraint(equalTo: view.topAnchor),
+            alertView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            alertView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            alertView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        
+        joopjoopAlertView = alertView
+        
+        // 애니메이션
+        alertView.alpha = 0
+        UIView.animate(withDuration: 0.3) {
+            alertView.alpha = 1
+        }
+    }
+    
+    private func hideJoopjoopAlert() {
+        guard let alertView = joopjoopAlertView else { return }
+        
+        UIView.animate(withDuration: 0.3, animations: {
+            alertView.alpha = 0
+        }) { _ in
+            alertView.removeFromSuperview()
+            self.joopjoopAlertView = nil
+            self.pendingJoopjoopPostingId = nil
+        }
     }
     
     private func performJoopjoop(postingId: Int) {
@@ -2806,5 +2851,23 @@ extension PostDetailViewController: PopoverMenuViewDelegate {
                 }
             }
         }
+    }
+}
+
+// MARK: - JoopjoopAlertViewDelegate
+extension PostDetailViewController: JoopjoopAlertViewDelegate {
+    func joopjoopAlertViewDidTapSend(_ alertView: JoopjoopAlertView) {
+        hideJoopjoopAlert()
+        
+        guard let postingId = pendingJoopjoopPostingId else {
+            print("❌ postingId가 없습니다.")
+            return
+        }
+        
+        performJoopjoop(postingId: postingId)
+    }
+    
+    func joopjoopAlertViewDidTapClose(_ alertView: JoopjoopAlertView) {
+        hideJoopjoopAlert()
     }
 }
