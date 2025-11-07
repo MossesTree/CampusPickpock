@@ -533,15 +533,15 @@ class HomeViewController: UIViewController {
             titleUnderlineView.heightAnchor.constraint(equalToConstant: 8),
             titleUnderlineView.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 148),
             
-            myPageButton.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 308),
+            myPageButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -25),
             myPageButton.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 62),
             
-            searchButton.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 296),
+            searchButton.trailingAnchor.constraint(equalTo: notificationButton.leadingAnchor,constant: -8),
             searchButton.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 92),
             searchButton.widthAnchor.constraint(equalToConstant: 24),
             searchButton.heightAnchor.constraint(equalToConstant: 24),
             
-            notificationButton.leadingAnchor.constraint(equalTo: searchButton.trailingAnchor, constant: 12),
+            notificationButton.trailingAnchor.constraint(equalTo: myPageButton.trailingAnchor),
             notificationButton.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 92),
             notificationButton.widthAnchor.constraint(equalToConstant: 24),
             notificationButton.heightAnchor.constraint(equalToConstant: 24),
@@ -553,7 +553,8 @@ class HomeViewController: UIViewController {
             
             alertCard.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 25),
             alertCard.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 202),
-            alertCard.widthAnchor.constraint(equalToConstant: 325),
+            alertCard.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -25),
+//            alertCard.widthAnchor.constraint(equalToConstant: 325),
             alertCard.heightAnchor.constraint(equalToConstant: 60),
             
             // 왼쪽 아이콘 (HomeSoundIcon)
@@ -582,7 +583,8 @@ class HomeViewController: UIViewController {
             
             segmentedControlContainer.topAnchor.constraint(equalTo: alertCard.bottomAnchor, constant: 37),
             segmentedControlContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 25),
-            segmentedControlContainer.widthAnchor.constraint(equalToConstant: 324),
+            segmentedControlContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -25),
+//            segmentedControlContainer.widthAnchor.constraint(equalToConstant: 324),
             segmentedControlContainer.heightAnchor.constraint(equalToConstant: 48),
             
             segmentedControl.topAnchor.constraint(equalTo: alertCard.bottomAnchor, constant: 37),
@@ -600,19 +602,19 @@ class HomeViewController: UIViewController {
             lostButton.centerYAnchor.constraint(equalTo: segmentedControlContainer.centerYAnchor),
             lostButton.heightAnchor.constraint(equalToConstant: 38),
             
-            lostBadge.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 287),
-            lostBadge.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 311),
+            lostBadge.leadingAnchor.constraint(equalTo: lostButton.titleLabel!.trailingAnchor),
+            lostBadge.bottomAnchor.constraint(equalTo: lostButton.titleLabel!.topAnchor),
             lostBadge.widthAnchor.constraint(equalToConstant: 6),
             lostBadge.heightAnchor.constraint(equalToConstant: 6),
             
             moreButton.trailingAnchor.constraint(equalTo: lostButton.trailingAnchor, constant: -5),  // Lost 버튼 오른쪽 끝에서 5px 안쪽
-            moreButton.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor, constant: 8),
+            moreButton.bottomAnchor.constraint(equalTo: tableView.topAnchor, constant: -2),
             
             tableView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 377),
             tableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
             tableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
-            tableView.widthAnchor.constraint(equalToConstant: 325),
-            tableView.heightAnchor.constraint(equalToConstant: 400),
+//            tableView.widthAnchor.constraint(equalToConstant: 325),
+//            tableView.heightAnchor.constraint(equalToConstant: 400),
             
             bottomButtonContainer.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 20),
             bottomButtonContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -685,7 +687,7 @@ class HomeViewController: UIViewController {
         tableView.separatorInset = UIEdgeInsets.zero
         tableView.sectionFooterHeight = 0
         tableView.sectionHeaderHeight = 0
-        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 4, right: 0)
         tableView.isScrollEnabled = false
     }
     

@@ -496,7 +496,7 @@ class PostDetailViewController: UIViewController, UIImagePickerControllerDelegat
             navBackButton.heightAnchor.constraint(equalToConstant: 48),
             
             navTitleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
-            navTitleLabel.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
+            navTitleLabel.centerYAnchor.constraint(equalTo: navBackButton.centerYAnchor),
             
             navMoreButton.trailingAnchor.constraint(equalTo: customNavHeader.trailingAnchor, constant: -16),
             navMoreButton.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),

@@ -219,7 +219,7 @@ class PostListCell: UITableViewCell {
             descriptionLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             
             commentIcon.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 8),
-            commentIcon.trailingAnchor.constraint(equalTo: commentCountLabel.leadingAnchor, constant: -2),
+            commentIcon.trailingAnchor.constraint(equalTo: commentCountLabel.leadingAnchor, constant: -8),
             commentIcon.widthAnchor.constraint(equalToConstant: 22),
             commentIcon.heightAnchor.constraint(equalToConstant: 20),
             commentIcon.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16),

@@ -614,7 +614,7 @@ class FoundPostCell: UITableViewCell {
             commentIcon.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16),
             
             commentCountLabel.centerYAnchor.constraint(equalTo: commentIcon.centerYAnchor),
-            commentCountLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16)
+            commentCountLabel.leadingAnchor.constraint(equalTo: commentIcon.trailingAnchor, constant: 5)
         ]
         
         if let dividerLineTopConstraint = dividerLineTopConstraint {
