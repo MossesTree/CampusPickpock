@@ -27,8 +27,11 @@ class PostLostViewController: UIViewController {
             backIcon.draw(in: CGRect(origin: .zero, size: size))
             let resizedIcon = UIGraphicsGetImageFromCurrentImageContext()
             UIGraphicsEndImageContext()
+            // 원본 색상을 유지하기 위해 renderingMode 설정
             button.setImage(resizedIcon?.withRenderingMode(.alwaysOriginal), for: .normal)
         }
+        // 색상 명시적으로 설정 (rgba(19, 45, 100, 1))
+        button.tintColor = UIColor(red: 19/255.0, green: 45/255.0, blue: 100/255.0, alpha: 1.0)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -419,7 +422,7 @@ class PostLostViewController: UIViewController {
             backButton.heightAnchor.constraint(equalToConstant: 48),
             
             navTitleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
-            navTitleLabel.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
+            navTitleLabel.centerYAnchor.constraint(equalTo: backButton.centerYAnchor),
             
             navDividerLine.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
             navDividerLine.leadingAnchor.constraint(equalTo: view.leadingAnchor),

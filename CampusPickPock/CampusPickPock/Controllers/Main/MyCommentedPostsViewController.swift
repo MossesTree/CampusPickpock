@@ -165,7 +165,7 @@ class MyCommentedPostsViewController: UIViewController {
             backButton.heightAnchor.constraint(equalToConstant: 48),
             
             navTitleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
-            navTitleLabel.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
+            navTitleLabel.centerYAnchor.constraint(equalTo: backButton.centerYAnchor),
             
             navDividerLine.topAnchor.constraint(equalTo: customNavHeader.bottomAnchor),
             navDividerLine.leadingAnchor.constraint(equalTo: view.leadingAnchor),

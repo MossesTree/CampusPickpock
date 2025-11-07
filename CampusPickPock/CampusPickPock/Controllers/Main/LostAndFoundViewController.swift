@@ -53,7 +53,7 @@ class LostAndFoundViewController: UIViewController {
         let label = UILabel()
         label.text = "우리 학교 분실물 보관함"
         label.font = UIFont.pretendardBold(size: 22)
-        label.textColor = UIColor(red: 0.19, green: 0.45, blue: 1.0, alpha: 1.0)
+        label.textColor = UIColor(red: 0x13/255.0, green: 0x2D/255.0, blue: 0x64/255.0, alpha: 1.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -300,8 +300,8 @@ class LostAndFoundViewController: UIViewController {
                 button.backgroundColor = UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0)
                 button.setTitleColor(.white, for: .normal)
             } else {
-                button.backgroundColor = UIColor(red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
-                button.setTitleColor(UIColor(red: 0.26, green: 0.41, blue: 0.96, alpha: 1.0), for: .normal)
+                button.backgroundColor = UIColor(red: 0xCE/255.0, green: 0xD6/255.0, blue: 0xE9/255.0, alpha: 1.0)
+                button.setTitleColor(UIColor(red: 0x4A/255.0, green: 0x80/255.0, blue: 0xF0/255.0, alpha: 1.0), for: .normal)
             }
             
             button.addTarget(self, action: #selector(categoryTapped(_:)), for: .touchUpInside)
