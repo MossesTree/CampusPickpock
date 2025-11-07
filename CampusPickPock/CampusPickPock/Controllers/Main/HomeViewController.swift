@@ -489,8 +489,6 @@ class HomeViewController: UIViewController {
         notificationPopupView.addSubview(notificationMessageLabel)
         notificationPopupView.addSubview(notificationActionButton)
         
-        bottomButtonContainer.addSubview(writeButton)
-        
         headerView.addSubview(titleUnderlineView)
         headerView.addSubview(titleLabel)
         headerView.addSubview(myPageButton)
@@ -507,6 +505,10 @@ class HomeViewController: UIViewController {
         
         bottomBar.addSubview(bottomBarLabel)
         bottomBar.addSubview(bottomBarIcon)
+        
+        let writeButtonGuide = UILayoutGuide()
+        contentView.addLayoutGuide(writeButtonGuide)
+        bottomButtonContainer.addSubview(writeButton)
         
         NSLayoutConstraint.activate([
 //            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -621,8 +623,8 @@ class HomeViewController: UIViewController {
             bottomButtonContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             bottomButtonContainer.heightAnchor.constraint(equalToConstant: 60),
             
-            writeButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 147),
-            writeButton.topAnchor.constraint(equalTo: view.topAnchor, constant: 663),
+            writeButton.centerXAnchor.constraint(equalTo: bottomButtonContainer.centerXAnchor),
+            writeButton.centerYAnchor.constraint(equalTo: bottomButtonContainer.centerYAnchor),
             writeButton.widthAnchor.constraint(equalToConstant: 81),
             writeButton.heightAnchor.constraint(equalToConstant: 30),
             
@@ -640,6 +642,13 @@ class HomeViewController: UIViewController {
             bottomBarIcon.centerYAnchor.constraint(equalTo: bottomBar.centerYAnchor),
             bottomBarIcon.widthAnchor.constraint(equalToConstant: 20),
             bottomBarIcon.heightAnchor.constraint(equalToConstant: 20),
+            
+            writeButtonGuide.topAnchor.constraint(equalTo: tableView.bottomAnchor),
+            writeButtonGuide.bottomAnchor.constraint(equalTo: bottomBar.topAnchor),
+            writeButton.centerXAnchor.constraint(equalTo: bottomButtonContainer.centerXAnchor),
+            writeButton.centerYAnchor.constraint(equalTo: writeButtonGuide.centerYAnchor),
+            writeButton.widthAnchor.constraint(equalToConstant: 81),
+            writeButton.heightAnchor.constraint(equalToConstant: 30),
             
             // Notification Overlay Constraints
             notificationOverlayView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -977,9 +986,9 @@ class HomeViewController: UIViewController {
         print("📱 delegate 설정됨: \(myPagePopover?.delegate != nil ? "성공" : "실패")")
         myPagePopover?.configure(with: menuItems)
         
-        guard let popover = myPagePopover else { 
+        guard let popover = myPagePopover else {
             print("❌ popover가 nil")
-            return 
+            return
         }
         view.addSubview(popover)
         view.bringSubviewToFront(popover)
@@ -1032,9 +1041,9 @@ class HomeViewController: UIViewController {
         print("✍️ delegate 설정됨: \(writePopover?.delegate != nil ? "성공" : "실패")")
         writePopover?.configure(with: menuItems)
         
-        guard let popover = writePopover else { 
+        guard let popover = writePopover else {
             print("❌ writePopover가 nil")
-            return 
+            return
         }
         view.addSubview(popover)
         view.bringSubviewToFront(popover)
