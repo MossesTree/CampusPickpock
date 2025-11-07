@@ -138,8 +138,8 @@ class NotificationListViewController: UIViewController {
             titleLabel.centerXAnchor.constraint(equalTo: customNavHeader.centerXAnchor),
             titleLabel.centerYAnchor.constraint(equalTo: customNavHeader.centerYAnchor),
             
-            // X 버튼 위치 - '알림' 텍스트와 같은 y 위치
-            closeButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 323),
+            // X 버튼 위치 - 오른쪽 25pt 여백 고정
+            closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -25),
             closeButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
             closeButton.widthAnchor.constraint(equalToConstant: 27),
             closeButton.heightAnchor.constraint(equalToConstant: 27),
@@ -150,10 +150,9 @@ class NotificationListViewController: UIViewController {
             navDividerLine.heightAnchor.constraint(equalToConstant: 1),
             
             // Table view constraints - start below custom header
-            // 셀의 오른쪽 끝이 X 버튼의 오른쪽 끝(350)에 맞춰지도록 trailingAnchor 조정
             tableView.topAnchor.constraint(equalTo: navDividerLine.bottomAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.leadingAnchor, constant: 350),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
             // Empty State View
@@ -332,9 +331,9 @@ extension NotificationListViewController: UITableViewDelegate, UITableViewDataSo
         let bottomMargin: CGFloat = 4
         
         var constraints: [NSLayoutConstraint] = [
-            // 컨테이너 뷰 (오른쪽 끝이 X 버튼의 오른쪽 끝에 맞춰지도록 정렬)
-            containerView.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor),
-            containerView.widthAnchor.constraint(equalToConstant: 325),
+            // 컨테이너 뷰 - 좌우 여백 25pt 고정 (X 버튼과 동일한 오른쪽 여백)
+            containerView.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 25),
+            containerView.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -25),
             containerView.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: topMargin),
             containerView.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -bottomMargin),
             
