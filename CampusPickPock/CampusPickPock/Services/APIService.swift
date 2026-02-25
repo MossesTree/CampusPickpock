@@ -10,7 +10,7 @@ import Foundation
 class APIService {
     static let shared = APIService()
     
-    let baseURL = "http://lostnfound-env.eba-2wmsjk7u.ap-northeast-2.elasticbeanstalk.com" 
+    let baseURL = "http://lostnfound-env.eba-2wmsjk7u.ap-northeast-2.elasticbeanstalk.com"
     let session = URLSession.shared
     
     private init() {}
